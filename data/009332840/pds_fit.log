@@ -1,0 +1,16 @@
+2021-09-28 21:59:43,757 INFO # Initial background values set by guesses using numax=50.20938824033475.
+2021-09-28 21:59:43,761 INFO # Sampling with the PDS binned with 300 bins.
+2021-09-28 21:59:43,761 INFO # Sampler started (for warmup).
+2021-09-28 21:59:43,761 INFO # Sampling 1000 iterations as warmup.
+2021-09-28 21:59:43,761 INFO  niter,niterC, slope,nchains,  Rhat,  mESS
+2021-09-28 21:59:46,602 INFO 000000,000000,   inf,0000500,   inf,000000
+2021-09-28 21:59:49,363 INFO 000500,000500,   inf,0001000,   inf,000000
+2021-09-28 21:59:49,364 INFO # Sampling for a minimum of 2000 iterations.
+2021-09-28 21:59:52,121 INFO 001500,000500,   inf,0000050,   inf,000000
+2021-09-28 21:59:54,733 INFO 002000,001000,   inf,0000050,   inf,000000
+2021-09-28 21:59:57,817 INFO 002500,001500,   inf,0000050,   inf,000000
+2021-09-28 22:00:00,832 INFO 003000,002000,   inf,0000050,   inf,000000
+2021-09-28 22:00:00,835 INFO # Sampling until reaching convergence, sufficient mixing and sample size.
+2021-09-28 22:00:09,640 INFO 003500,002000,1.04640,0002500,1.38045,000000
+2021-09-28 22:00:17,889 INFO 004000,002500,1.04485,0002500,1.00092,003465
+2021-09-28 22:00:17,890 INFO # Updating background parameter estimations.
