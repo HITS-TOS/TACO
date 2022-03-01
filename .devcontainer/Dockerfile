@@ -1,0 +1,39 @@
+FROM braintwister/ubuntu-20.04-gcc-11:0.5
+
+LABEL maintainer="Bernd Doser <bernd.doser@h-its.org>"
+
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9 \
+ && add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/' \
+ && apt-get update \
+ && export DEBIAN_FRONTEND=noninteractive \
+ && apt-get -y install --no-install-recommends \
+       apt-transport-https \
+       ca-certificates \
+       dirmngr \
+       gnupg \
+       locales \
+       python3-dev \
+       python3-pip \
+       r-base \
+       software-properties-common \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN pip install \
+      argparse \
+      numpy \
+      pandas \
+      scipy \
+      sklearn \
+      emcee \
+      lightkurve \
+      loguru
+
+RUN Rscript -e 'install.packages(c( \
+      "argparser", \
+      "ifultools", \
+      "numDeriv", \
+      "lomb", \
+      "tidyverse", \
+      "modelr" \
+    ), dependencies=TRUE)'
