@@ -1,0 +1,11 @@
+argparse
+bokeh==2.4.1
+emcee
+lightkurve
+loguru
+numpy
+pandas
+protobuf==3.19.4
+scipy
+sklearn
+streamlit==1.3.1
