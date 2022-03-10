@@ -28,13 +28,17 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD5
 
 RUN pip install \
       argparse \
+      emcee \
+      lightkurve \
+      loguru \
       numpy \
       pandas \
       scipy \
-      sklearn \
-      emcee \
-      lightkurve \
-      loguru
+      sklearn
+
+RUN pip install \
+      black \
+      pylint
 
 RUN Rscript -e 'install.packages(c( \
       "argparser", \
