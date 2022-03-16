@@ -23,6 +23,7 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD5
        r-base \
        r-base-dev \
        software-properties-common \
+       tk \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
