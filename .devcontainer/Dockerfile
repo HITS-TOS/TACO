@@ -32,6 +32,7 @@ RUN pip install \
       emcee \
       lightkurve \
       loguru \
+      nbformat \
       numpy \
       pandas \
       scipy \
