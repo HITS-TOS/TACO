@@ -27,7 +27,7 @@ def calc_pds(ts):
     Parameters:
         ts(pandas.DataFrame):Time series with units of days.
             Columns:
-                Name: Date, dtype: datetime64[ns]
+                Name: time, dtype: datetime64[ns]
                 Name: flux, dtype: int64
         ofac(int):Oversampling factor to use in oversampled periodogram (default is 2).
 
@@ -36,6 +36,7 @@ def calc_pds(ts):
             Columns:
                 Name: frequency, dtype: float[micro-Hertz]
                 Name: power, dtype: float
+        nyquist(float):
     '''
     
     # Add change in here so that checks to see if data in ppm or normalized flux already
