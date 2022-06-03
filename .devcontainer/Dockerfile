@@ -39,6 +39,8 @@ RUN Rscript -e 'install.packages(c( \
 
 RUN Rscript -e 'devtools::install_version("ifultools", "2.0-23")'
 
+RUN /usr/bin/python3 -m pip install --upgrade pip
+
 RUN pip install \
       argparse \
       emcee \
@@ -53,6 +55,7 @@ RUN pip install \
 
 RUN pip install \
       black \
+      ipykernel \
       pylint \
       pytest
 
