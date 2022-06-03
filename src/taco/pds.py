@@ -33,7 +33,7 @@ def calc_pds(ts):
     Parameters:
         ts(pandas.DataFrame):Time series with units of days.
             Columns:
-                Name: time, dtype: datetime64[ns]
+                Name: time, dtype: datetime64[days]
                 Name: flux, dtype: int64
         ofac(int):Oversampling factor to use in oversampled periodogram (default is 2).
 
