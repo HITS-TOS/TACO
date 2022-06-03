@@ -5,17 +5,27 @@ import pytest
 from taco import pds
 
 
-def test_zero_division():
-    with pytest.raises(ZeroDivisionError):
-        1 / 0
+def test_value_error():
+    ts = pd.DataFrame({"time": [1, 2, 3, 4], "flux": [1, -1, 1, -1]})
+    with pytest.raises(ValueError):
+        pds.calc_pds(ts)
 
-def test_pds():
-    # ts = pd.DataFrame({"time": [1.0, 2.0, 3.0, 4.0], "flux": [15.0, -3.0, 2.0, 8.0]})
-    # ts = pd.DataFrame({"time": [54953.5392, 54953.5596, 54953.5801, 54953.6005],
-    #                    "flux": [156.9757, -68.3652, 333.7183, 556.5434]})
-    ts = pd.DataFrame({"time": range(0, 50),
-                       "flux": random.sample(range(10, 3000), 50)})
 
-    print(ts)
+testdata = [
+    (
+        pd.DataFrame(
+            {"time": range(0, 50), "flux": random.sample(range(10, 3000), 50)}
+        ),
+        pytest.approx(5.6689, 0.0001),
+    ),
+    (
+        pd.DataFrame({"time": range(0, 10), "flux": [1,-1,1,-1,1,-1,1,-1,1,-1]}),
+        pytest.approx(5.1440, 0.0001),
+    )
+]
+
+
+@pytest.mark.parametrize("ts,expected", testdata)
+def test_pds(ts, expected):
     _, nyquist = pds.calc_pds(ts)
-    assert nyquist == 10.0
+    assert nyquist == expected
