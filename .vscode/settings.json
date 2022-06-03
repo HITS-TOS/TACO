@@ -3,5 +3,6 @@
     "python.linting.enabled": true,
     "terminal.integrated.env.linux": {
         "PYTHONPATH": "${workspaceFolder}/src"
-    }
+    },
+    "python.formatting.provider": "black"
 }
