@@ -18,7 +18,7 @@ pipeline {
         }
       }
       steps {
-        sh 'PYTHONPATH=$WORKSPACE/src && pytest'
+        sh 'PYTHONPATH=$WORKSPACE/src pytest'
       }
     }
   }
