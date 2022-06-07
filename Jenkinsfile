@@ -18,7 +18,7 @@ pipeline {
         }
       }
       steps {
-        sh 'pytest'
+        sh 'PYTHONPATH=$PYTHONPATH:$pwd/src && pytest'
       }
     }
   }
