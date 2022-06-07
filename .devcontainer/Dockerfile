@@ -50,6 +50,7 @@ RUN pip install \
       numpy \
       pandas \
       plotly \
+      rpy2==3.3.* \
       scipy \
       sklearn
 
@@ -58,4 +59,3 @@ RUN pip install \
       ipykernel \
       pylint \
       pytest
-
