@@ -26,7 +26,7 @@ def compute_conversion_factor(ts):
     return np.sum(fftpower) * bw
 
 
-def calc_pds(ts):
+def calc_pds(ts, ofac = 1):
     """
     Calculating a Lomb-Scargle periodogram.
 
@@ -35,7 +35,7 @@ def calc_pds(ts):
             Columns:
                 Name: time, dtype: datetime64[ns]
                 Name: flux, dtype: int64
-        ofac(int):Oversampling factor to use in oversampled periodogram (default is 2).
+        ofac(int):Oversampling factor (default is 1).
 
     Returns:
         pds(pandas.DataFrame):Periodogram columns=[' in units of ', 'power'].
@@ -60,7 +60,7 @@ def calc_pds(ts):
         )
 
     # Compute periodogram with psd normalisation
-    ps = lc.to_periodogram(normalization="psd")
+    ps = lc.to_periodogram(normalization="psd", oversample_factor=ofac)
 
     # Normalisation factor
     factor = compute_conversion_factor(ts)
