@@ -59,3 +59,6 @@ RUN pip install \
       ipykernel \
       pylint \
       pytest
+
+RUN useradd --uid 15005 -m user
+USER user
