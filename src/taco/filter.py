@@ -4,7 +4,7 @@ from rpy2.robjects import pandas2ri
 
 from rpy2.robjects.conversion import localconverter
 
-def filter(ts, width, remove_gaps):
+def filter(ts, width=1, remove_gaps=-1):
     """
     Filtering the lightcurves with a triangular smooth
     I use two rectangular smooths with half the provided width.
@@ -25,6 +25,3 @@ def filter(ts, width, remove_gaps):
 
     with localconverter(ro.default_converter + pandas2ri.converter):
         r_ts = ro.conversion.py2rpy(ts)
-
-
-    print(df_summary)
