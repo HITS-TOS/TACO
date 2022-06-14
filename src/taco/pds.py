@@ -33,8 +33,8 @@ def calc_pds(ts, ofac = 1):
     Parameters:
         ts(pandas.DataFrame):Time series with units of days.
             Columns:
-                Name: time, dtype: datetime64[days]
-                Name: flux, dtype: int64
+                Name: time, dtype: float[days]
+                Name: flux, dtype: float
         ofac(int):Oversampling factor (default is 1).
 
     Returns:
