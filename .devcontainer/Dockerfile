@@ -2,6 +2,11 @@ FROM braintwister/ubuntu-20.04:0.5
 
 LABEL maintainer="Bernd Doser <bernd.doser@h-its.org>"
 
+ARG USERNAME=user
+ARG GROUPNAME=users
+ARG USER_UID=1000
+ARG USER_GID=1000
+
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9 \
  && add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/' \
  && add-apt-repository ppa:c2d4u.team/c2d4u4.0+ \
@@ -60,5 +65,5 @@ RUN pip install \
       pylint \
       pytest
 
-RUN useradd --uid 15005 -m user
-USER user
+RUN useradd --uid ${USER_UID} -m ${USERNAME}
+USER ${USERNAME}

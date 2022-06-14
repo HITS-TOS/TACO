@@ -3,7 +3,10 @@
 {
 	"name": "Python",
 	"build": {
-		"dockerfile": "Dockerfile"
+		"dockerfile": "Dockerfile",
+		"args": { "USER_UID": "1026" }
+		//"args": { "USER_UID": "${localEnv:UID}" }
+
 	},
 	"runArgs": ["--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined", "-e DISPLAY"],
 
