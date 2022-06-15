@@ -2,10 +2,13 @@
 
 import argparse
 import os
+import sys
 
 import pandas as pd
 
-# import taco
+sys.path.insert(0, '../src')
+from taco import filter, pds
+
 
 def main(argv):
 
@@ -14,8 +17,9 @@ def main(argv):
         print('Current directory: ', directory.name)
         ts_raw = pd.read_csv(os.path.join(directory, 'raw.dat'), comment = '#', header = None, sep = '\s+')
 
-        # ts_filtered, var = filter_lightcurve(ts_raw)
-        # pds, nyquist = calc_pds(ts_filtered, ofac=2)
+        ts_filtered, var = filter.filter(ts_raw)
+        freq, nyquist = pds.calc_pds(ts_filtered, ofac=2)
+        print ('nyquist = ', nyquist)
         # numax_estimate(pds, var, nyquist, filterwidth=0.2)
         # background_fit(bins=300)
         # background_summary()
