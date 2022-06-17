@@ -28,7 +28,7 @@ def main(argv):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="TACO workflow")
-    parser.add_argument('base_directory', default='.',
+    parser.add_argument('--base_directory', '-b', default='.',
                         help="Base directory of processable raw data.")
     argv = parser.parse_args()
     
