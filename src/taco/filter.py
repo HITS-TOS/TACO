@@ -6,7 +6,7 @@ from rpy2.robjects.conversion import localconverter
 from rpy2.robjects.packages import STAP
 
 
-def filter(ts, width=1, remove_gaps=-1):
+def filter(ts, width=40, remove_gaps=-1):
     """
     Filtering the lightcurves with a triangular smooth
     I use two rectangular smooths with half the provided width.
