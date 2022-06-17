@@ -13,7 +13,7 @@ pipeline {
   stages {
     stage('Static Code Checking') {
       steps {
-        sh 'find . -name \\*.py | xargs pylint -f parseable | tee pylint.log'
+        sh 'find src -name \"*.py\" | xargs pylint -f parseable | tee pylint.log'
       }
       post {
         always {
