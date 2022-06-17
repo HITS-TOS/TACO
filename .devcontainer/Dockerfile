@@ -65,5 +65,7 @@ RUN pip install \
       pylint \
       pytest
 
+RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && locale-gen
+
 RUN useradd --uid ${USER_UID} -m ${USERNAME}
 USER ${USERNAME}

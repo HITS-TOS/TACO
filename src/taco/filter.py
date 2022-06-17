@@ -1,3 +1,5 @@
+import os
+
 import rpy2.robjects as ro
 from rpy2.robjects import pandas2ri
 from rpy2.robjects.conversion import localconverter
@@ -21,10 +23,10 @@ def filter(ts, width=1, remove_gaps=-1):
         remove_gaps(int):Remove gaps greater than this value (in days). If set to -1, do not remove gaps
     """
 
-    with open('src/taco/filter.R', 'r') as f:
+    with open(os.path.join(os.path.dirname(__file__),'filter.R'), 'r') as f:
         filter = STAP(f.read(), "filter_r")
 
         with localconverter(ro.default_converter + pandas2ri.converter):
             r_ts = ro.conversion.py2rpy(ts)
             r_ts_filtered = filter.filter_r(r_ts, width, remove_gaps)
-            return ro.conversion.rpy2py(r_ts_filtered)
+            return ro.conversion.rpy2py(r_ts_filtered), 0
