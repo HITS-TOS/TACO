@@ -31,7 +31,7 @@ pipeline {
         }
       }
       steps {
-        sh 'PYTHONPATH=$WORKSPACE/src pytest --with-xunit --xunit-file=pyunit.xml --cover-xml --cover-xml-file=cov.xml'
+        sh 'PYTHONPATH=$WORKSPACE/src pytest --junitxml=pyunit.xml'
       }
       post {
         always {
