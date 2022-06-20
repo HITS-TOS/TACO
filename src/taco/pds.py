@@ -38,7 +38,7 @@ def calc_pds(ts, ofac = 1):
         ofac(int):Oversampling factor (default is 1).
 
     Returns:
-        pds(pandas.DataFrame):Periodogram columns=[' in units of ', 'power'].
+        pds(pandas.DataFrame):Periodogram
             Columns:
                 Name: frequency, dtype: float[micro-Hertz]
                 Name: power, dtype: float
