@@ -7,7 +7,7 @@ import os
 import pathlib
 
 import pandas as pd
-from taco import filter, pds
+import taco
 
 
 def pipeline(argv):
@@ -20,11 +20,11 @@ def pipeline(argv):
         ts_raw = pd.read_csv(os.path.join(directory, 'raw.dat'),
             comment = '#', header = None, delim_whitespace=True)
 
-        ts_filtered, _ = filter.filter(ts_raw)
+        ts_filtered, _ = taco.filter(ts_raw)
         filtered_filename = os.path.join(argv.output_directory, directory.name, 'filtered.cvs')
         ts_filtered.to_csv(filtered_filename, index=False)
 
-        pds_data, _ = pds.calc_pds(ts_filtered, ofac=2)
+        pds_data, _ = taco.calc_pds(ts_filtered, ofac=2)
         pds_filename = os.path.join(argv.output_directory, directory.name, 'pds.cvs')
         pds_data.to_csv(pds_filename, index=False)
 

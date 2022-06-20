@@ -1,3 +1,7 @@
+# __init__.py
+from .filter import filter
+from .pds import calc_pds
+
 __doc__ = """
 TACO - Tools for Automated Characterisation of Oscillations
 ===========================================================
