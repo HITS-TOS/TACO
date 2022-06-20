@@ -8,7 +8,7 @@ from taco import filter
 
 def test_filter():
     ts = pd.DataFrame({"0": [1, 2, 3, 4], "1": [1, -1, math.inf, -1]})
-    ts_filtered,_ = filter.filter(ts)
+    ts_filtered,_ = filter(ts)
     assert len(ts_filtered) == 3
 
 data = StringIO("""
@@ -24,7 +24,7 @@ data = StringIO("""
 """)
 
 def test_filter_2():
-    ts = pd.read_csv(data, comment = '#', header = None, sep = '\s+')
-    ts_filtered,_ = filter.filter(ts)
+    ts = pd.read_csv(data, comment = '#', header = None, delim_whitespace=True)
+    ts_filtered,_ = filter(ts)
     print(ts_filtered)
     assert ts_filtered.iat[0, 2] == pytest.approx(-5.4567, 0.001)
