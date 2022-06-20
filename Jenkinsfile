@@ -12,6 +12,11 @@ pipeline {
 
   stages {
     stage('Static Code Checking') {
+      agent {
+        dockerfile {
+          dir '.devcontainer'
+        }
+      }
       steps {
         sh 'find src -name \"*.py\" | xargs pylint -f parseable | tee pylint.log'
       }
