@@ -18,7 +18,7 @@ pipeline {
                 }
             }
             steps {
-                sh 'find src -name \"*.py\" | xargs pylint -f parseable > pylint.log'
+                sh 'find src -name \"*.py\" | xargs pylint -f parseable | tee pylint.log'
             }
             post {
                 always {
