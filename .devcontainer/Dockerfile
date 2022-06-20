@@ -55,6 +55,7 @@ RUN pip install \
       numpy \
       pandas \
       plotly \
+      pyyaml \
       rpy2==3.3.* \
       scipy \
       sklearn
