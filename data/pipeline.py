@@ -16,7 +16,7 @@ def pipeline(argv):
 
     # Read pipeline settings
     with open(argv.settings_file, 'r', encoding="utf-8") as stream:
-        data = yaml.load(stream, Loader=yaml.Loader)
+        settings = yaml.load(stream, Loader=yaml.Loader)
 
     # Loop over input directories
     for directory in [f for f in os.scandir(argv.input_directory) if os.path.isdir(f)]:
@@ -27,16 +27,22 @@ def pipeline(argv):
             comment = '#', header = None, delim_whitespace=True)
 
         # 1) Filter
-        ts_filtered, _ = taco.filter(ts_raw, width = data['pipeline'][0]['filter']['width'])
+        ts_filtered, variance = taco.filter(ts_raw,
+            width = settings['pipeline'][0]['filter']['width'],
+            remove_gaps = settings['pipeline'][0]['filter']['remove_gaps'])
         filtered_filename = os.path.join(argv.output_directory, directory.name, 'filtered.cvs')
         ts_filtered.to_csv(filtered_filename, index=False)
 
         # 2) PDS
-        pds_data, _ = taco.calc_pds(ts_filtered, ofac=2)
+        pds, nyquist = taco.calc_pds(ts_filtered, ofac=2)
         pds_filename = os.path.join(argv.output_directory, directory.name, 'pds.cvs')
-        pds_data.to_csv(pds_filename, index=False)
+        pds.to_csv(pds_filename, index=False)
 
-        # numax_estimate(pds, var, nyquist, filterwidth=0.2)
+        # 3) Estimate numax
+        # taco.numax_estimate(pds, variance, nyquist,
+        #     filterwidth = settings['pipeline'][3]['numax_estimate']['filter_width'])
+
+        # TODO ...
         # background_fit(bins=300)
         # background_summary()
         # peakFind(snr=1.1, prob=0.0001, minAIC=2)

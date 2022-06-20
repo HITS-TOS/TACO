@@ -1,6 +1,8 @@
 # __init__.py
+
 from .filter import filter
 from .pds import calc_pds
+from .numax_estimate import numax_estimate
 
 __doc__ = """
 TACO - Tools for Automated Characterisation of Oscillations
@@ -15,4 +17,5 @@ modes.
 __all__ = [
     "filter",
     "pds",
+    "numax_estimate",
 ]
