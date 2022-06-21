@@ -34,7 +34,7 @@ def pipeline(argv):
         ts_filtered.to_csv(filtered_filename, index=False)
 
         # 2) PDS
-        pds, nyquist = taco.calc_pds(ts_filtered, ofac=2)
+        pds, nyquist = taco.calc_pds(ts_filtered)
         pds_filename = os.path.join(argv.output_directory, directory.name, 'pds.cvs')
         pds.to_csv(pds_filename, index=False)
 
