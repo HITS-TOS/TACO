@@ -4,7 +4,7 @@
 
 import argparse
 import os
-import pathlib
+from pathlib import Path
 import yaml
 
 import pandas as pd
@@ -16,27 +16,35 @@ def pipeline(argv):
 
     # Read pipeline settings
     with open(argv.settings_file, 'r', encoding="utf-8") as stream:
-        settings = yaml.load(stream, Loader=yaml.Loader)
+        settings = yaml.load(stream, Loader = yaml.Loader)
+
+    input_files = [f for f in Path(argv.input_directory).iterdir()
+        if (f.is_file() and f.suffix == '.dat')]
+
+    if argv.verbose > 0:
+        print('Number of input files: ', len(input_files))
 
     # Loop over input directories
-    for directory in [f for f in os.scandir(argv.input_directory) if os.path.isdir(f)]:
+    for input_file in input_files:
 
-        print('Current directory: ', directory.name)
-        pathlib.Path(os.path.join(argv.output_directory, directory.name)).mkdir(exist_ok=True)
-        ts_raw = pd.read_csv(os.path.join(directory, 'raw.dat'),
-            comment = '#', header = None, delim_whitespace=True)
+        input_name = input_file.stem
+        if argv.verbose > 0:
+            print('Current input name: ', input_name)
+
+        Path(argv.output_directory, input_name).mkdir(exist_ok = True)
+        ts_raw = pd.read_csv(input_file, comment = '#', header = None, delim_whitespace = True)
 
         # 1) Filter
         ts_filtered, variance = taco.filter(ts_raw,
             width = settings['pipeline'][0]['filter']['width'],
             remove_gaps = settings['pipeline'][0]['filter']['remove_gaps'])
-        filtered_filename = os.path.join(argv.output_directory, directory.name, 'filtered.cvs')
-        ts_filtered.to_csv(filtered_filename, index=False)
+        filtered_filename = Path(argv.output_directory, input_name, 'filtered.cvs')
+        ts_filtered.to_csv(filtered_filename, index = False)
 
         # 2) PDS
         pds, nyquist = taco.calc_pds(ts_filtered)
-        pds_filename = os.path.join(argv.output_directory, directory.name, 'pds.cvs')
-        pds.to_csv(pds_filename, index=False)
+        pds_filename = Path(argv.output_directory, input_name, 'pds.cvs')
+        pds.to_csv(pds_filename, index = False)
 
         # 3) Estimate numax
         # taco.numax_estimate(pds, variance, nyquist,
@@ -52,13 +60,15 @@ def pipeline(argv):
         # peaksMLE(minAIC=2, finalfit=TRUE)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="TACO pipeline")
 
+    parser = argparse.ArgumentParser(description="TACO pipeline")
     parser.add_argument('--input_directory', '-i', default='.',
                         help="Input directory of processable raw data.")
     parser.add_argument('--output_directory', '-o', default='.',
                         help="Output directory for resulting data.")
     parser.add_argument('--settings-file', '-s', default='pipeline_settings.yaml',
                         help="File with pipeline settings in Yaml.")
+    parser.add_argument('--verbose', '-v', default=0, type=int,
+                        help="Print level.")
 
     pipeline(parser.parse_args())
