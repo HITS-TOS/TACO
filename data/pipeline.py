@@ -44,7 +44,6 @@ def pipeline(argv):
 
         # TODO ...
         # background_fit(bins=300)
-        # background_summary()
         # peakFind(snr=1.1, prob=0.0001, minAIC=2)
         # peaksMLE(minAIC=2)
         # peakBagModeId02()
