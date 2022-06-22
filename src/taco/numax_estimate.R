@@ -1,23 +1,18 @@
 ## Quick numax estimation from different methods.
 
-library(argparser, quietly=TRUE)
-library(readr, quietly=TRUE)
-library(tidyr, quietly=TRUE)
+library(argparser, quietly = TRUE)
+library(readr, quietly = TRUE)
+library(tidyr, quietly = TRUE)
 
-source(file.path(script.basename, "peakFind_lib.R"), echo=FALSE)
-
-if(!file.exists(file.path(script.basename, "wavelets.R"))) {
-    stop("Could not find wavelets.R")
-}
+source(file.path(script.basename, "peakFind_lib.R"), echo = FALSE)
 source(file.path(script.basename, "wavelets.R"))
 
-numax_estimate_r = function(pds, variance, nyquist, filterwidth)
-{
-    NUMPEAKS <- 5
+numax_estimate_r <- function(pds, variance, nyquist, filterwidth) {
+    numpeaks <- 5
 
     do_estimation <- TRUE
 
-    if (("numax0_flag" %in% names(d.summary)) & ("numax0" %in% names(d.summary))) {
+    if (("numax0_flag" %in% names(d.summary)) && ("numax0" %in% names(d.summary))) {
         d.summary <-
             d.summary %>%
             mutate(numax0_flag = as.factor(numax0_flag))
@@ -115,7 +110,7 @@ numax_estimate_r = function(pds, variance, nyquist, filterwidth)
         if(dim(d.pds.Peaks)[1] == 0) {
             d.summary$numax_CWTMexHat <- FALSE
         } else {
-            d.pds.Peaks <- d.pds.Peaks[order(-d.pds.Peaks$snr)[1:NUMPEAKS],]
+            d.pds.Peaks <- d.pds.Peaks[order(-d.pds.Peaks$snr)[1:numpeaks],]
             d.summary$numax_CWTMexHat <- median(d.pds.Peaks[,"frequency"], na.rm=TRUE)
         }
 

@@ -1,9 +1,9 @@
 library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
 
-filter_r = function(lc, width, remove_gaps)
+filter_r <- function(lc, width, remove_gaps)
 {
-    names(lc)[1] = "time"
-    names(lc)[2] = "flux"
+    names(lc)[1] <- "time"
+    names(lc)[2] <- "flux"
 
     lc <-
         lc %>%
@@ -39,30 +39,30 @@ filter_r = function(lc, width, remove_gaps)
         mutate(dt = time - lag(time))
 
     # Remove the large gaps
-    if(remove_gaps != -1){
+    if (remove_gaps != -1) {
         gaps.idx <- which(lc$dt > remove_gaps)
 
-        for(idx in gaps.idx) {
+        for (idx in gaps.idx) {
             gap <- d.lc$dt[idx]
-            time_mod <- d.lc$time[idx-1]
+            time_mod <- d.lc$time[idx - 1]
             lc <-
                 lc %>%
                 mutate(time = if_else(
                         time > time_mod,
                         time - gap + deltat,
-                        time))               
-        } 
+                        time))
+        }
     }
 
     # Make the filter
-    smooth <- ksmooth(x = lc$time, 
+    smooth <- ksmooth(x = lc$time,
                       y = lc$flux,
                       x.points = lc$time,
-                      kernel = "box", bandwidth = width/2)
-    smooth <- ksmooth(x = smooth$x, 
+                      kernel = "box", bandwidth = width / 2)
+    smooth <- ksmooth(x = smooth$x,
                       y = smooth$y,
                       x.points = lc$time,
-                      kernel = "box", bandwidth = width/2)
+                      kernel = "box", bandwidth = width / 2)
     filtered <- tibble(
         time     = lc$time,
         time_raw = lc$time_raw,
