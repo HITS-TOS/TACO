@@ -1,0 +1,11 @@
+FROM r-base:3.6.3
+
+LABEL maintainer="Bernd Doser <bernd.doser@h-its.org>"
+
+RUN Rscript -e 'install.packages(c( \
+      "devtools" \
+    ), dependencies=TRUE)'
+
+RUN Rscript -e 'devtools::install_version("ifultools", "2.0-23")'
+
+RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && locale-gen
