@@ -1,7 +1,20 @@
 name: taco
 channels:
   - conda-forge
+  - defaults
 dependencies:
-  - python=3.9
-  - numpy=1.21.*
+  # - argparse # native in python > 2.7
+  - emcee
+  - lightkurve
+  - loguru
+  - numpy
+  - pandas
+  - python=3.8
+  - r-argparser
   - r-ifultools
+  - r-lomb
+  - r-modelr
+  - r-numderiv
+  - r-tidyverse
+  - scikit-learn
+  - scipy
