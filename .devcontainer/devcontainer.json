@@ -14,7 +14,11 @@
 	"settings": {},
 
 	// Add the IDs of extensions you want installed when the container is created.
-	"extensions": ["ms-python.python", "REditorSupport.r"],
+	"extensions": [
+		"ms-python.python",
+		"REditorSupport.r",
+		"mechatroner.rainbow-csv"
+	],
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	"forwardPorts": [8501],
