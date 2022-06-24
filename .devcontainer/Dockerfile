@@ -33,6 +33,7 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD5
        r-cran-modelr \
        r-cran-tidyverse \
        software-properties-common \
+       sudo \
        tk \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
@@ -69,5 +70,8 @@ RUN pip install \
 
 RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && locale-gen
 
-RUN useradd --uid ${USER_UID} -m ${USERNAME}
+RUN useradd --uid ${USER_UID} -m ${USERNAME} \
+ && adduser ${USERNAME} sudo \
+ && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
 USER ${USERNAME}
