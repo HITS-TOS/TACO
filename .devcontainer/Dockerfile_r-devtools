@@ -1,5 +1,0 @@
-FROM colinxfleming/r-devtools
-
-LABEL maintainer="Bernd Doser <bernd.doser@h-its.org>"
-
-RUN Rscript -e 'devtools::install_version("ifultools", "2.0-23")'
