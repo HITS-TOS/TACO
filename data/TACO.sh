@@ -6,7 +6,7 @@ echo "--------------------------"
 
 #MAXLWD=0.
 
-for dir in ./0*
+for dir in ./0*.dir
 do
     cd $dir
     #if [ -f peaksMLE.csv ]
@@ -15,27 +15,27 @@ do
     #else
         echo "$dir"
         echo "filter lightcurve"
-        Rscript ../../src/filter_lightcurve.R
+        time Rscript ../../src/filter_lightcurve.R
         echo "compute pds"
-        python3 ../../src/pds.py
+        time python3 ../../src/pds.py
         echo "numax estimate"
-        Rscript ../../src/numax_estimate.R
+        time Rscript ../../src/numax_estimate.R
         echo "background fit"
-        python3 ../../src/background_fit.py --bins 300
+        time python3 ../../src/background_fit.py --bins 300
 #       echo "background summary"
  #       python3 ../../../../lib/background_summary.py
         echo "find peaks"
-        Rscript ../../src/peakFind.R --snr 1.1 --prob 0.0001 --minAIC 2
+        time Rscript ../../src/peakFind.R --snr 1.1 --prob 0.0001 --minAIC 2
         echo "MLE optimisation for peaks"
-     	Rscript ../../src/peaksMLE.R  --minAIC 2
+     	time Rscript ../../src/peaksMLE.R  --minAIC 2
         echo "mode ID 02"
-        Rscript ../../src/peakBagModeId02.R
+        time Rscript ../../src/peakBagModeId02.R
         echo "find peaks"
-        Rscript ../../src/peakFind.R --snr 1.1 --prob 0.0001 --minAIC 2 --removel02 TRUE
+        time Rscript ../../src/peakFind.R --snr 1.1 --prob 0.0001 --minAIC 2 --removel02 TRUE
         echo "MLE optimisation for peaks"
-        Rscript ../../src/peaksMLE.R  --minAIC 2 --removel02 TRUE --init peaksMLE.csv --mixedpeaks mixedpeaks.csv
+        time Rscript ../../src/peaksMLE.R  --minAIC 2 --removel02 TRUE --init peaksMLE.csv --mixedpeaks mixedpeaks.csv
         echo "MLE optimisation for peaks"
-        Rscript ../../src/peaksMLE.R  --minAIC 2 --finalfit TRUE
+        time Rscript ../../src/peaksMLE.R  --minAIC 2 --finalfit TRUE
         
     #fi
     cd - > /dev/null
