@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 import rpy2.robjects as ro
 from rpy2.robjects import pandas2ri
@@ -22,8 +22,7 @@ def filter(ts, width=40, remove_gaps=-1):
         width(int):Width of the triangular filter
         remove_gaps(int):Remove gaps greater than this value (in days). If set to -1, do not remove gaps
     """
-
-    with open(os.path.join(os.path.dirname(__file__),'filter.R'), 'r') as f:
+    with open(Path(Path(__file__).parent, 'filter.R'), 'r') as f:
         filter = STAP(f.read(), "filter_r")
 
         with localconverter(ro.default_converter + pandas2ri.converter):

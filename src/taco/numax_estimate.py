@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 import rpy2.robjects as ro
 from rpy2.robjects import pandas2ri
@@ -22,7 +22,7 @@ def numax_estimate(pds, variance, nyquist, filterwidth=0.2):
                            for the wavelet numax estimation
     """
 
-    with open(os.path.join(os.path.dirname(__file__),'numax_estimate.R'), 'r') as f:
+    with open(Path(Path(__file__).parent, 'numax_estimate.R'), 'r') as f:
         numax_estimate = STAP(f.read(), "numax_estimate_r")
 
         with localconverter(ro.default_converter + pandas2ri.converter):
