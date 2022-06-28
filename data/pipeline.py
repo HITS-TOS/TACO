@@ -3,7 +3,6 @@
 """ TACO pipline module """
 
 import argparse
-import os
 from pathlib import Path
 import yaml
 
@@ -34,19 +33,21 @@ def pipeline(argv):
         Path(argv.output_directory, input_name).mkdir(exist_ok = True)
         ts_raw = pd.read_csv(input_file, comment = '#', header = None, delim_whitespace = True)
 
-        # 1) Filter
+        # 0) Filter
+        filter_settings = settings['pipeline'][0]['filter']
         ts_filtered, variance = taco.filter(ts_raw,
-            width = settings['pipeline'][0]['filter']['width'],
-            remove_gaps = settings['pipeline'][0]['filter']['remove_gaps'])
-        filtered_filename = Path(argv.output_directory, input_name, 'filtered.cvs')
-        ts_filtered.to_csv(filtered_filename, index = False)
+            width = filter_settings['width'],
+            remove_gaps = filter_settings['remove_gaps'])
+        if 'output' in filter_settings:
+            ts_filtered.to_csv(Path(argv.output_directory, input_name, filter_settings['output']), index = False)
 
-        # 2) PDS
+        # 1) PDS
+        pds_settings = settings['pipeline'][1]['pds']
         pds, nyquist = taco.calc_pds(ts_filtered)
-        pds_filename = Path(argv.output_directory, input_name, 'pds.cvs')
-        pds.to_csv(pds_filename, index = False)
+        if 'output' in pds_settings:
+            pds.to_csv(Path(argv.output_directory, input_name, pds_settings['output']), index = False)
 
-        # 3) Estimate numax
+        # 2) Estimate numax
         # taco.numax_estimate(pds, variance, nyquist,
         #     filterwidth = settings['pipeline'][3]['numax_estimate']['filter_width'])
 

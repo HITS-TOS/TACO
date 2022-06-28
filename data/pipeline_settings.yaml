@@ -2,15 +2,15 @@ pipeline:
     - filter:
         width: 40
         remove_gaps: -1
-        output_filtered: filtered.cvs
+        output: filtered.csv
     - pds:
-        output_pds: pds.cvs
+        output: pds.csv
     - oversampled_pds:
         oversample_factor:
             inclusive_lower_bound: 365
             small_dataset: 5
             large_dataset: 2
-        output_pds: oversampled_pds.cvs
+        output: oversampled_pds.csv
     - numax_estimate:
         filter_width: 0.2
     - background_fit:
