@@ -1,4 +1,4 @@
-#!/bin/python
+#!/bin/python3
 
 """ TACO pipline module """
 
@@ -48,8 +48,8 @@ def pipeline(argv):
             pds.to_csv(Path(argv.output_directory, input_name, pds_settings['output']), index = False)
 
         # 2) Estimate numax
-        # taco.numax_estimate(pds, variance, nyquist,
-        #     filterwidth = settings['pipeline'][3]['numax_estimate']['filter_width'])
+        taco.numax_estimate(pds, variance, nyquist,
+            filterwidth = settings['pipeline'][3]['numax_estimate']['filter_width'])
 
         # TODO ...
         # background_fit(bins=300)

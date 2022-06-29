@@ -1,2 +1,2 @@
 *.pyc
-pipeline_test/
+pipeline/*/
