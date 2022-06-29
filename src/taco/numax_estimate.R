@@ -4,8 +4,8 @@ library(argparser, quietly = TRUE)
 library(readr, quietly = TRUE)
 library(tidyr, quietly = TRUE)
 
-source("/workspaces/TACO/src/peakFind_lib.R", chdir = TRUE)
-source("/workspaces/TACO/src/wavelets.R", chdir = TRUE)
+source("src/peakFind_lib.R", chdir = TRUE)
+source("src/wavelets.R", chdir = TRUE)
 
 numax_estimate_r <- function(pds, variance, nyquist, filterwidth) {
     numpeaks <- 5
