@@ -19,10 +19,11 @@ file.arg.name <- "--file="
 script.name <- sub(file.arg.name, "", initial.options[grep(file.arg.name, initial.options)])
 script.basename <- dirname(script.name)
 
-if(!file.exists(file.path(script.basename, "wavelets.R"))) {
-    stop("Could not find wavelets.R")
+if(is_empty(script.basename)) {
+    source("wavelets.R")
+} else {
+    source(file.path(script.basename, "wavelets.R"))
 }
-source(file.path(script.basename, "wavelets.R"))
 
 if(!is.null(sys.frame(1)$ofile)) {
   EFP_model <- readRDS(file.path(dirname(sys.frame(1)$ofile), "false-alarm-model.rds"))
