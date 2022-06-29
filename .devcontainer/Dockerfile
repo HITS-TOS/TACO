@@ -1,4 +1,4 @@
-FROM braintwister/ubuntu-20.04:0.5
+FROM ubuntu:20.04
 
 LABEL maintainer="Bernd Doser <bernd.doser@h-its.org>"
 
@@ -6,42 +6,58 @@ ARG USERNAME=user
 ARG GROUPNAME=users
 ARG USER_UID=1000
 ARG USER_GID=1000
+ARG TIMEZONE='Europe/Berlin'
+ARG DEBIAN_FRONTEND=noninteractive
 
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9 \
- && add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/' \
- && add-apt-repository ppa:c2d4u.team/c2d4u4.0+ \
- && apt-get update \
- && export DEBIAN_FRONTEND=noninteractive \
- && apt-get -y install --no-install-recommends \
+RUN echo $TIMEZONE > /etc/timezone && \
+  apt-get update && apt-get install -y tzdata && \
+  rm /etc/localtime && \
+  ln -snf /usr/share/zoneinfo/$TIMEZONE /etc/localtime && \
+  dpkg-reconfigure -f noninteractive tzdata && \
+  apt-get clean
+
+RUN apt-get update \
+ && apt-get -y install \
        apt-transport-https \
        build-essential \
        ca-certificates \
+       curl \
        dirmngr \
+       git \
        gnupg \
+       gpg-agent \
        libblas-dev \
        libcurl4-gnutls-dev \
        liblapack-dev \
        libssl-dev \
        libxml2-dev \
        locales \
+       make \
+       ninja-build \
+       python3 \
        python3-dev \
        python3-pip \
+       python3-setuptools \
+       python3-tk \
        r-base \
+       r-base-core \
        r-base-dev \
-       r-cran-devtools \
-       r-cran-lomb \
-       r-cran-modelr \
-       r-cran-tidyverse \
        software-properties-common \
        sudo \
        tk \
- && apt-get clean \
+       vim \
+       wget \
+  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
 RUN Rscript -e 'install.packages(c( \
       "argparser", \
       "languageserver", \
-      "numDeriv" \
+      "numDeriv", \
+      "devtools", \
+      "lomb", \
+      "modelr", \
+      "tidyverse" \
     ), dependencies=TRUE)'
 
 RUN Rscript -e 'devtools::install_version("ifultools", "2.0-23")'
