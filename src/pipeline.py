@@ -13,6 +13,12 @@ import taco
 def pipeline(argv):
     """ TACO pipeline """
 
+    if not argv.quiet:
+        print(" ==========")
+        print("    TACO")
+        print(" ==========\n")
+        print('Print level: ', argv.verbose)
+
     # Read pipeline settings
     with open(argv.settings_file, 'r', encoding="utf-8") as stream:
         settings = yaml.load(stream, Loader = yaml.Loader)
@@ -20,7 +26,7 @@ def pipeline(argv):
     input_files = [f for f in Path(argv.input_directory).iterdir()
         if (f.is_file() and f.suffix == '.dat')]
 
-    if argv.verbose > 0:
+    if not argv.quiet:
         print('Number of input files: ', len(input_files))
 
     # Loop over input directories
@@ -69,7 +75,9 @@ if __name__ == "__main__":
                         help="Output directory for resulting data.")
     parser.add_argument('--settings-file', '-s', default='pipeline_settings.yaml',
                         help="File with pipeline settings in Yaml.")
-    parser.add_argument('--verbose', '-v', default=0, type=int,
+    parser.add_argument('--verbose', '-v', default=0, action='count',
                         help="Print level.")
+    parser.add_argument('--quiet', '-q', action='store_true',
+                        help="No output")
 
     pipeline(parser.parse_args())
