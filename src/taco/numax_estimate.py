@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import rpy2.robjects as ro
@@ -23,7 +24,10 @@ def numax_estimate(pds, variance, nyquist, filterwidth=0.2):
     """
 
     with open(Path(Path(__file__).parent, 'numax_estimate.R'), 'r') as f:
+        owd = os.getcwd()
+        os.chdir(Path(__file__).parents[2])
         numax_estimate = STAP(f.read(), "numax_estimate_r")
+        os.chdir(owd)
 
         with localconverter(ro.default_converter + pandas2ri.converter):
             r_pds = ro.conversion.py2rpy(pds)
