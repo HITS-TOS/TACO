@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 import yaml
-from taco import background_fit
+from taco.background_fit import *
 
 yaml_string = """
 logfile: 'pds_fit.log'
@@ -22,8 +22,12 @@ mcmc:
 
 def test_settings():
     kwargs = yaml.load(yaml_string, Loader = yaml.Loader)
+    print(kwargs)
     settings = Settings(**kwargs)
+    print(settings.mcmc)
+    assert settings.bins == 300
 
+@pytest.mark.skip(reason="no way of currently testing this")
 def test_background_fit():
     pds = pd.DataFrame({"frequency": [1, 2, 3, 4], "power": [1, 2, 3, 4]})
     background_fit(pds, 1.0, 1.0)
