@@ -20,12 +20,28 @@ class Settings(object):
         self.output_ofac_bgr = 'ofac_pds_bgr.csv'
         self.output_pds_pgr = 'pds_bgr.csv'
         self.output_quantiles = 'pds_fit_quantiles.csv'
-        self.backend_filename = 'pds_fit_posterior.h5'
+        self.posterior = 'pds_fit_posterior.h5'
         self.save_posteriors = False
 
     def __init__(self, **kwargs):
         self._setup_attrs()
+        assert kwargs.keys() <= self.__dict__.keys()
         self.__dict__.update(kwargs)
+    
+    def get_mcmc_settings(self):
+        """ MCMC subset of settings """
+        kwargs = {k: self.__dict__[k] for k in (
+            'bins',
+            'posterior',
+            'save_posteriors',
+            'maxsteps',
+            'minsteps',
+            'nwalkers',
+            'nwarmup'
+        )}
+        # Rename keyword
+        kwargs['backend_filename'] = kwargs.pop('posterior')
+        return kwargs
 
 
 def background_fit(pds, numax0, nuquist, **kwargs):
@@ -59,7 +75,9 @@ def background_fit(pds, numax0, nuquist, **kwargs):
     done_p = False
 
     print("Starting initial MCMC with binned PDS. Number of bins:", settings.bins)
-    bg_fit.MCMC(bg_fit.bg_params, **settings.__dict__)  # MCMC with binned PDS
+    mcmc_kwargs = settings.get_mcmc_settings()
+    print(mcmc_kwargs)
+    bg_fit.MCMC(bg_fit.bg_params, **mcmc_kwargs)  # MCMC with binned PDS
     print("Finished initial MCMC with binned PDS")
 
     chain_i = np.argmax(bg_fit.MCMC_sampler.lnprobability[:,-1])
@@ -153,3 +171,4 @@ def background_fit(pds, numax0, nuquist, **kwargs):
     #     ofac_pds_bgr.to_csv(kwargs.ofac_bgr, index=False)        
 
     # return Hmax, Bmax, HBR
+    return 1.0, 1.0, 1.0
