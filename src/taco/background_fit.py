@@ -7,18 +7,28 @@ import numpy as np
 import pandas as pd
 
 class Settings(object):
-    """
-    Turns a dictionary into a object
-    """
+    """ Turns kwargs dictionary into a settings object """
     def _setup_attrs(self):
+        self.bins = 300
         self.bkg_model = 'KeplerBg3Comp'
+        self.logfile = 'pds_fit.log'
+        self.maxsteps = 5000
+        self.minsteps = 2000
+        self.nwalkers = 50
+        self.nwarmup = 1000
+        self.output_backg_model = 'out_backg_model.pkl'
+        self.output_ofac_bgr = 'ofac_pds_bgr.csv'
+        self.output_pds_pgr = 'pds_bgr.csv'
+        self.output_quantiles = 'pds_fit_quantiles.csv'
+        self.backend_filename = 'pds_fit_posterior.h5'
+        self.save_posteriors = False
 
     def __init__(self, **kwargs):
         self._setup_attrs()
         self.__dict__.update(kwargs)
 
 
-def background_fit(pds, numax0, nuNyq, **kwargs):
+def background_fit(pds, numax0, nuquist, **kwargs):
     """
     Background fitting using emcee's MCMC procedure
 
@@ -28,7 +38,7 @@ def background_fit(pds, numax0, nuNyq, **kwargs):
                 Name: frequency, dtype: float[micro-Hertz]
                 Name: power, dtype: float
         numax0(float):
-        nuNyq(float):Nyquist frequency
+        nuquist(float):Nyquist frequency
         kwargs(dict):
 
     Returns:
@@ -40,37 +50,37 @@ def background_fit(pds, numax0, nuNyq, **kwargs):
     settings = Settings(**kwargs)
     print(settings.bkg_model)
 
-    # # Fetch background model
-    # bkg_model = getattr(lib.background.KeplerLCBgFit, settings.bkg_model)
+    # Fetch background model
+    bkg_model = getattr(lib.background.KeplerLCBgFit, settings.bkg_model)
 
-    # bgFit = bkg_model(pds, numax0, nuNyq, logfile=kwargs.logfile)
-    # minESS = mESS.minESS(bgFit.ndim, alpha=0.05, eps=0.1)
-    # i=0
-    # done_p = False
+    bg_fit = bkg_model(pds, numax0, nuquist, logfile = settings.logfile)
+    minESS = mESS.minESS(bg_fit.ndim, alpha=0.05, eps=0.1)
+    i = 0
+    done_p = False
 
-    # print("Starting initial MCMC with binned PDS. Number of bins: %s" % kw["bins"])
-    # bgFit.MCMC(bgFit.bg_params, **kw)  # MCMC with binned PDS
-    # print("Finished initial MCMC with binned PDS")
+    print("Starting initial MCMC with binned PDS. Number of bins:", settings.bins)
+    bg_fit.MCMC(bg_fit.bg_params, **settings.__dict__)  # MCMC with binned PDS
+    print("Finished initial MCMC with binned PDS")
 
-    # chain_i = np.argmax(bgFit.MCMC_sampler.lnprobability[:,-1])
-    # theta0 = bgFit.MCMC_sampler.chain[chain_i,-1,:]
+    chain_i = np.argmax(bg_fit.MCMC_sampler.lnprobability[:,-1])
+    theta0 = bg_fit.MCMC_sampler.chain[chain_i,-1,:]
 
     # while (i < 5 and not done_p):
-    #     if (bgFit.MCMCp["mixed_p"]
-    #         and bgFit.MCMCp["converged_p"]
-    #         and bgFit.MCMCp["mESS"] >= minESS):
+    #     if (bg_fit.MCMCp["mixed_p"]
+    #         and bg_fit.MCMCp["converged_p"]
+    #         and bg_fit.MCMCp["mESS"] >= minESS):
     #         done_p = True
     #         print("MCMC with binned PDS done.")
     #     else:
-    #         chain_i = np.argmax(bgFit.MCMC_sampler.lnprobability[:,-1])
-    #         theta0 = bgFit.MCMC_sampler.chain[chain_i,-1,:]
+    #         chain_i = np.argmax(bg_fit.MCMC_sampler.lnprobability[:,-1])
+    #         theta0 = bg_fit.MCMC_sampler.chain[chain_i,-1,:]
     #         #Pn, A1, b1, A2, b2, A3, b3, Pg, numax, sigmaEnv = theta0
-    #         iguess = bgFit.theta_to_dict(theta0)
+    #         iguess = bg_fit.theta_to_dict(theta0)
     #         #iguess = {"Pn":Pn, "A1":A1, "b1":b1, "A2":A2, "b2":b2, "A3":A3, "b3":b3,
     #         #          "Pg":Pg, "numax":numax, "sigmaEnv":sigmaEnv}
     #         print("Attempting again (%s/5) the MCMC with binned PDS. Number of bins: %s" %
     #               (i, kw["bins"]))
-    #         bgFit.MCMC(iguess, **kw)
+    #         bg_fit.MCMC(iguess, **kw)
     #         i = i+1
 
     # if not done_p:
@@ -94,16 +104,16 @@ def background_fit(pds, numax0, nuNyq, **kwargs):
     #         lnprob = reader.get_log_prob(discard=kwargs.nwarmup, flat=True)
     #     else:
     #         # Flattened chains and log-probability         
-    #         #tau = bgFit.MCMC_sampler.get_autocorr_time()
+    #         #tau = bg_fit.MCMC_sampler.get_autocorr_time()
     #         #print(f"Autocorrelation time: {tau}")
     #         #print(kwargs.nwarmup)
-    #         flatchain = bgFit.MCMC_sampler.get_chain(discard=kwargs.nwarmup, flat=True)
-    #         lnprob = bgFit.MCMC_sampler.get_log_prob(discard=kwargs.nwarmup, flat=True)
+    #         flatchain = bg_fit.MCMC_sampler.get_chain(discard=kwargs.nwarmup, flat=True)
+    #         lnprob = bg_fit.MCMC_sampler.get_log_prob(discard=kwargs.nwarmup, flat=True)
 
     #     posteriors = np.c_[flatchain, lnprob]
 
     #     # Summary of posterior distribution
-    #     names = bgFit.bg_param_names()
+    #     names = bg_fit.bg_param_names()
     #     names.append("lnprob")
     #     df = pd.DataFrame(data=posteriors, columns=names)
 
@@ -116,15 +126,15 @@ def background_fit(pds, numax0, nuNyq, **kwargs):
     #                        inplace=True)
 
     #     # Remove the background
-    #     nuNyq = summary['nuNyq'].values
+    #     nuquist = summary['nuNyq'].values
     #     bg_parameters = bkg_summary['Q50']
 
-    #     numax_index = bgFit.bg_param_names().index("numax")
+    #     numax_index = bg_fit.bg_param_names().index("numax")
 
     #     # Go to -1 because of logprob added at end
-    #     model = bgFit.bgModel(theta=bg_parameters[:-1], nu=pds.frequency, no_osc=True)
-    #     full_model = bgFit.bgModel(bg_parameters[:-1], pds.frequency)
-    #     ofac_model = bgFit.bgModel(bg_parameters[:-1], ofac_pds.frequency, no_osc=True)
+    #     model = bg_fit.bgModel(theta=bg_parameters[:-1], nu=pds.frequency, no_osc=True)
+    #     full_model = bg_fit.bgModel(bg_parameters[:-1], pds.frequency)
+    #     ofac_model = bg_fit.bgModel(bg_parameters[:-1], ofac_pds.frequency, no_osc=True)
 
     #     pds_bgr = pds.assign(power = pds['power'] / model)
     #     ofac_pds_bgr = ofac_pds.assign(power = ofac_pds['power'] / ofac_model)
