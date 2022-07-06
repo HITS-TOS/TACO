@@ -14,20 +14,19 @@ pipeline:
     - numax_estimate:
         filter_width: 0.2
     - background_fit:
-        logfile: 'pds_fit.log'
-        bkg_model: 'KeplerBg3Comp'
-        output_pds_pgr: 'pds_bgr.csv'
-        output_ofac_bgr: 'ofac_pds_bgr.csv'
-        output_backg_model: 'out_backg_model.pkl'
-        output_quantiles: 'pds_fit_quantiles.csv'
-        mcmc:
-            bins: 300
-            posterior: 'pds_fit_posterior.h5'
-            save_posteriors: false
-            maxsteps: 5000
-            minsteps: 2000
-            nwalkers: 50
-            nwarmup: 1000
+        bins: 300
+        bkg_model: KeplerBg3Comp
+        logfile: pds_fit.log
+        maxsteps: 5000
+        minsteps: 2000
+        nwalkers: 50
+        nwarmup: 1000
+        output_backg_model: out_backg_model.pkl
+        output_ofac_bgr: ofac_pds_bgr.csv
+        output_pds_pgr: pds_bgr.csv
+        output_quantiles: pds_fit_quantiles.csv
+        posterior: pds_fit_posterior.h5
+        save_posteriors: false
     - peakFind:
         snr: 1.1
         prob: 0.0001

@@ -42,7 +42,6 @@ def calc_pds(ts, ofac = 1):
             Columns:
                 Name: frequency, dtype: float[micro-Hertz]
                 Name: power, dtype: float
-        nuNyq(float):Nyquist frequency
     """
 
     # Add change in here so that checks to see if data in ppm or normalized flux already
@@ -70,6 +69,7 @@ def calc_pds(ts, ofac = 1):
         columns=["frequency", "power"],
     )
 
-    nuNyq = pds["frequency"].iloc[-1]
+    # if settings.output.empty():
+    #     pds.to_csv(Path(argv.output_directory, input_name, settings.output), index = False)
 
-    return pds, nuNyq
+    return pds

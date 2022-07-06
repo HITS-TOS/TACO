@@ -27,5 +27,5 @@ testdata = [
 
 @pytest.mark.parametrize("ts,expected", testdata)
 def test_pds(ts, expected):
-    _, nyquist = pds.calc_pds(ts)
-    assert nyquist == expected
+    psd = pds.calc_pds(ts)
+    assert psd["frequency"].iloc[-1] == expected # Nyquist frequency
