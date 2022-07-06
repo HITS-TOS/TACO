@@ -1,0 +1,3 @@
+[submodule "libs/sloscillations"]
+	path = libs/sloscillations
+	url = https://github.com/jsk389/sloscillations.git
