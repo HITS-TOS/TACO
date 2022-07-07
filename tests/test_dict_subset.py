@@ -1,12 +1,13 @@
-import pytest
+""" Check behavior of dict subsets """
 
 def test_dict_subset():
-    d1 = {'a': 1, 'b': 2}
-    d2 = {'a': 1, 'b': 2}
-    d3 = {'a': 1}
-    d4 = {'a': 3}
-    d5 = {'c': 3}
-    assert d2.items() <= d1.items()
-    assert d3.items() <= d1.items()
-    assert d4.keys() <= d1.keys()
-    assert not d5.keys() <= d1.keys()
+    """ Check behavior of dict subsets """
+    d_1 = {'a': 1, 'b': 2}
+    d_2 = {'a': 1, 'b': 2}
+    d_3 = {'a': 1}
+    d_4 = {'a': 3}
+    d_5 = {'c': 3}
+    assert d_2.items() <= d_1.items()
+    assert d_3.items() <= d_1.items()
+    assert d_4.keys() <= d_1.keys()
+    assert not d_5.keys() <= d_1.keys()
