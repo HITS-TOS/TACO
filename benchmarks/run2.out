@@ -1,0 +1,412 @@
+--------------------------
+---- run TACO ----
+--------------------------
+./001296068.dir
+filter lightcurve
+Warning message:
+no DISPLAY variable so Tk is not available 
+
+real    0m1.365s
+user    0m1.235s
+sys     0m0.154s
+compute pds
+
+real    0m1.873s
+user    0m3.164s
+sys     0m2.227s
+numax estimate
+[1] "Initial estimation of numax for KIC 001296068.dir"
+
+real    0m16.549s
+user    0m16.398s
+sys     0m0.156s
+background fit
+Starting initial MCMC with binned PDS. Number of bins: 300
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:03<00:00, 284.03it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2000/2000 [00:06<00:00, 308.67it/s]
+ 40%|████████████████████████████████████████████████▍                                                                        | 2000/5000 [00:20<00:30, 99.66it/s]
+Finished initial MCMC with binned PDS
+MCMC with binned PDS done.
+
+real    0m31.335s
+user    0m31.606s
+sys     0m0.736s
+find peaks
+
+Attaching package: ‘broom’
+
+The following object is masked from ‘package:modelr’:
+
+    bootstrap
+
+Warning message:
+no DISPLAY variable so Tk is not available 
+[1] 0.00925346
+[1] 0.00462673
+[1] "Maximum peak linewidth (HWHM) not set, therefore taking estimated value  0.366227101967302 uHz"
+[1] 0.00462673
+[1] "Finding only resolved peaks"
+Warning message:
+no DISPLAY variable so Tk is not available
+
+real    0m26.541s
+user    0m25.692s
+sys     0m1.667s
+MLE optimisation for peaks
+
+Attaching package: ‘broom’
+
+The following object is masked from ‘package:modelr’:
+
+    bootstrap
+
+Warning message:
+no DISPLAY variable so Tk is not available 
+[1] "Maximum peak linewidth (HWHM) not set, therefore taking estimated value  0.366227101967302 uHz"
+[1] "Getting error estimates"
+Warning message:
+no DISPLAY variable so Tk is not available
+
+real    0m28.113s
+user    0m26.875s
+sys     0m2.163s
+mode ID 02
+
+Attaching package: ‘broom’
+
+The following object is masked from ‘package:modelr’:
+
+    bootstrap
+
+Warning message:
+no DISPLAY variable so Tk is not available 
+Warning message:
+Unknown columns: `n`, `l`, `m` 
+[1] "Initial Dnu from PSxPS 6.12665112355307"
+[1] "Expected alpha from nmax 0.013071475811685"
+[1] "CENTRAL PEAKS"
+# A tibble: 1 × 11
+  frequency amplitude linewidth frequency_sd amplitude_sd linewidth_sd
+      <dbl>     <dbl>     <dbl>        <dbl>        <dbl>        <dbl>
+1      62.2      2.57    0.0530       0.0116        0.230       0.0129
+  convergence height   AIC     l     n
+        <dbl>  <dbl> <dbl> <dbl> <dbl>
+1           0   39.6  840.     0     9
+# A tibble: 1 × 11
+  frequency amplitude linewidth frequency_sd amplitude_sd linewidth_sd
+      <dbl>     <dbl>     <dbl>        <dbl>        <dbl>        <dbl>
+1      61.4      2.25    0.0554       0.0124        0.204       0.0144
+  convergence height   AIC     l     n
+        <dbl>  <dbl> <dbl> <dbl> <dbl>
+1           0   29.1  569.     2     8
+[1] "======================="
+[1] "CURRENT RADIAL ORDER"
+[1] 9
+[1] 9
+[1] "CURRENT RADIAL ORDER"
+[1] 10
+[1] 8
+[1] "CURRENT RADIAL ORDER"
+[1] 11
+[1] 7
+[1] "CURRENT RADIAL ORDER"
+[1] 12
+[1] 6
+[1] "CURRENT RADIAL ORDER"
+[1] 13
+[1] 5
+[1] "Initial fit to radial modes gives dnu: 6.14, eps: 1.14, alpha: 0.017, d02: 0.8312"
+[1] "Tagging any possible l=3 modes..."
+[1] "Final dnu: 6.137+/- 0.003 uHz, and eps: 1.140+/- 0.005, alpha: 0.017+/-6e-04, d02: 0.8312"
+[1] "Central dnu: 6.115+/- 0.009 uHz, and eps: 1.178+/- 0.014, alpha: 0.011+/-0.0036"
+
+real    0m4.442s
+user    0m4.216s
+sys     0m0.310s
+find peaks
+
+Attaching package: ‘broom’
+
+The following object is masked from ‘package:modelr’:
+
+    bootstrap
+
+Warning message:
+no DISPLAY variable so Tk is not available 
+[1] 0.00925346
+[1] 0.00462673
+[1] "Removing l=0,2,3 first"
+[1] "Maximum peak linewidth (HWHM) not set, therefore set to Gamma0:  0.0860673181769088 uHz"
+Warning message:
+no DISPLAY variable so Tk is not available
+
+real    0m34.711s
+user    0m33.812s
+sys     0m1.868s
+MLE optimisation for peaks
+
+Attaching package: ‘broom’
+
+The following object is masked from ‘package:modelr’:
+
+    bootstrap
+
+Warning message:
+no DISPLAY variable so Tk is not available 
+[1] "Removing l=0,2,3 first"
+# A tibble: 61 × 6
+   frequency linewidth height   snr   AIC amplitude
+       <dbl>     <dbl>  <dbl> <dbl> <dbl>     <dbl>
+ 1      34.0    0.0235   4.25  3.42  6.09     0.560
+ 2      35.3    0.0152   3.41  2.17  5.24     0.404
+ 3      36.8   NA        6.95 NA     2.32     0.318
+ 4      37.1   NA        7.41 NA     3.24     0.328
+ 5      37.2   NA        8.00 NA     3.63     0.341
+ 6      38.2   NA        8.53 NA     6.97     0.352
+ 7      38.8   NA        7.24 NA     2.11     0.324
+ 8      40.4    0.0131   3.04  1.78  2.50     0.355
+ 9      41.3    0.0194   5.05  3.71 26.8      0.554
+10      41.8   NA        6.86 NA     2.39     0.316
+# … with 51 more rows
+[1] "Maximum peak linewidth (HWHM) not set, therefore set to Gamma0:  0.0860673181769088 uHz"
+[1] "Getting error estimates"
+Warning message:
+no DISPLAY variable so Tk is not available
+Warning messages:
+1: In sqrt(diag(solve(peak.hess))) : NaNs produced
+2: In sqrt(diag(solve(peak.hess))) : NaNs produced
+3: In sqrt(diag(solve(peak.hess))) : NaNs produced
+
+real    1m2.414s
+user    1m0.096s
+sys     0m4.279s
+MLE optimisation for peaks
+
+Attaching package: ‘broom’
+
+The following object is masked from ‘package:modelr’:
+
+    bootstrap
+
+Warning message:
+no DISPLAY variable so Tk is not available 
+[1] "Getting error estimates"
+Warning message:
+no DISPLAY variable so Tk is not available
+Warning messages:
+1: Unknown or uninitialised column: `n`. 
+2: Unknown or uninitialised column: `l`. 
+
+real    0m36.112s
+user    0m34.930s
+sys     0m2.395s
+./009332840.dir
+filter lightcurve
+Warning message:
+no DISPLAY variable so Tk is not available 
+
+real    0m2.095s
+user    0m2.019s
+sys     0m0.148s
+compute pds
+
+real    0m2.040s
+user    0m3.353s
+sys     0m2.637s
+numax estimate
+[1] "Initial estimation of numax for KIC 009332840.dir"
+
+real    0m15.017s
+user    0m14.827s
+sys     0m0.204s
+background fit
+Starting initial MCMC with binned PDS. Number of bins: 300
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1000/1000 [00:03<00:00, 265.42it/s]
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2000/2000 [00:07<00:00, 266.88it/s]
+ 20%|████████████████████████▏                                                                                                | 1000/5000 [00:10<00:43, 92.49it/s]
+Finished initial MCMC with binned PDS
+MCMC with binned PDS done.
+
+real    0m23.349s
+user    0m23.675s
+sys     0m0.780s
+find peaks
+
+Attaching package: ‘broom’
+
+The following object is masked from ‘package:modelr’:
+
+    bootstrap
+
+Warning message:
+no DISPLAY variable so Tk is not available 
+[1] 0.007871044
+[1] 0.003935522
+[1] "Maximum peak linewidth (HWHM) not set, therefore taking estimated value  0.268242313197769 uHz"
+[1] 0.003935522
+[1] "Finding only resolved peaks"
+Warning message:
+no DISPLAY variable so Tk is not available
+
+real    0m38.333s
+user    0m36.872s
+sys     0m2.689s
+MLE optimisation for peaks
+
+Attaching package: ‘broom’
+
+The following object is masked from ‘package:modelr’:
+
+    bootstrap
+
+Warning message:
+no DISPLAY variable so Tk is not available 
+[1] "Maximum peak linewidth (HWHM) not set, therefore taking estimated value  0.268242313197769 uHz"
+[1] "Getting error estimates"
+[1] "modes larger than 0.95*maxlwd, redoing the fit"
+[1] "Getting error estimates"
+[1] "AIC"
+[1] 16165.84
+[1] 16150.32
+Warning message:
+no DISPLAY variable so Tk is not available
+
+real    1m49.300s
+user    1m44.818s
+sys     0m8.344s
+mode ID 02
+
+Attaching package: ‘broom’
+
+The following object is masked from ‘package:modelr’:
+
+    bootstrap
+
+Warning message:
+no DISPLAY variable so Tk is not available 
+Warning message:
+Unknown columns: `n`, `l`, `m` 
+[1] "Initial Dnu from PSxPS 4.43501407080878"
+[1] "Expected alpha from nmax 0.0142655831011301"
+[1] "CENTRAL PEAKS"
+# A tibble: 1 × 11
+  frequency amplitude linewidth frequency_sd amplitude_sd linewidth_sd
+      <dbl>     <dbl>     <dbl>        <dbl>        <dbl>        <dbl>
+1      39.3      1.96    0.0888       0.0164        0.141       0.0192
+  convergence height   AIC     l     n
+        <dbl>  <dbl> <dbl> <dbl> <dbl>
+1           0   13.8  523.     0     7
+# A tibble: 3 × 11
+  frequency amplitude linewidth frequency_sd amplitude_sd linewidth_sd
+      <dbl>     <dbl>     <dbl>        <dbl>        <dbl>        <dbl>
+1      38.3     0.521   0.00381      0.00381        0.183      0.00372
+2      38.6     1.42    0.0152       0.00573        0.219      0.00665
+3      38.7     0.780   0.00495      0.00346        0.232      0.00463
+  convergence height   AIC     l     n
+        <dbl>  <dbl> <dbl> <dbl> <dbl>
+1           0   22.7  29.0     2     6
+2           0   42.0 260.      2     6
+3           0   39.1  39.5     2     6
+[1] "======================="
+[1] "CURRENT RADIAL ORDER"
+[1] 7
+[1] 7
+[1] "CURRENT RADIAL ORDER"
+[1] 8
+[1] 6
+[1] "CURRENT RADIAL ORDER"
+[1] 9
+[1] 5
+[1] "CURRENT RADIAL ORDER"
+[1] 10
+[1] 4
+[1] "CURRENT RADIAL ORDER"
+[1] 11
+[1] 3
+[1] "CURRENT RADIAL ORDER"
+[1] 12
+[1] 2
+[1] "Epsilon p was too large, corrected"
+[1] "Initial fit to radial modes gives dnu: 4.43, eps: 0.85, alpha: 0.0224, d02: 0.7467"
+[1] "Tagging any possible l=3 modes..."
+[1] "Final dnu: 4.435+/- 0.003 uHz, and eps: 0.855+/- 0.005, alpha: 0.0224+/-6e-04, d02: 0.7467"
+[1] "Central dnu: 4.459+/- 0.007 uHz, and eps: 0.817+/- 0.016, alpha: 0.0022+/-0.0060"
+
+real    0m5.207s
+user    0m4.931s
+sys     0m0.394s
+find peaks
+
+Attaching package: ‘broom’
+
+The following object is masked from ‘package:modelr’:
+
+    bootstrap
+
+Warning message:
+no DISPLAY variable so Tk is not available 
+[1] 0.007871044
+[1] 0.003935522
+[1] "Removing l=0,2,3 first"
+[1] "Maximum peak linewidth (HWHM) not set, therefore set to Gamma0:  0.113238994446409 uHz"
+Warning message:
+no DISPLAY variable so Tk is not available
+
+real    0m39.462s
+user    0m38.255s
+sys     0m2.250s
+MLE optimisation for peaks
+
+Attaching package: ‘broom’
+
+The following object is masked from ‘package:modelr’:
+
+    bootstrap
+
+Warning message:
+no DISPLAY variable so Tk is not available 
+[1] "Removing l=0,2,3 first"
+# A tibble: 63 × 6
+   frequency linewidth height   snr   AIC amplitude
+       <dbl>     <dbl>  <dbl> <dbl> <dbl>     <dbl>
+ 1      21.5   0.0166    3.97  2.89  3.08     0.455
+ 2      21.9   0.00764   5.16  2.53  6.41     0.352
+ 3      23.1  NA         7.96 NA     3.66     0.314
+ 4      25.0  NA         8.59 NA     6.90     0.326
+ 5      25.8  NA         7.54 NA     2.37     0.305
+ 6      28.8   0.00764  11.6   5.94 28.3      0.528
+ 7      29.5  NA         7.45 NA     3.51     0.303
+ 8      29.7  NA        12.3  NA    21.5      0.390
+ 9      30.2  NA         7.45 NA     3.27     0.304
+10      32.1  NA         8.30 NA     4.68     0.320
+# … with 53 more rows
+[1] "Maximum peak linewidth (HWHM) not set, therefore set to Gamma0:  0.113238994446409 uHz"
+[1] "Getting error estimates"
+Warning message:
+no DISPLAY variable so Tk is not available
+
+real    1m8.131s
+user    1m5.718s
+sys     0m4.489s
+MLE optimisation for peaks
+
+Attaching package: ‘broom’
+
+The following object is masked from ‘package:modelr’:
+
+    bootstrap
+
+Warning message:
+no DISPLAY variable so Tk is not available 
+[1] "Getting error estimates"
+Warning message:
+no DISPLAY variable so Tk is not available
+Warning messages:
+1: In sqrt(diag(solve(peak.hess))) : NaNs produced
+2: In sqrt(diag(solve(peak.hess))) : NaNs produced
+3: Unknown or uninitialised column: `n`. 
+4: Unknown or uninitialised column: `l`. 
+
+real    1m14.468s
+user    1m11.552s
+sys     0m5.527s
