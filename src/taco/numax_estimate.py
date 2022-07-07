@@ -7,7 +7,7 @@ from rpy2.robjects.conversion import localconverter
 from rpy2.robjects.packages import STAP
 
 
-def numax_estimate(pds, variance, nyquist, filterwidth=0.2):
+def numax_estimate(pds, variance, nyquist, filter_width = 0.2):
     """
     Make a rough numax estimation using the periodogram, the variance of the time-series
     and the Nyquist frequency.
@@ -31,5 +31,5 @@ def numax_estimate(pds, variance, nyquist, filterwidth=0.2):
 
         with localconverter(ro.default_converter + pandas2ri.converter):
             r_pds = ro.conversion.py2rpy(pds)
-            return numax_estimate.numax_estimate_r(r_pds, variance, nyquist, filterwidth)
+            return numax_estimate.numax_estimate_r(r_pds, variance, float(nyquist), filter_width)
             #return numax_var, numax_CWTMexHat, numax_Morlet, numax0

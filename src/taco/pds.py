@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import lightkurve as lk
 import numpy as np
 import pandas as pd
@@ -26,7 +28,7 @@ def compute_conversion_factor(ts):
     return np.sum(fftpower) * bw
 
 
-def calc_pds(ts, ofac = 1):
+def calc_pds(ts, oversample_factor = 1, output = '', output_directory = ''):
     """
     Calculating a Lomb-Scargle periodogram.
 
@@ -35,7 +37,7 @@ def calc_pds(ts, ofac = 1):
             Columns:
                 Name: time, dtype: float[days]
                 Name: flux, dtype: float
-        ofac(int):Oversampling factor (default is 1).
+        oversample_factor(int):Oversampling factor (default is 1).
 
     Returns:
         pds(pandas.DataFrame):Periodogram
@@ -58,18 +60,22 @@ def calc_pds(ts, ofac = 1):
             unit="ppm"
         )
 
+    if isinstance(oversample_factor, dict):
+        oversample_factor = 1.0
+
     # Compute periodogram with psd normalisation
-    ps = lc.to_periodogram(normalization="psd", oversample_factor=ofac)
+    ps = lc.to_periodogram(normalization = "psd", oversample_factor = oversample_factor)
 
     # Normalisation factor
     factor = compute_conversion_factor(ts)
+
     # Normalise power spectrum accounting for "fill"
     pds = pd.DataFrame(
-        data=np.c_[ps.frequency.value, ps.power.value / factor],
-        columns=["frequency", "power"],
+        data = np.c_[ps.frequency.value, ps.power.value / factor],
+        columns = ["frequency", "power"],
     )
 
-    # if settings.output.empty():
-    #     pds.to_csv(Path(argv.output_directory, input_name, settings.output), index = False)
+    if not output:
+        pds.to_csv(Path(output_directory, output), index = False)
 
     return pds

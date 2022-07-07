@@ -75,9 +75,7 @@ def background_fit(pds, numax0, nuquist, **kwargs):
     done_p = False
 
     print("Starting initial MCMC with binned PDS. Number of bins:", settings.bins)
-    mcmc_kwargs = settings.get_mcmc_settings()
-    print(mcmc_kwargs)
-    bg_fit.MCMC(bg_fit.bg_params, **mcmc_kwargs)  # MCMC with binned PDS
+    bg_fit.MCMC(bg_fit.bg_params, **settings.get_mcmc_settings())  # MCMC with binned PDS
     print("Finished initial MCMC with binned PDS")
 
     chain_i = np.argmax(bg_fit.MCMC_sampler.lnprobability[:,-1])

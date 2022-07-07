@@ -48,19 +48,21 @@ def pipeline(argv):
             ts_filtered.to_csv(Path(argv.output_directory, input_name, filter_settings['output']), index = False)
 
         # 1) PDS
-        pds = taco.calc_pds(ts_filtered, settings['pipeline'][1]['pds'])
+        pds = taco.calc_pds(ts_filtered, **settings['pipeline'][1]['pds'],
+            output_directory = Path(argv.output_directory, input_name))
 
         # 2) Oversampled PDS
-        oversampled_pds = taco.calc_pds(ts_filtered, 'pipeline'][2]['oversampled_pds')
+        oversampled_pds = taco.calc_pds(ts_filtered, **settings['pipeline'][2]['oversampled_pds'],
+            output_directory = Path(argv.output_directory, input_name))
 
         # 3) Estimate numax
         nyquist = pds["frequency"].iloc[-1]
-        numax_var, numax_CWTMexHat, numax_Morlet, numax0 = taco.numax_estimate(pds, variance, nyquist,
-            settings['pipeline'][3]['numax_estimate'])
+        numax0 = taco.numax_estimate(pds, variance, nyquist,
+            **settings['pipeline'][3]['numax_estimate'])
 
         # 4) Background fit
         Hmax, Bmax, HBR = taco.background_fit(pds, numax0, nyquist,
-            settings['pipeline'][4]['background_fit'])
+            **settings['pipeline'][4]['background_fit'])
     
         # TODO ...
         # peakFind(snr=1.1, prob=0.0001, minAIC=2)
