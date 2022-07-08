@@ -40,12 +40,8 @@ def pipeline(argv):
         ts_raw = pd.read_csv(input_file, comment = '#', header = None, delim_whitespace = True)
 
         # 0) Filter
-        filter_settings = settings['pipeline'][0]['filter']
-        ts_filtered, variance = taco.filter(ts_raw,
-            width = filter_settings['width'],
-            remove_gaps = filter_settings['remove_gaps'])
-        if 'output' in filter_settings:
-            ts_filtered.to_csv(Path(argv.output_directory, input_name, filter_settings['output']), index = False)
+        ts_filtered, variance = taco.filter(ts_raw, **settings['pipeline'][0]['filter'],
+            output_directory = Path(argv.output_directory, input_name))
 
         # 1) PDS
         pds = taco.calc_pds(ts_filtered, **settings['pipeline'][1]['pds'],
