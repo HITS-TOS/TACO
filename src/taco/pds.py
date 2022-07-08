@@ -75,7 +75,7 @@ def calc_pds(ts, oversample_factor = 1, output = '', output_directory = ''):
         columns = ["frequency", "power"],
     )
 
-    if not output:
+    if output:
         pds.to_csv(Path(output_directory, output), index = False)
 
     return pds
