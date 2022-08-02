@@ -61,7 +61,8 @@ def pipeline(argv):
             **settings['pipeline'][4]['background_fit'])
     
         # 5) Find peaks
-        taco.peak_find(pds, oversampled_pds)
+        taco.peak_find(pds, oversampled_pds,
+            **settings['pipeline'][5]['peak_find'])
 
         # TODO ...
         # peaksMLE(minAIC=2)
