@@ -4,6 +4,7 @@ from .filter import filter
 from .pds import calc_pds
 from .numax_estimate import numax_estimate
 from .background_fit import background_fit
+from .peak_find import peak_find
 
 __doc__ = """
 TACO - Tools for Automated Characterisation of Oscillations
@@ -20,4 +21,5 @@ __all__ = [
     "pds",
     "numax_estimate",
     "background_fit",
+    "peak_find",
 ]
