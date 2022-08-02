@@ -28,18 +28,22 @@ pipeline:
         posterior: pds_fit_posterior.h5
         save_posteriors: false
     - peakFind:
-        removel02: false
         snr: 1.1
         prob: 0.0001
+        maxlwd: NA
+        removel02: false
         minAIC: 2
+        navg: 1
     - peaksMLE:
         minAIC: 2
     - peakBagModeId02:
     - peakFind:
         snr: 1.1
         prob: 0.0001
-        minAIC: 2
+        maxlwd: NA
         removel02: true
+        minAIC: 2
+        navg: 1
     - peaksMLE:
         minAIC: 2
         removel02: true
