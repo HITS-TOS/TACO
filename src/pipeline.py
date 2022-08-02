@@ -60,8 +60,10 @@ def pipeline(argv):
         Hmax, Bmax, HBR = taco.background_fit(pds, numax0, nyquist,
             **settings['pipeline'][4]['background_fit'])
     
+        # 5) Find peaks
+        peak_find(snr=1.1, prob=0.0001, minAIC=2)
+
         # TODO ...
-        # peakFind(snr=1.1, prob=0.0001, minAIC=2)
         # peaksMLE(minAIC=2)
         # peakBagModeId02()
         # peakFind(snr=1.1, prob=0.0001, minAIC=2, removel02=TRUE)
