@@ -1,5 +1,4 @@
 import pandas as pd
-import pytest
 import yaml
 from taco.background_fit import *
 

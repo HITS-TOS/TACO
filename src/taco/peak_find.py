@@ -26,15 +26,15 @@ def peak_find(pds, oversampled_pds, peaks, mixedpeaks, snr = 1.2, prob = 0.0001,
                 Name: power, dtype: float
         peaks(pandas.DataFrame): Identified peaks. It must contain the l=0,2 modes already identified
             Columns:
-                Name: frequency
-                Name: linewidth
-                Name: height
-                Name: snr
-                Name: AIC
-                Name: amplitude
+                Name: frequency, dtype: float[micro-Hertz]
+                Name: linewidth, dtype: float
+                Name: height, dtype: float
+                Name: snr, dtype: float
+                Name: AIC, dtype: float
+                Name: amplitude, dtype: float
         mixedpeaks(pandas.DataFrame): Mixed mode peaks from peak finding
             Columns:
-                Name: frequency
+                Name: frequency, dtype: float[micro-Hertz]
         snr(float): Minimum signal-to-noise ratio (on CWT space) for resolved peaks
         prob(float): Minimum (frequentist) probability threshold for unresolved peaks
         maxlwd(float): Maximum search linewidth for resolved peaks in the CWT search
