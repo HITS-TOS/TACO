@@ -28,8 +28,15 @@ RUN apt-get update \
        gpg-agent \
        libblas-dev \
        libcurl4-gnutls-dev \
+       libfontconfig1-dev \
+       libfreetype6-dev \
+       libfribidi-dev \
+       libharfbuzz-dev \
+       libjpeg-dev \
        liblapack-dev \
+       libpng-dev \
        libssl-dev \
+       libtiff5-dev \
        libxml2-dev \
        locales \
        make \
