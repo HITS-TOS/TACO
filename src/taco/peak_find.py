@@ -8,7 +8,7 @@ from rpy2.robjects.packages import STAP
 
 
 def peak_find(pds, oversampled_pds, peaks, mixedpeaks, snr = 1.2, prob = 0.0001,
-              maxlwd = NA, removel02 = False, minAIC = 2, navg = 1):
+              maxlwd = None, removel02 = False, minAIC = 2, navg = 1):
     """
     Find the relevant solar-like oscillations in a background-removed PDS
     We use a tree-map of the local maxima found by a (mexican-hat) wavelet
