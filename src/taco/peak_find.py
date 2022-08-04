@@ -2,12 +2,15 @@ import os
 from pathlib import Path
 
 import rpy2.robjects as ro
+import rpy2.robjects.conversion as cv
 from rpy2.robjects import pandas2ri
 from rpy2.robjects.conversion import localconverter
 from rpy2.robjects.packages import STAP
 
+def _none2null(none_obj):
+    return ro.r("NULL")
 
-def peak_find(pds, oversampled_pds, peaks, mixedpeaks, snr = 1.2, prob = 0.0001,
+def peak_find(pds, oversampled_pds, peaks = None, mixedpeaks = None, snr = 1.2, prob = 0.0001,
               maxlwd = None, removel02 = False, minAIC = 2, navg = 1):
     """
     Find the relevant solar-like oscillations in a background-removed PDS
@@ -49,8 +52,18 @@ def peak_find(pds, oversampled_pds, peaks, mixedpeaks, snr = 1.2, prob = 0.0001,
         peak_find = STAP(f.read(), "peak_find_r")
         os.chdir(owd)
 
-        with localconverter(ro.default_converter + pandas2ri.converter):
+        none_converter = cv.Converter("None converter")
+        none_converter.py2rpy.register(type(None), _none2null)
+
+        with localconverter(ro.default_converter + pandas2ri.converter + none_converter):
             r_pds = ro.conversion.py2rpy(pds)
             r_oversampled_pds = ro.conversion.py2rpy(oversampled_pds)
-            peak_find.peak_find_r(r_pds, r_oversampled_pds, removel02)
-            return True
+            return peak_find.peak_find_r(r_pds, r_oversampled_pds,
+                 peaks = peaks,
+                 mixedpeaks = mixedpeaks,
+                 snr = snr,
+                 prob = prob,
+                 maxlwd = maxlwd,
+                 removel02 = removel02,
+                 minAIC = minAIC,
+                 navg = navg)
