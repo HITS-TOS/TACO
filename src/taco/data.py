@@ -6,7 +6,7 @@ class TacoData:
     IC: float = 0.0
     raw_data: float = 0.0
     mean: float = 0.0
-    var: float = 0.0
+    variance: float = 0.0
     start_date: float = 0.0
     end_date: float = 0.0
     fill_factor: float = 0.0

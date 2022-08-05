@@ -27,11 +27,11 @@ def filter(ts, width = 40, remove_gaps = -1, output = '', output_directory = '')
 
         with localconverter(ro.default_converter + pandas2ri.converter):
             r_ts = ro.conversion.py2rpy(ts)
-            r_ts_filtered = filter.filter_r(r_ts, width, remove_gaps)
-            ts_filtered = ro.conversion.rpy2py(r_ts_filtered)
-            variance = 1.0 # TODO
+            result = filter.filter_r(r_ts, width, remove_gaps)
+            ts_filtered = ro.conversion.rpy2py(result[0])
+            data = ro.conversion.rpy2py(result[1])
 
             if output:
                 ts_filtered.to_csv(Path(output_directory, output), index = False)
 
-            return ts_filtered, variance
+            return ts_filtered, data

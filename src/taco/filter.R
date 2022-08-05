@@ -68,5 +68,17 @@ filter_r <- function(lc, width, remove_gaps)
         time_raw = lc$time_raw,
         flux     = lc$flux - smooth$y)
 
-    return(filtered)
+    # Some useful quantities
+    data <- tibble(
+        KIC         = NA,
+        raw_data    = NA,
+        mean        = mean(filtered$flux),
+        var         = var(filtered$flux),
+        start_date  = min(filtered$time),
+        end_date    = max(filtered$time),
+        fill_factor = nrow(filtered) *
+            median(diff(filtered$time)) /
+            diff(range(filtered$time)))
+
+    return(list(filtered, data))
 }

@@ -8,10 +8,11 @@ from taco import filter
 
 def test_filter():
     ts = pd.DataFrame({"0": [1, 2, 3, 4], "1": [1, -1, math.inf, -1]})
-    ts_filtered,_ = filter(ts)
+    ts_filtered, data = filter(ts)
     assert len(ts_filtered) == 3
+    assert data["mean"].iloc[0] == -7.401486830834377e-17
 
-data = StringIO("""
+input_data = StringIO("""
   54953.5392583   4.1796191939225127e+02   5.7956622261711652e+02
   54953.5596930   1.9262097401395727e+02   6.0935807794115999e+02
   54953.5801275   5.9470459113319941e+02   6.1677369479803588e+02
@@ -24,7 +25,8 @@ data = StringIO("""
 """)
 
 def test_filter_2():
-    ts = pd.read_csv(data, comment = '#', header = None, delim_whitespace=True)
-    ts_filtered,_ = filter(ts)
-    print(ts_filtered)
+    ts = pd.read_csv(input_data, comment = '#', header = None, delim_whitespace=True)
+    ts_filtered, data = filter(ts)
+    print(data)
     assert ts_filtered.iat[0, 2] == pytest.approx(-5.4567, 0.001)
+    assert data["mean"].iloc[0] == -1.3895674734322306e-13
