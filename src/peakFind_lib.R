@@ -870,8 +870,7 @@ peak_find <- function(pds, min.snr = 3, p=0.0001, linewidth.range = NULL, use.AI
             lorentzian_peaks(pds = pds, min.snr = min.snr,
                              linewidth.range = linewidth.range,
                              pds.CWTTree = NULL, use.AIC = use.AIC, naverages=naverages)
-        #if (is.null(peaks)) return(NULL)
-        if(nrow(peaks) == 0) return(NULL)
+        if(is.null(peaks) || nrow(peaks) == 0) return(NULL)
         # AIC computed in lorentzian peaks and again here, why?!?!
         #print(paste("Before unresolved check: ", sum(is.na(peaks$linewidth))))
 
@@ -909,7 +908,7 @@ peak_find <- function(pds, min.snr = 3, p=0.0001, linewidth.range = NULL, use.AI
                           return(check_if_peak_unresolved(peak = peaks[i,], pds = pds))
                       }, 1:nrow(peaks)))
     }
-    if(nrow(peaks) == 0) return(NULL)
+    if(is.null(peaks) || nrow(peaks) == 0) return(NULL)
     #peaks <-
     #    do.call(bind_rows,
     #            Map(function (i) {
