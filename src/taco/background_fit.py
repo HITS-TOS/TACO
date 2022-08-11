@@ -44,7 +44,7 @@ class Settings(object):
         return kwargs
 
 
-def background_fit(pds, numax0, nuquist, **kwargs):
+def background_fit(pds, data, **kwargs):
     """
     Background fitting using emcee's MCMC procedure
 
@@ -53,8 +53,10 @@ def background_fit(pds, numax0, nuquist, **kwargs):
             Columns:
                 Name: frequency, dtype: float[micro-Hertz]
                 Name: power, dtype: float
-        numax0(float):
-        nuquist(float):Nyquist frequency
+        data(pandas.DataFrame):Summary data
+            Columns:
+                numax0(float):
+                nuNyq(float):Nyquist frequency
         kwargs(dict):
 
     Returns:
@@ -69,7 +71,7 @@ def background_fit(pds, numax0, nuquist, **kwargs):
     # Fetch background model
     bkg_model = getattr(lib.background.KeplerLCBgFit, settings.bkg_model)
 
-    bg_fit = bkg_model(pds, numax0, nuquist, logfile = settings.logfile)
+    bg_fit = bkg_model(pds, data['numax0'][0], data['nuNyq'][0], logfile = settings.logfile)
     minESS = mESS.minESS(bg_fit.ndim, alpha=0.05, eps=0.1)
     i = 0
     done_p = False
@@ -168,5 +170,7 @@ def background_fit(pds, numax0, nuquist, **kwargs):
     #     pds_bgr.to_csv(kwargs.pds_bgr, index=False)
     #     ofac_pds_bgr.to_csv(kwargs.ofac_bgr, index=False)        
 
-    # return Hmax, Bmax, HBR
-    return 1.0, 1.0, 1.0
+    # Update summary file
+    data['Hmax'] = 1.0 # full_model[idx_closest_numax].values
+    data['Bmax'] = 1.0 # model[idx_closest_numax].values
+    data['HBR'] = 1.0 # full_model[idx_closest_numax].values / model[idx_closest_numax].values

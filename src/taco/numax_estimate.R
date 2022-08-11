@@ -7,7 +7,7 @@ library(tidyr, quietly = TRUE)
 source("src/peakFind_lib.R", chdir = TRUE)
 source("src/wavelets.R", chdir = TRUE)
 
-numax_estimate_r <- function(pds, variance, nyquist, filterwidth) {
+numax_estimate_r <- function(pds, data, filterwidth) {
     numpeaks <- 5
     do_estimation <- TRUE
 
@@ -174,6 +174,4 @@ numax_estimate_r <- function(pds, variance, nyquist, filterwidth) {
     #                     file = file.path(dirname(argv$summary), "NUMAX0_FLAG"))
     #     }
     # }
-
-    return(3)
 }

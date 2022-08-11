@@ -7,9 +7,6 @@ def test_peak_find():
     oversampled_pds = pd.DataFrame({"frequency": [0.5, 1, 1.5, 2], "power": [0, 1, 0, 0]})
     data = pd.DataFrame({"numax": [1]})
     peaks = peak_find(pds, oversampled_pds, data)
-
-    print(peaks)
-
     assert "frequency" in peaks
     assert "AIC" in peaks
 
