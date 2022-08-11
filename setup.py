@@ -1,17 +1,6 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-import setuptools
+from setuptools import setup
 
-setuptools.setup()
-
-# from setuptools import setup
-
-# setup(name="taco",
-#       version="0.2",
-#       description="Tools for the Automated Characterisation of Oscillations.",
-#       author="",
-#       author_email="",
-#       url="",
-#       packages=["taco"],
-#       package_dir={'taco': 'src/taco'},
-#       )
+setup()
