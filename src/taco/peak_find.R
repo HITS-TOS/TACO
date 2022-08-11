@@ -11,7 +11,7 @@ source("src/peakFind_lib.R", chdir = TRUE)
 # 22/12/19 adding this to enable estimation of d02 from numax
 source("src/l02_modes_id.R", chdir = TRUE)
 
-peak_find_r <- function(pds, ofac_pds, peaks, mixedpeaks, snr, prob,
+peak_find_r <- function(pds, ofac_pds, data, peaks, mixedpeaks, snr, prob,
                         maxlwd, removel02, minAIC, navg) {
 
     deltanu <- diff(pds$frequency[1:2])
@@ -78,24 +78,24 @@ peak_find_r <- function(pds, ofac_pds, peaks, mixedpeaks, snr, prob,
     } else {
         # Only find resolved peaks
         # If value not given then set it to be equal to 0.1 * dnu or just less than ~d02 # nolint
-        # if (is.null(maxlwd)) {
-        #     deltanu_est <- DeltaNu_from_numax(numax)
-        #     # Set to be < d02 from scaling relation (~0.125 dnu)
-        #     # Divide by 2 because HWHM defined here and want FWHM to be less than ~d02 # nolint
-        #     maxlwd <- 0.125 * deltanu_est / 2
-        #     if (maxlwd < deltanu / 2) {
-        #         print("Maximum peak linewidth (HWHM) is less than frequency resolution! Increasing upper bound slightly")
-        #         maxlwd <- deltanu / 2 + 0.1 * deltanu / 2
-        #     }
-        #     print(paste("Maximum peak linewidth (HWHM) not set, therefore taking estimated value ", maxlwd, "uHz"))
-        # } else{
-        #     maxlwd <- as.numeric(maxlwd)
-        #     print(paste("Maximum peak linewidth (HWHM) set, using value ", maxlwd, "uHz"))
-        # }
+        if (is.null(maxlwd)) {
+            deltanu_est <- DeltaNu_from_numax(data$numax)
+            # Set to be < d02 from scaling relation (~0.125 dnu)
+            # Divide by 2 because HWHM defined here and want FWHM to be less than ~d02 # nolint
+            maxlwd <- 0.125 * deltanu_est / 2
+            if (maxlwd < deltanu / 2) {
+                print("Maximum peak linewidth (HWHM) is less than frequency resolution! Increasing upper bound slightly")
+                maxlwd <- deltanu / 2 + 0.1 * deltanu / 2
+            }
+            print(paste("Maximum peak linewidth (HWHM) not set, therefore taking estimated value ", maxlwd, "uHz"))
+        } else{
+            maxlwd <- as.numeric(maxlwd)
+            print(paste("Maximum peak linewidth (HWHM) set, using value ", maxlwd, "uHz"))
+        }
 
-        # peaks <- peak_find(pds, min.snr = snr, p = prob,
-        #                    linewidth.range = c(deltanu / 2, maxlwd),
-        #                    find.resolved.only = TRUE, naverages = navg)
+        peaks <- peak_find(pds, min.snr = snr, p = prob,
+                           linewidth.range = c(deltanu / 2, maxlwd),
+                           find.resolved.only = TRUE, naverages = navg)
 
         if (is.null(peaks)) {
             peaks <- tibble(frequency = double(),

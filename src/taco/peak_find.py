@@ -10,7 +10,7 @@ from rpy2.robjects.packages import STAP
 def _none2null(none_obj):
     return ro.r("NULL")
 
-def peak_find(pds, oversampled_pds, peaks = None, mixedpeaks = None, snr = 1.2, prob = 0.0001,
+def peak_find(pds, oversampled_pds, data, peaks = None, mixedpeaks = None, snr = 1.2, prob = 0.0001,
               maxlwd = None, removel02 = False, minAIC = 2, navg = 1):
     """
     Find the relevant solar-like oscillations in a background-removed PDS
@@ -27,6 +27,9 @@ def peak_find(pds, oversampled_pds, peaks = None, mixedpeaks = None, snr = 1.2, 
             Columns:
                 Name: frequency, dtype: float[micro-Hertz]
                 Name: power, dtype: float
+        data(pandas.DataFrame):Summary data
+            Columns:
+                Name: numax, dtype: float
         peaks(pandas.DataFrame): Identified peaks. It must contain the l=0,2 modes already identified
             Columns:
                 Name: frequency, dtype: float[micro-Hertz]
@@ -58,7 +61,8 @@ def peak_find(pds, oversampled_pds, peaks = None, mixedpeaks = None, snr = 1.2, 
         with localconverter(ro.default_converter + pandas2ri.converter + none_converter):
             r_pds = ro.conversion.py2rpy(pds)
             r_oversampled_pds = ro.conversion.py2rpy(oversampled_pds)
-            return peak_find.peak_find_r(r_pds, r_oversampled_pds,
+            r_data = ro.conversion.py2rpy(data)
+            return peak_find.peak_find_r(r_pds, r_oversampled_pds, r_data,
                  peaks = peaks,
                  mixedpeaks = mixedpeaks,
                  snr = snr,
