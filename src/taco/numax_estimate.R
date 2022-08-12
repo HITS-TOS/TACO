@@ -174,4 +174,8 @@ numax_estimate_r <- function(pds, data, filterwidth) {
     #                     file = file.path(dirname(argv$summary), "NUMAX0_FLAG"))
     #     }
     # }
+
+    data$numax0 = 1.0
+    return(data)
+
 }

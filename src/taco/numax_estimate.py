@@ -19,8 +19,8 @@ def numax_estimate(pds, data, filter_width = 0.2):
                 Name: power, dtype: float
         data(pandas.DataFrame):Summary data
             Columns:
-                variance(float):Variance of the time-series
-                nyquist(float):Nyquist frequency
+                var(float):Variance of the time-series
+                nuNyq(float):Nyquist frequency
         filterwidth(float):The width of the log-median filter used to remove the background
                            for the wavelet numax estimation
     """
@@ -34,5 +34,5 @@ def numax_estimate(pds, data, filter_width = 0.2):
         with localconverter(ro.default_converter + pandas2ri.converter):
             r_pds = ro.conversion.py2rpy(pds)
             r_data = ro.conversion.py2rpy(data)
-            return numax_estimate.numax_estimate_r(r_pds, r_data, filter_width)
-            #return numax_var, numax_CWTMexHat, numax_Morlet, numax0
+            r_data = numax_estimate.numax_estimate_r(r_pds, r_data, filter_width)
+            return(ro.conversion.rpy2py(r_data))
