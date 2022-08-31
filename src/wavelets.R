@@ -204,14 +204,14 @@ wavCWT <- function(x, scale.range=deltat(x) * c(1, length(x)), n.scale=100,
       tolerance <- tolerance[1] / sqrt(scales)
 
     wtmmz <- itCall("RS_wavelets_transform_continuous_wavelet_modulus_maxima",
-      as.matrix(x)+0i, tolerance, mutilsTransformPeakType(type))
+      as.matrix(x) + 0i, tolerance, mutilsTransformPeakType(type))
     #
       #CLASSES=c("matrix","numeric","integer"),
       #COPY=rep(FALSE,3),
       #PACKAGE="ifultools")
 
-    z <- matrix(0, nrow=nrow(x), ncol=ncol(x))
-    z[matrix(unlist(wtmmz),ncol=2)+1] <- 1
+    z <- matrix(0, nrow = nrow(x), ncol = ncol(x))
+    z[matrix(unlist(wtmmz),ncol = 2) + 1] <- 1
 
     z
   }
@@ -362,11 +362,15 @@ wavCWT <- function(x, scale.range=deltat(x) * c(1, length(x)), n.scale=100,
     # remove any redundant branches
     iflat <- lapply(tree, function(x, nr) (x$iscale-1)*nr + x$itime, nr=nrow(wtmm))
 
+    print(iflat)
+
     flatset <- iflat[[1]]
     bad <- NULL
 
+    cat("hey ", length(iflat))
     for (i in seq(2,length(iflat))){
 
+       cat("ho", i, "\n")
        if (any(is.element(iflat[[i]], flatset)))
          bad <- c(bad, i)
        else
