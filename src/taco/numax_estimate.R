@@ -94,52 +94,52 @@ numax_estimate_r <- function(pds, data, filter_width) {
             data$numax_CWTMexHat <- median(pds.Peaks[,"frequency"], na.rm = TRUE)
         }
 
-    #     ## Estimating numax from a Morlet-CWT
-    #     ## ==================================
+        ## Estimating numax from a Morlet-CWT
+        ## ==================================
 
-    #     pds.CWT.Morlet <- wavCWT(pds.SS, wavelet = "morlet",
-    #                             scale.range = c(deltat(pds.SS), max_scale))
-    #     pds.CWT.Morlet.M <- Mod(as.matrix(pds.CWT.Morlet))
+        pds.CWT.Morlet <- wavCWT(pds.SS, wavelet = "morlet",
+                                scale.range = c(deltat(pds.SS), max_scale))
+        pds.CWT.Morlet.M <- Mod(as.matrix(pds.CWT.Morlet))
 
-    #     ## Removing edge effects
-    #     nuNyq <- tail(attr(pds.CWT.Morlet, "time"), 1)
-    #     time.M <- matrix(rep(attr(pds.CWT.Morlet, "time"),
-    #                         times = attr(pds.CWT.Morlet, "n.scale")),
-    #                     nrow = attr(pds.CWT.Morlet, "n.sample"))
-    #     scale.M <- matrix(rep(attr(pds.CWT.Morlet, "scale"),
-    #                         times = attr(pds.CWT.Morlet, "n.sample")),
-    #                     nrow = attr(pds.CWT.Morlet, "n.scale"))
+        ## Removing edge effects
+        nuNyq <- tail(attr(pds.CWT.Morlet, "time"), 1)
+        time.M <- matrix(rep(attr(pds.CWT.Morlet, "time"),
+                            times = attr(pds.CWT.Morlet, "n.scale")),
+                        nrow = attr(pds.CWT.Morlet, "n.sample"))
+        scale.M <- matrix(rep(attr(pds.CWT.Morlet, "scale"),
+                            times = attr(pds.CWT.Morlet, "n.sample")),
+                        nrow = attr(pds.CWT.Morlet, "n.scale"))
 
-    #     aux <- matrix(data = TRUE, nrow = attr(pds.CWT.Morlet, "n.sample"),
-    #                 ncol = attr(pds.CWT.Morlet, "n.scale"))
-    #     aux[t(scale.M) > (time.M - 10)/5] <- FALSE
-    #     aux[t(scale.M) > (nuNyq - time.M)/5] <- FALSE
-    #     aux[t(scale.M) > attr(pds.CWT.Morlet, "scale")[3]] <- FALSE
-    #     pds.CWT.Morlet.M <- pds.CWT.Morlet.M * aux
+        aux <- matrix(data = TRUE, nrow = attr(pds.CWT.Morlet, "n.sample"),
+                    ncol = attr(pds.CWT.Morlet, "n.scale"))
+        aux[t(scale.M) > (time.M - 10)/5] <- FALSE
+        aux[t(scale.M) > (nuNyq - time.M)/5] <- FALSE
+        aux[t(scale.M) > attr(pds.CWT.Morlet, "scale")[3]] <- FALSE
+        pds.CWT.Morlet.M <- pds.CWT.Morlet.M * aux
 
-    #     ## Supppose numax is the maximum value
-    #     data$numax_Morlet <- attr(pds.CWT.Morlet,
-    #                                 "time")[which(pds.CWT.Morlet.M == max(pds.CWT.Morlet.M),
-    #                                                 arr.ind= TRUE)[1]]
+        ## Supppose numax is the maximum value
+        data$numax_Morlet <- attr(pds.CWT.Morlet,
+                                    "time")[which(pds.CWT.Morlet.M == max(pds.CWT.Morlet.M),
+                                                    arr.ind= TRUE)[1]]
 
-    #     ## Estimate the final numax from the previous results
-    #     ## ==================================================
+        ## Estimate the final numax from the previous results
+        ## ==================================================
 
-    #     if (abs(1 - data$numax_CWTMexHat/data$numax_Morlet) < 0.2 |
-    #         abs(1 - data$numax_var/data$numax_Morlet) < 0.2)
-    #     {
-    #         data$numax0 <-data$numax_Morlet
-    #         data$numax0_flag <- FALSE
-    #     } else if (abs(1 - data$numax_CWTMexHat/data$numax_var) < 0.2) {
-    #         data$numax0 <- data$numax_CWTMexHat
-    #         data$numax0_flag <- FALSE
-    #     } else {
-    #         # 29/06/2020 Does this even work for MS stars? var estimate will
-    #         # always be dodgy!
-    #         data$numax0_flag <- TRUE
-    #         #27.10.2021 after a visual check with Nathalie; numax_CWTMexHat seems much better!!!
-    #         data$numax0 <- data$numax_CWTMexHat
-    #     }
+        if (abs(1 - data$numax_CWTMexHat/data$numax_Morlet) < 0.2 |
+            abs(1 - data$numax_var/data$numax_Morlet) < 0.2)
+        {
+            data$numax0 <-data$numax_Morlet
+            data$numax0_flag <- FALSE
+        } else if (abs(1 - data$numax_CWTMexHat/data$numax_var) < 0.2) {
+            data$numax0 <- data$numax_CWTMexHat
+            data$numax0_flag <- FALSE
+        } else {
+            # 29/06/2020 Does this even work for MS stars? var estimate will
+            # always be dodgy!
+            data$numax0_flag <- TRUE
+            #27.10.2021 after a visual check with Nathalie; numax_CWTMexHat seems much better!!!
+            data$numax0 <- data$numax_CWTMexHat
+        }
     }
 
     return(data)
