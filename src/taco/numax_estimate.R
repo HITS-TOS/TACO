@@ -85,14 +85,14 @@ numax_estimate_r <- function(pds, data, filter_width) {
         pds.CWT.MH <- wavCWT(x = pds.SS, wavelet = "gaussian2",
                             scale.range = c(deltat(pds.SS), max_scale))
         pds.CWTMexHat <- wavCWTTree(pds.CWT.MH)
-        # pds.Peaks <- cwtPeaks(pds.CWTMexHat)
+        pds.Peaks <- cwtPeaks(pds.CWTMexHat)
 
-        # if(dim(pds.Peaks)[1] == 0) {
-        #     data$numax_CWTMexHat <- FALSE
-        # } else {
-        #     pds.Peaks <- pds.Peaks[order(-pds.Peaks$snr)[1:numpeaks],]
-        #     data$numax_CWTMexHat <- median(pds.Peaks[,"frequency"], na.rm = TRUE)
-        # }
+        if(dim(pds.Peaks)[1] == 0) {
+            data$numax_CWTMexHat <- FALSE
+        } else {
+            pds.Peaks <- pds.Peaks[order(-pds.Peaks$snr)[1:numpeaks],]
+            data$numax_CWTMexHat <- median(pds.Peaks[,"frequency"], na.rm = TRUE)
+        }
 
     #     ## Estimating numax from a Morlet-CWT
     #     ## ==================================
