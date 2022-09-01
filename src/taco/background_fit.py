@@ -1,5 +1,3 @@
-import os
-
 import emcee
 import lib.background.KeplerLCBgFit
 import lib.background.mESS as mESS
@@ -17,8 +15,8 @@ class Settings(object):
         self.nwalkers = 50
         self.nwarmup = 1000
         self.output_backg_model = 'out_backg_model.pkl'
-        self.output_ofac_bgr = 'ofac_pds_bgr.csv'
-        self.output_pds_pgr = 'pds_bgr.csv'
+        self.output_ofac_pds_bgr = 'ofac_pds_bgr.csv'
+        self.output_pds_bgr = 'pds_bgr.csv'
         self.output_quantiles = 'pds_fit_quantiles.csv'
         self.posterior = 'pds_fit_posterior.h5'
         self.save_posteriors = False
@@ -44,7 +42,7 @@ class Settings(object):
         return kwargs
 
 
-def background_fit(pds, data, **kwargs):
+def background_fit(pds, ofac_pds, data, **kwargs):
     """
     Background fitting using emcee's MCMC procedure
 
@@ -53,9 +51,13 @@ def background_fit(pds, data, **kwargs):
             Columns:
                 Name: frequency, dtype: float[micro-Hertz]
                 Name: power, dtype: float
+        ofac_pds(pandas.DataFrame):Oversampled periodogram
+            Columns:
+                Name: frequency, dtype: float[micro-Hertz]
+                Name: power, dtype: float
         data(pandas.DataFrame):Summary data
             Columns:
-                numax0(float):
+                numax0(float):Initial numax estimation
                 nuNyq(float):Nyquist frequency
         kwargs(dict):
 
@@ -103,30 +105,27 @@ def background_fit(pds, data, **kwargs):
 
     if not done_p:
         print("Giving up")
-        # flag_file = os.path.join(os.path.dirname(kwargs.pds), "BACKGROUND_FIT_FLAG")
+        # flag_file = os.path.join(os.path.dirname(settings.pds), "BACKGROUND_FIT_FLAG")
         # open(flag_file, "a").close()
         return
     else:
         # Create background_subtracted spectra
-        summary = pd.read_csv(kwargs.summary)
-        # Read in pds and oversampled pds
-        ofac_pds = pd.read_csv(kwargs.ofac_pds)
 
-        if kwargs.save_posteriors:
+        if settings.save_posteriors:
             # Read in chains
-            reader = emcee.backends.HDFBackend(kwargs.posterior, read_only=True)
+            reader = emcee.backends.HDFBackend(settings.posterior, read_only=True)
 
             #print(reader.get_autocorr_time())
             # Flattened chains and log-probability
-            flatchain = reader.get_chain(discard=kwargs.nwarmup, flat=True)
-            lnprob = reader.get_log_prob(discard=kwargs.nwarmup, flat=True)
+            flatchain = reader.get_chain(discard=settings.nwarmup, flat=True)
+            lnprob = reader.get_log_prob(discard=settings.nwarmup, flat=True)
         else:
             # Flattened chains and log-probability         
             #tau = bg_fit.MCMC_sampler.get_autocorr_time()
             #print(f"Autocorrelation time: {tau}")
-            #print(kwargs.nwarmup)
-            flatchain = bg_fit.MCMC_sampler.get_chain(discard=kwargs.nwarmup, flat=True)
-            lnprob = bg_fit.MCMC_sampler.get_log_prob(discard=kwargs.nwarmup, flat=True)
+            #print(settings.nwarmup)
+            flatchain = bg_fit.MCMC_sampler.get_chain(discard=settings.nwarmup, flat=True)
+            lnprob = bg_fit.MCMC_sampler.get_log_prob(discard=settings.nwarmup, flat=True)
 
         posteriors = np.c_[flatchain, lnprob]
 
@@ -144,7 +143,6 @@ def background_fit(pds, data, **kwargs):
                            inplace=True)
 
         # Remove the background
-        nuquist = summary['nuNyq'].values
         bg_parameters = bkg_summary['Q50']
 
         numax_index = bg_fit.bg_param_names().index("numax")
@@ -161,13 +159,13 @@ def background_fit(pds, data, **kwargs):
 
         data['Hmax'] = full_model[idx_closest_numax].values
         data['Bmax'] = model[idx_closest_numax].values
-        data['HBR'] = Hmax / Bmax
+        data['HBR'] = data['Hmax'] / data['Bmax']
 
         for idx, row in bkg_summary.iterrows():
             data[row['parameter']] = row['Q50']
 
-        bkg_summary.to_csv(kwargs.quantiles, index=False)
-        pds_bgr.to_csv(kwargs.pds_bgr, index=False)
-        ofac_pds_bgr.to_csv(kwargs.ofac_bgr, index=False)
+        bkg_summary.to_csv(settings.output_quantiles, index = False)
+        pds_bgr.to_csv(settings.output_pds_bgr, index = False)
+        ofac_pds_bgr.to_csv(settings.output_ofac_pds_bgr, index = False)
 
     return(data)

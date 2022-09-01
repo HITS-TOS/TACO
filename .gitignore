@@ -2,3 +2,7 @@
 __pycache__
 pipeline/*/
 jupyter/pds_fit.log
+ofac_pds_bgr.csv
+pds_bgr.csv
+pds_fit_quantiles.csv
+tests/data/pds_fit.log
