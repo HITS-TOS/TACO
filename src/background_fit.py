@@ -152,7 +152,7 @@ if __name__ == "__main__":
     parser.add_argument('--ofac_pds', dest='ofac_pds', default='ofac_pds.csv',
                         help="A csv file with the oversampled periodogram, used when creating background-subtracted spectrum")
     parser.add_argument('--summary', dest='summary', default='summary.csv',
-                        help="A csv file with a 'numax0' column giving an initial numax estimation")
+                        help="A csv file containing 'numax0' (initial numax estimation) and 'nuNyq' (Nyquist frequency).")
     parser.add_argument('--save_posteriors', dest='save_posteriors', action='store_true',
                         help="Whether or not MCMC posteriors (full chains) should be saved or not.")
     parser.add_argument('--posterior', dest='posterior', default='pds_fit_posterior.h5',
