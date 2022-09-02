@@ -26,6 +26,10 @@ def main(argv):
           "save_posteriors": argv.save_posteriors,
           "backend_filename"  : argv.posterior}
 
+    # Set random number generator seed for reproducible results
+    if argv.seed >= 0:
+        np.random.seed(argv.seed)
+
     # Fetch background model
     bkg_model = getattr(lib.background.KeplerLCBgFit, argv.bkg_model)
 
@@ -184,6 +188,8 @@ if __name__ == "__main__":
     parser.add_argument("--quantiles", dest="quantiles", default = "pds_fit_quantiles.csv",
                     help = "File on which to save the 16-50-84 quantiles of the MCMC chains",
                     type = str)
+    parser.add_argument("--seed", dest="seed", default = -1, type=int,
+                    help = "Random number generator seed for reproducible results (Default: -1).")
     argv = parser.parse_args()
     main(argv)
 else:
@@ -197,3 +203,4 @@ else:
         minsteps  = 2000
         maxsteps  = 5000
         bins      = -1
+        seed      = -1

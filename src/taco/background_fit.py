@@ -20,6 +20,7 @@ class Settings(object):
         self.output_quantiles = 'pds_fit_quantiles.csv'
         self.posterior = 'pds_fit_posterior.h5'
         self.save_posteriors = False
+        self.seed = -1
 
     def __init__(self, **kwargs):
         self._setup_attrs()
@@ -69,6 +70,10 @@ def background_fit(pds, ofac_pds, data, **kwargs):
 
     settings = Settings(**kwargs)
     print(settings.bkg_model)
+
+    # Set random number generator seed for reproducible results
+    if settings.seed >= 0:
+        np.random.seed(settings.seed)
 
     # Fetch background model
     bkg_model = getattr(lib.background.KeplerLCBgFit, settings.bkg_model)
