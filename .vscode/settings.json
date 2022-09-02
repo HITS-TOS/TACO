@@ -10,5 +10,5 @@
     "python.testing.pytestArgs": [],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
-    "editor.experimental.stickyScroll.enabled": true
+    "editor.stickyScroll.enabled": true
 }
