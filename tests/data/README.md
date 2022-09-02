@@ -1,0 +1,3 @@
+Rscript src/numax_estimate.R -p tests/data/test_numax_<n>_pds.csv -s tests/data/test_numax_<n>_summary.csv
+python3 ../../src/background_fit.py --pds test_background_pds.csv --summary test_background_summary.csv --ofac_pds test_background_ofac_pds.csv --bins 300 --seed 42
+Rscript ../../src/peakFind.R --snr 1.1 --prob 0.0001 --minAIC 2 --pds test_peak_find_pds.csv --ofac_pds test_peak_find_ofac_pds.csv --summary test_peak_find_summary.csv
