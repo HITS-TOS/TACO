@@ -145,11 +145,11 @@ if(do_estimation) {
     d.pds.CWTMexHat <- wavCWTTree(d.pds.CWT.MH)
     d.pds.Peaks <- cwtPeaks(d.pds.CWTMexHat)
 
-    if(dim(d.pds.Peaks)[1] == 0) {
+    if (is.null(d.pds.Peaks) || dim(d.pds.Peaks)[1] == 0) {
         d.summary$numax_CWTMexHat <- FALSE
     } else {
         d.pds.Peaks <- d.pds.Peaks[order(-d.pds.Peaks$snr)[1:NUMPEAKS],]
-        d.summary$numax_CWTMexHat <- median(d.pds.Peaks[,"frequency"], na.rm=TRUE)
+        d.summary$numax_CWTMexHat <- median(d.pds.Peaks[,"frequency"], na.rm = TRUE)
     }
 
 
