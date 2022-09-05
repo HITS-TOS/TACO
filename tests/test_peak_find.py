@@ -18,3 +18,13 @@ def test_peak_find_with_peaks():
     mixed_peaks = pd.DataFrame({"frequency": [1]})
     peaks = peak_find(pds, oversampled_pds, data, peaks, mixed_peaks)
     assert "frequency" in peaks
+
+
+def test_peak_find_001296068():
+    """Unit test real data with ID 001296068"""
+
+    pds = pd.read_csv("tests/data/test_peak_find_pds.csv")
+    ofac_pds = pd.read_csv("tests/data/test_peak_find_ofac_pds.csv")
+    data = pd.read_csv("tests/data/test_peak_find_summary.csv")
+    peaks = peak_find(pds, ofac_pds, data, snr = 1.1, prob = 0.0001, minAIC = 2)
+    assert "frequency" in peaks
