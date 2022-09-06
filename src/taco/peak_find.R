@@ -14,6 +14,14 @@ source("src/l02_modes_id.R", chdir = TRUE)
 peak_find_r <- function(pds, ofac_pds, data, peaks, mixedpeaks, snr, prob,
                         maxlwd, removel02, minAIC, navg) {
 
+    pds <- pds %>%
+        filter(frequency > data$numax - 3 * data$sigmaEnv,
+               frequency < data$numax + 3 * data$sigmaEnv)
+
+    ofac_pds <- ofac_pds %>%
+        filter(frequency > data$numax - 3 * data$sigmaEnv,
+               frequency < data$numax + 3 * data$sigmaEnv)
+
     deltanu <- diff(pds$frequency[1:2])
     ofac_deltanu <- diff(ofac_pds$frequency[1:2])
 

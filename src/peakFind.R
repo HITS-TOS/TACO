@@ -196,11 +196,9 @@ if (argv$removel02 == TRUE){
         print(paste("Maximum peak linewidth (HWHM) set, using value ", maxlwd, "uHz"))
     }
 
-    print(deltanu)
-
     d.peaks <- peak_find(d.pds, min.snr = argv$snr, p = argv$prob,
                         linewidth.range = c(deltanu/2, maxlwd),
-                        find.resolved.only=TRUE, naverages=argv$navg)
+                        find.resolved.only = TRUE, naverages = argv$navg)
 
     if (is.null(d.peaks)){
         d.peaks <- tibble(frequency=double(),
