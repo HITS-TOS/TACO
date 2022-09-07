@@ -63,9 +63,11 @@ def background_fit(pds, ofac_pds, data, **kwargs):
         kwargs(dict):
 
     Returns:
-        Hmax(float):
-        Bmax(float):
-        HBR(float):
+        data(pandas.DataFrame):Summary data
+            Columns:
+                Hmax(float):
+                Bmax(float):
+                HBR(float):
     """
 
     settings = Settings(**kwargs)
@@ -170,7 +172,5 @@ def background_fit(pds, ofac_pds, data, **kwargs):
             data[row['parameter']] = row['Q50']
 
         bkg_summary.to_csv(settings.output_quantiles, index = False)
-        pds_bgr.to_csv(settings.output_pds_bgr, index = False)
-        ofac_pds_bgr.to_csv(settings.output_ofac_pds_bgr, index = False)
 
-    return(data)
+    return(pds_bgr, ofac_pds_bgr, data)
