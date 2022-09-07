@@ -4,11 +4,9 @@
 ## oscillations.
 
 library(readr)
-library(argparser, quietly = TRUE)
 library(lomb, quietly = TRUE)
 
 source("src/peakFind_lib.R", chdir = TRUE)
-# 22/12/19 adding this to enable estimation of d02 from numax
 source("src/l02_modes_id.R", chdir = TRUE)
 
 peak_find_r <- function(pds, ofac_pds, data, peaks, mixedpeaks, snr, prob,
