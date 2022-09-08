@@ -54,10 +54,14 @@ def peaks_MLE(pds, peaks, data, mixedpeaks = None, maxlwd = None,
             r_pds = ro.conversion.py2rpy(pds)
             r_peaks = ro.conversion.py2rpy(peaks)
             r_data = ro.conversion.py2rpy(data)
-            return peaks_mle.peaks_mle_r(r_pds, r_peaks, r_data,
+            result = peaks_mle.peaks_mle_r(r_pds, r_peaks, r_data,
                  mixedpeaks = mixedpeaks,
                  maxlwd = maxlwd,
                  removel02 = removel02,
                  minAIC = minAIC,
                  navg = navg,
                  finalfit = finalfit)
+
+            peaks = ro.conversion.rpy2py(result[0])
+            data = ro.conversion.rpy2py(result[1])
+            return peaks, data

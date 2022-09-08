@@ -6,7 +6,7 @@
 library(readr, quietly = TRUE)
 
 source("src/peakFind_lib.R", chdir = TRUE)
-source("src/l02_modes_iR", chdir = TRUE)
+source("src/l02_modes_id.R", chdir = TRUE)
 
 peaks_mle_r <- function(pds, peaks, data, mixedpeaks, maxlwd,
                         removel02, minAIC, navg, finalfit) {
@@ -19,12 +19,12 @@ peaks_mle_r <- function(pds, peaks, data, mixedpeaks, maxlwd,
         filter(frequency > data$numax - 3 * data$sigmaEnv &
                frequency < data$numax + 3 * data$sigmaEnv)
 
-    pds_bgr <-
-        pds_bgr %>%
+    pds <-
+        pds %>%
         filter(frequency > data$numax - 3 * data$sigmaEnv &
                frequency < data$numax + 3 * data$sigmaEnv)
 
-    deltanu <- diff(pds_bgr$frequency[1:2])
+    deltanu <- diff(pds$frequency[1:2])
 
     if (finalfit == TRUE) {
 
@@ -42,7 +42,7 @@ peaks_mle_r <- function(pds, peaks, data, mixedpeaks, maxlwd,
         }
 
         peaks.mle <-
-            peaks_MLE_final_sd(peaks = peaks, pds = pds_bgr,
+            peaks_MLE_final_sd(peaks = peaks, pds = pds,
                             final_fit_factor = 0.1, naverages = navg) %>%
             arrange(frequency)
 
@@ -66,11 +66,11 @@ peaks_mle_r <- function(pds, peaks, data, mixedpeaks, maxlwd,
                     peaks %>%
                     filter(l == 0 | l == 2 | l == 3)
                 pds_l02_removed <-
-                    pds_bgr %>%
+                    pds %>%
                     mutate(power = power / fit_model(pds = ., peaks = l02_peaks))
             } else {
                 l02_peaks <- peaks
-                pds_l02_removed <- pds_bgr
+                pds_l02_removed <- pds
             }
 
             rest_peaks <- mixedpeaks %>% arrange(frequency)
@@ -80,7 +80,7 @@ peaks_mle_r <- function(pds, peaks, data, mixedpeaks, maxlwd,
             }
 
             # If max linewidth argument not set
-            if (is.na(maxlwd)) {
+            if (is.null(maxlwd)) {
                 # Since this is for finding mixed modes we add in constraint that linewidth must be less than Gamma0
                 if (is.null(data$gamma0)) {
                     maxlwd <- deltanu / 2 + 0.1 * deltanu / 2
@@ -123,7 +123,7 @@ peaks_mle_r <- function(pds, peaks, data, mixedpeaks, maxlwd,
             }
 
             # 22/12/19 Add in maxlwd default so consistent with peakfind
-            if (is.na(maxlwd)) {
+            if (is.null(maxlwd)) {
                 deltanu_est <- DeltaNu_from_numax(data$numax)
                 # Set to be < d02 from scaling relation (~0.125 dnu)
                 # Divide by 2 because HWHM defined here and want FWHM to be less than ~d02
@@ -139,7 +139,7 @@ peaks_mle_r <- function(pds, peaks, data, mixedpeaks, maxlwd,
             }
             ## Do the calculations
             peaks.mle <-
-                peaks_MLE_sd(peaks = peaks, pds = pds_bgr, maxLWD = maxlwd, naverages = navg) %>%
+                peaks_MLE_sd(peaks = peaks, pds = pds, maxLWD = maxlwd, naverages = navg) %>%
                 arrange(frequency) %>%
                 filter(AIC > minAIC)
 
@@ -164,16 +164,16 @@ peaks_mle_r <- function(pds, peaks, data, mixedpeaks, maxlwd,
 
                     peaks_new <- bind_rows(peaks_split1, peaks_split2, peaks_all)
 
-                    N <- nrow(pds_bgr)
-                    LL1 <- log_likelihood(pds_bgr, fit_model(pds_bgr, peaks.mle), naverages=1)
+                    N <- nrow(pds)
+                    LL1 <- log_likelihood(pds, fit_model(pds, peaks.mle), naverages=1)
                     k1 <- 3*nrow(peaks.mle) - sum(is.na(peaks.mle$linewidth))
                     AIC1 <- model_AIC(LL1, k1, N)
                     peaks.mle2 <-
-                    peaks_MLE_sd(peaks = peaks_new, pds = pds_bgr, maxLWD = maxlwd, naverages = navg) %>%
+                    peaks_MLE_sd(peaks = peaks_new, pds = pds, maxLWD = maxlwd, naverages = navg) %>%
                         arrange(frequency) %>%
                         filter(AIC > minAIC)
 
-                    LL2 <- log_likelihood(pds_bgr, fit_model(pds_bgr, peaks.mle2), naverages=1)
+                    LL2 <- log_likelihood(pds, fit_model(pds, peaks.mle2), naverages=1)
                     k2 <- 3*nrow(peaks.mle2) - sum(is.na(peaks.mle2$linewidth))
                     AIC2 <- model_AIC(LL2, k2, N)
 
@@ -192,5 +192,5 @@ peaks_mle_r <- function(pds, peaks, data, mixedpeaks, maxlwd,
                 mutate(npeaks = nrow(peaks.mle %>% filter(AIC > minAIC)))
         }
     }
-    return(peaks)
+    return(list(peaks, data))
 }

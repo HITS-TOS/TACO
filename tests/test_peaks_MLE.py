@@ -13,14 +13,14 @@ def test_peaks_MLE():
                          "DeltaNu": [1],
                          "eps_p": [1],
                          "gamma0": [1]})
-    peaks = peaks_MLE(pds, peaks, data)
+    peaks, data = peaks_MLE(pds, peaks, data)
     assert "frequency" in peaks
 
 def test_peaks_MLE_001296068():
     """Unit test real data with ID 001296068"""
 
-    pds = pd.read_csv("tests/data/test_peaks_MLE_pds.csv")
-    peaks = pd.read_csv("tests/data/test_peaks_MLE_peaks.csv")
-    data = pd.read_csv("tests/data/test_peaks_MLE_summary.csv")
-    peaks = peaks_MLE(pds, peaks, data)
-    assert "frequency" in peaks
+    pds = pd.read_csv("tests/data/test_peaks_mle_pds_bgr.csv")
+    peaks = pd.read_csv("tests/data/test_peaks_mle_peaks.csv")
+    data = pd.read_csv("tests/data/test_peaks_mle_summary.csv")
+    peaks, data = peaks_MLE(pds, peaks, data)
+    assert data["npeaks"][0] == 31
