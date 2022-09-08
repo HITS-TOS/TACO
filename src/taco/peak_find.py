@@ -10,7 +10,7 @@ from rpy2.robjects.packages import STAP
 def _none2null(none_obj):
     return ro.r("NULL")
 
-def peak_find(pds, oversampled_pds, data, peaks = None, mixedpeaks = None, snr = 1.2, prob = 0.0001,
+def peak_find(pds, oversampled_pds, data, peaks = None, snr = 1.2, prob = 0.0001,
               maxlwd = None, removel02 = False, minAIC = 2, navg = 1):
     """
     Find the relevant solar-like oscillations in a background-removed PDS
@@ -38,9 +38,6 @@ def peak_find(pds, oversampled_pds, data, peaks = None, mixedpeaks = None, snr =
                 Name: snr, dtype: float
                 Name: AIC, dtype: float
                 Name: amplitude, dtype: float
-        mixedpeaks(pandas.DataFrame): Mixed mode peaks from peak finding
-            Columns:
-                Name: frequency, dtype: float[micro-Hertz]
         snr(float): Minimum signal-to-noise ratio (on CWT space) for resolved peaks
         prob(float): Minimum (frequentist) probability threshold for unresolved peaks
         maxlwd(float): Maximum search linewidth for resolved peaks in the CWT search
@@ -64,7 +61,6 @@ def peak_find(pds, oversampled_pds, data, peaks = None, mixedpeaks = None, snr =
             r_data = ro.conversion.py2rpy(data)
             return peak_find.peak_find_r(r_pds, r_oversampled_pds, r_data,
                  peaks = peaks,
-                 mixedpeaks = mixedpeaks,
                  snr = snr,
                  prob = prob,
                  maxlwd = maxlwd,

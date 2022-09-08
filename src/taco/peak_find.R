@@ -9,7 +9,7 @@ library(lomb, quietly = TRUE)
 source("src/peakFind_lib.R", chdir = TRUE)
 source("src/l02_modes_id.R", chdir = TRUE)
 
-peak_find_r <- function(pds, ofac_pds, data, peaks, mixedpeaks, snr, prob,
+peak_find_r <- function(pds, ofac_pds, data, peaks, snr, prob,
                         maxlwd, removel02, minAIC, navg) {
 
     pds <- pds %>%
@@ -52,7 +52,7 @@ peak_find_r <- function(pds, ofac_pds, data, peaks, mixedpeaks, snr, prob,
 
         # # If max linewidth argument not set
         # #stop()
-        # if (is.na(maxlwd)){
+        # if (is.null(maxlwd)){
         #     # Since this is for finding mixed modes we add in constraint that linewidth must be less than Gamma0
         #     if(is.null(summary$gamma0)) {
         #         maxlwd <- deltanu/2 + 0.1*deltanu/2
