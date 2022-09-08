@@ -114,7 +114,7 @@ def background_fit(pds, ofac_pds, data, **kwargs):
         print("Giving up")
         # flag_file = os.path.join(os.path.dirname(settings.pds), "BACKGROUND_FIT_FLAG")
         # open(flag_file, "a").close()
-        return
+        return None, None, None
     else:
         # Create background_subtracted spectra
 
