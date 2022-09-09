@@ -24,3 +24,4 @@ def test_peaks_MLE_001296068():
     data = pd.read_csv("tests/data/test_peaks_mle_summary.csv")
     peaks, data = peaks_MLE(pds, peaks, data)
     assert data["npeaks"][0] == 31
+    assert peaks["frequency"][0] == pytest.approx(34.03745602727537, 1e-4)
