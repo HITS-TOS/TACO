@@ -2,7 +2,7 @@
 # wavCWT (constructor)
 ###
 
-library(ifultools)
+library(ifultools, quietly = TRUE)
 #library(splus2R)
 
 # From line 259 of Swrappers.R from splus2R
