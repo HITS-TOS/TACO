@@ -65,7 +65,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                 modeIDFlag = 1)
         print("No peaks detected so not proceeding with mode ID")
         return(list(peaks, data))
-    } else if(nrow(peaks) < 3){
+    } else if(nrow(peaks) < 3) {
         peaks$l <- NA
         data <-
             data %>%

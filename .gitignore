@@ -1,9 +1,10 @@
 *.pyc
 __pycache__
 pipeline/*/
+/ofac_pds_bgr.csv
+/pds_bgr.csv
+/pds_fit_quantiles.csv
+jupyter/ofac_pds_bgr.csv
+jupyter/pds_bgr.csv
 jupyter/pds_fit.log
-ofac_pds_bgr.csv
-pds_bgr.csv
-pds_fit_quantiles.csv
-tests/data/pds_fit.log
-tests/data/peaks.csv
+jupyter/pds_fit_quantiles.csv
