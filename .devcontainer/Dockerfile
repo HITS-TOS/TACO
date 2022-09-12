@@ -68,6 +68,7 @@ RUN Rscript -e 'install.packages(c( \
     ), dependencies=TRUE)'
 
 RUN Rscript -e 'devtools::install_version("ifultools", "2.0-23")'
+RUN Rscript -e 'devtools::install_github("ManuelHentschel/vscDebugger")'
 
 RUN /usr/bin/python3 -m pip install --upgrade pip
 

@@ -4,7 +4,7 @@
 	"name": "Python",
 	"build": {
 		"dockerfile": "Dockerfile",
-		"args": { "USER_UID": "1026" }
+		"args": { "USER_UID": "15005" }
 		//"args": { "USER_UID": "${localEnv:UID}" }
 
 	},
@@ -17,7 +17,8 @@
 	"extensions": [
 		"ms-python.python",
 		"REditorSupport.r",
-		"mechatroner.rainbow-csv"
+		"mechatroner.rainbow-csv",
+		"RDebugger.r-debugger"
 	],
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
