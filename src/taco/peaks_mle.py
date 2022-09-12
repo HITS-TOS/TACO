@@ -10,7 +10,7 @@ from rpy2.robjects.packages import STAP
 def _none2null(none_obj):
     return ro.r("NULL")
 
-def peaks_MLE(pds, peaks, data, mixedpeaks = None, maxlwd = None,
+def peaks_mle(pds, peaks, data, mixedpeaks = None, maxlwd = None,
               removel02 = False, minAIC = 2, navg = 1, finalfit = False):
     """
     MLE optimization for the peaks found by peakFind.R (or another way)
@@ -41,7 +41,7 @@ def peaks_MLE(pds, peaks, data, mixedpeaks = None, maxlwd = None,
         finalfit(bool): Whether or not this is the final MLE optimisation
     """
 
-    with open(Path(Path(__file__).parent, 'peaks_MLE.R'), 'r') as f:
+    with open(Path(Path(__file__).parent, 'peaks_mle.R'), 'r') as f:
         owd = os.getcwd()
         os.chdir(Path(__file__).parents[2])
         peaks_mle = STAP(f.read(), "peaks_mle_r")

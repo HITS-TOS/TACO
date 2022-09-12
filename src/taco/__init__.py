@@ -5,7 +5,8 @@ from .pds import calc_pds
 from .numax_estimate import numax_estimate
 from .background_fit import background_fit
 from .peak_find import peak_find
-from .peaks_MLE import peaks_MLE
+from .peaks_mle import peaks_mle
+from .peak_bag_mode_id02 import peak_bag_mode_id02
 
 __doc__ = """
 TACO - Tools for Automated Characterisation of Oscillations
@@ -23,5 +24,6 @@ __all__ = [
     "numax_estimate",
     "background_fit",
     "peak_find",
-    "peaks_MLE",
+    "peaks_mle",
+    "peak_bag_mode_id02",
 ]
