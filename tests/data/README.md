@@ -6,4 +6,5 @@ Rscript src/peakFind.R --snr 1.1 --prob 0.0001 --minAIC 2 --pds tests/data/test_
 
 Rscript src/peaksMLE.R --minAIC 2 --pds tests/data/test_peaks_mle_pds_bgr.csv --init tests/data/test_peaks_mle_peaks.csv --summary tests/data/test_peaks_mle_summary.csv
 
-Rscript src/peakBagModeId02.R
+cd tests/data/test_peak_bag_mode_id02
+Rscript ../../../src/peakBagModeId02.R
