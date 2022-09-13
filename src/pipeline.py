@@ -57,19 +57,32 @@ def pipeline(argv):
             **settings['pipeline'][3]['numax_estimate'])
 
         # 4) Background fit
-        Hmax, Bmax, HBR = taco.background_fit(pds, numax0, nyquist,
+        pds_bgr, oversampled_pds_bgr, data = taco.background_fit(pds, numax0, nyquist,
             **settings['pipeline'][4]['background_fit'])
     
         # 5) Find peaks
-        taco.peak_find(pds, oversampled_pds,
+        peaks = taco.peak_find(pds_bgr, oversampled_pds_bgr, data,
             **settings['pipeline'][5]['peak_find'])
 
-        # TODO ...
-        # peaksMLE(minAIC=2)
-        # peakBagModeId02()
-        # peakFind(snr=1.1, prob=0.0001, minAIC=2, removel02=TRUE)
-        # peaksMLE(minAIC=2, removel02=TRUE, init=peaksMLE.csv, mixedpeaks=mixedpeaks.csv)
-        # peaksMLE(minAIC=2, finalfit=TRUE)
+        # 6) Peaks MLE
+        peaks_mle = taco.peaks_mle(pds_bgr, peaks, data,
+            **settings['pipeline'][6]['peaks_mle'])
+
+        # 7) Peaks MLE
+        peaks_mle, data = taco.peak_bag_mode_id02(pds_bgr, peaks_mle, data,
+            **settings['pipeline'][7]['peak_bag_mode_id02'])
+
+        # 8) Peaks MLE
+        mixed_peaks = taco.peak_find(pds_bgr, oversampled_pds_bgr, peaks = peaks,
+            **settings['pipeline'][8]['peak_find'])
+
+        # 9) Peaks MLE
+        peaks = taco.peaks_mle(pds_bgr, peaks_mle, data,
+            **settings['pipeline'][9]['peaks_mle'])
+
+        # 10) Peaks MLE
+        peaks = taco.peaks_mle(pds_bgr, peaks, data, finalfit = True,
+            **settings['pipeline'][10]['peaks_mle'])
 
 if __name__ == "__main__":
 
