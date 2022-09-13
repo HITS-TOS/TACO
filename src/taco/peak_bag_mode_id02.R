@@ -212,9 +212,6 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
     # Extract uncertainties
     eps_p_sd <- res$eps_p_sd
 
-    peaks = peaks %>%
-        filter(l==2)
-    #print(peaks)
     # fit for d02, while keeping delta nu, epsilon and alpha fixed
     res2 <- DeltaNu_l2_fit(
                 peaks = peaks %>%
