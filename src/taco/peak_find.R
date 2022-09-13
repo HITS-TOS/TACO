@@ -31,55 +31,42 @@ peak_find_r <- function(pds, ofac_pds, data, peaks, snr, prob,
     if (removel02 == TRUE) {
         # Finding mixed modes!
 
-        # print("Removing l=0,2,3 first")
-        # peaks %>% filter(frequency > summary$numax - 3*summary$sigmaEnv,
-        #                  frequency < summary$numax + 3*summary$sigmaEnv))
-        # if("try-error" %in% class(peaks)){
-        #     pds_l02_removed <- pds
-        # } else{
+        print("Removing l=0,2,3 first")
+        peaks <- peaks %>%
+            filter(frequency > summary$numax - 3*summary$sigmaEnv,
+                   frequency < summary$numax + 3*summary$sigmaEnv)
 
-        #     if(nrow(peaks) != 0){
-        #         l02_peaks <-
-        #             peaks %>%
-        #             filter(l == 0 | l == 2 | l == 3)
-        #         pds_l02_removed <-
-        #             pds %>%
-        #             mutate(power = power / fit_model(pds = ., peaks = l02_peaks))
-        #     } else{
-        #         pds_l02_removed <- new_pds
-        #     }
-        # }
+        l02_peaks <- peaks %>%
+            filter(l == 0 || l == 2 || l == 3)
 
-        # # If max linewidth argument not set
-        # #stop()
-        # if (is.null(maxlwd)){
-        #     # Since this is for finding mixed modes we add in constraint that linewidth must be less than Gamma0
-        #     if(is.null(summary$gamma0)) {
-        #         maxlwd <- deltanu/2 + 0.1*deltanu/2
-        #         print(paste("Gamma0 from summary file is NA therefore setting to slightly larger than bin width: ", maxlwd, "uHz"))
-        #         #stop("Gamma0 from summary file is NA please supply a maximum linewidth")
-        #     } else {
-        #         maxlwd <- 1.5*summary$gamma0
-        #         print(paste("Maximum peak linewidth (HWHM) not set, therefore set to Gamma0: ", maxlwd, "uHz"))
-        #     }
-        # } else{
-        #     maxlwd <- 1.5*as.numeric(maxlwd)
-        #     print(paste("Maximum peak linewidth (HWHM) set, using value ", maxlwd, "uHz"))
-        # }
-        # # 23/12/19 Because we are fitting in terms of HWHM the minimum linewidth should be bw/2 not bw!
+        pds_l02_removed <- pds %>%
+            mutate(power = power / fit_model(pds = ., peaks = l02_peaks))
 
-        # new_peaks <- peak_find(pds_l02_removed, min.snr = snr, p = prob,
-        #                     linewidth.range = c(deltanu/2, maxlwd),
-        #                     find.resolved.only=FALSE, naverages=navg)
-        # ## Choose only the significant ones
+        # If max linewidth argument not set
+        if (is.null(maxlwd)) {
+            # Since this is for finding mixed modes we add in constraint that linewidth must be less than Gamma0
+            if(is.null(summary$gamma0)) {
+                maxlwd <- deltanu/2 + 0.1*deltanu/2
+                print(paste("Gamma0 from summary file is NA therefore setting to slightly larger than bin width: ", maxlwd, "uHz"))
+                #stop("Gamma0 from summary file is NA please supply a maximum linewidth")
+            } else {
+                maxlwd <- 1.5*summary$gamma0
+                print(paste("Maximum peak linewidth (HWHM) not set, therefore set to Gamma0: ", maxlwd, "uHz"))
+            }
+        } else{
+            maxlwd <- 1.5*as.numeric(maxlwd)
+            print(paste("Maximum peak linewidth (HWHM) set, using value ", maxlwd, "uHz"))
+        }
+        # 23/12/19 Because we are fitting in terms of HWHM the minimum linewidth should be bw/2 not bw!
 
-        # new_peaks <-
-        #     new_peaks %>%
-        #     arrange(frequency) %>%
-        #     #mutate(EFP = nrow(pds_l02_removed) * EFPp) %>%
-        #     filter(AIC > minAIC)# %>%
-        #     #filter(EFP < 1) # Also added this line to see if this helps trim away bad peaks!
-        # write_csv(new_peaks, file = mixedpeaks)#output)
+        peaks <- peak_find(pds_l02_removed, min.snr = snr, p = prob,
+                           linewidth.range = c(deltanu/2, maxlwd),
+                           find.resolved.only = FALSE, naverages = navg)
+
+        ## Choose only the significant ones
+        peaks <- peaks %>%
+            arrange(frequency) %>%
+            filter(AIC > minAIC)
 
     } else {
         # Only find resolved peaks
