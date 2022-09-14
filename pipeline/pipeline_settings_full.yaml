@@ -1,3 +1,7 @@
+# The full listing of TACO module parameters are only for documentation porpose
+# For usage only the parameters different to the default value should be set,
+# so that the default value is coming from the module parameter list.
+
 pipeline:
     - filter:
         width: 40

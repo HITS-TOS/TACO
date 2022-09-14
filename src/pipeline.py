@@ -23,6 +23,9 @@ def pipeline(argv):
     with open(argv.settings_file, 'r', encoding="utf-8") as stream:
         settings = yaml.load(stream, Loader = yaml.Loader)
 
+    if argv.verbose > 1:
+        print("settings: ", settings)
+
     input_files = [f for f in Path(argv.input_directory).iterdir()
         if (f.is_file() and f.suffix == '.dat')]
 
@@ -91,11 +94,11 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="TACO pipeline")
     parser.add_argument('--input_directory', '-i', default='.',
-                        help="Input directory of processable raw data.")
+                        help="Input directory of processable raw data (default = '.').")
     parser.add_argument('--output_directory', '-o', default='.',
-                        help="Output directory for resulting data.")
+                        help="Output directory for resulting data (default = '.').")
     parser.add_argument('--settings-file', '-s', default='pipeline_settings.yaml',
-                        help="File with pipeline settings in Yaml.")
+                        help="File with pipeline settings in Yaml (default = 'pipeline_settings.yaml').")
     parser.add_argument('--verbose', '-v', default=0, action='count',
                         help="Print level.")
     parser.add_argument('--quiet', '-q', action='store_true',
