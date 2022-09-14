@@ -1,0 +1,15 @@
+FROM jupyter/datascience-notebook:ubuntu-22.04
+
+LABEL maintainer="Bernd Doser <bernd.doser@h-its.org>"
+
+USER root
+
+RUN mamba install --quiet --yes \
+      'r-modelr' && \
+    mamba clean --all -f -y && \
+    fix-permissions "${CONDA_DIR}" && \
+    fix-permissions "/home/${NB_USER}"
+
+RUN Rscript -e 'devtools::install_version("ifultools", "2.0-23", repos = "http://cran.us.r-project.org")'
+
+USER ${NB_UID}
