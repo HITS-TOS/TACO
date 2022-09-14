@@ -40,7 +40,7 @@ def pipeline(argv):
         ts_raw = pd.read_csv(input_file, comment = '#', header = None, delim_whitespace = True)
 
         # 0) Filter
-        ts_filtered, variance = taco.filter(ts_raw, **settings['pipeline'][0]['filter'],
+        ts_filtered, data = taco.filter(ts_raw, **settings['pipeline'][0]['filter'],
             output_directory = Path(argv.output_directory, input_name))
 
         # 1) PDS
@@ -52,12 +52,13 @@ def pipeline(argv):
             output_directory = Path(argv.output_directory, input_name))
 
         # 3) Estimate numax
-        nyquist = pds["frequency"].iloc[-1]
-        numax0 = taco.numax_estimate(pds, variance, nyquist,
+        data["nuNyq"] = pds["frequency"].iloc[-1]
+        data = taco.numax_estimate(pds, data,
             **settings['pipeline'][3]['numax_estimate'])
 
         # 4) Background fit
-        pds_bgr, oversampled_pds_bgr, data = taco.background_fit(pds, numax0, nyquist,
+        pds_bgr, oversampled_pds_bgr, data = taco.background_fit(
+            pds, oversampled_pds, data,
             **settings['pipeline'][4]['background_fit'])
     
         # 5) Find peaks
@@ -73,11 +74,13 @@ def pipeline(argv):
             **settings['pipeline'][7]['peak_bag_mode_id02'])
 
         # 8) Peaks MLE
-        mixed_peaks = taco.peak_find(pds_bgr, oversampled_pds_bgr, peaks = peaks,
+        mixed_peaks = taco.peak_find(
+            pds_bgr, oversampled_pds_bgr, peaks = peaks, removel02 = True,
             **settings['pipeline'][8]['peak_find'])
 
         # 9) Peaks MLE
-        peaks = taco.peaks_mle(pds_bgr, peaks_mle, data,
+        peaks = taco.peaks_mle(
+            pds_bgr, peaks_mle, data, removel02 = True, mixed_peaks = mixed_peaks,
             **settings['pipeline'][9]['peaks_mle'])
 
         # 10) Peaks MLE

@@ -31,7 +31,6 @@ pipeline:
         snr: 1.1
         prob: 0.0001
         maxlwd: NA
-        removel02: false
         minAIC: 2
         navg: 1
     - peaksMLE:
@@ -41,14 +40,11 @@ pipeline:
         snr: 1.1
         prob: 0.0001
         maxlwd: NA
-        removel02: true
         minAIC: 2
         navg: 1
     - peaksMLE:
         minAIC: 2
-        removel02: true
         init: peaksMLE.csv
         mixedpeaks: mixedpeaks.csv
     - peaksMLE:
         minAIC: 2
-        finalfit: true
