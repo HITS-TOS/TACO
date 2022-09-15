@@ -68,26 +68,26 @@ def pipeline(argv):
         peaks = taco.peak_find(pds_bgr, oversampled_pds_bgr, data,
             **settings['pipeline'][5]['peak_find'])
 
-        # 6) Peaks MLE
-        peaks_mle = taco.peaks_mle(pds_bgr, peaks, data,
+        # 6) MLE
+        peaks_mle, data = taco.peaks_mle(pds_bgr, peaks, data,
             **settings['pipeline'][6]['peaks_mle'])
 
-        # 7) Peaks MLE
+        # 7) Bag mode id02
         peaks_mle, data = taco.peak_bag_mode_id02(pds_bgr, peaks_mle, data,
             **settings['pipeline'][7]['peak_bag_mode_id02'])
 
-        # 8) Peaks MLE
+        # 8) Find mixed peaks
         mixed_peaks = taco.peak_find(
             pds_bgr, oversampled_pds_bgr, peaks = peaks, removel02 = True,
             **settings['pipeline'][8]['peak_find'])
 
-        # 9) Peaks MLE
-        peaks = taco.peaks_mle(
+        # 9) MLE with mixed peaks
+        peaks, data = taco.peaks_mle(
             pds_bgr, peaks_mle, data, removel02 = True, mixed_peaks = mixed_peaks,
             **settings['pipeline'][9]['peaks_mle'])
 
-        # 10) Peaks MLE
-        peaks = taco.peaks_mle(pds_bgr, peaks, data, finalfit = True,
+        # 10) Final fit
+        peaks, data = taco.peaks_mle(pds_bgr, peaks, data, finalfit = True,
             **settings['pipeline'][10]['peaks_mle'])
 
 if __name__ == "__main__":
