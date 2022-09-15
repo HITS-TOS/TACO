@@ -1,4 +1,4 @@
-[![Build Status](https://jenkins.h-its.org/job/TOS/job/TACO/job/main/badge/icon)](https://jenkins.h-its.org/job/TOS/job/TACO/job/main/)
+[![Build Status](https://jenkins.h-its.org/buildStatus/icon?job=TOS%2FTACO%2Fmain)](https://jenkins.h-its.org/job/TOS/job/TACO/job/main/)
 
 # Tools for Automated Characterisation of Oscillations (TACO)
 
