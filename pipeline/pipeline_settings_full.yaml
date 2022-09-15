@@ -26,11 +26,12 @@ pipeline:
         nwalkers: 50
         nwarmup: 1000
         output_backg_model: out_backg_model.pkl
-        output_ofac_bgr: ofac_pds_bgr.csv
+        output_ofac_pds_bgr: ofac_pds_bgr.csv
         output_pds_pgr: pds_bgr.csv
         output_quantiles: pds_fit_quantiles.csv
         posterior: pds_fit_posterior.h5
         save_posteriors: false
+        seed: -1
     - peakFind:
         snr: 1.1
         prob: 0.0001
