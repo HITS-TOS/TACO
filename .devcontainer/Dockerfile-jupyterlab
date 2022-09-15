@@ -5,6 +5,7 @@ LABEL maintainer="Bernd Doser <bernd.doser@h-its.org>"
 USER root
 
 RUN mamba install --quiet --yes \
+      'r-argparser' \ 
       'r-modelr' && \
     mamba clean --all -f -y && \
     fix-permissions "${CONDA_DIR}" && \
@@ -22,6 +23,7 @@ RUN pip install \
       pandas \
       plotly \
       pyyaml \
+      rpy2==3.3.* \
       scipy \
       sklearn
 
