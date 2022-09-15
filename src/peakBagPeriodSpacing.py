@@ -1,6 +1,6 @@
 import site
 import sys
-site.addsitedir('../../')
+site.addsitedir('../../libs/sloscillations')
 
 import argparse
 import numpy as np 
