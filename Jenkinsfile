@@ -37,7 +37,7 @@ pipeline {
                 }
             }
             steps {
-                sh 'PYTHONPATH=$WORKSPACE/src pytest --junitxml=pyunit.xml'
+                sh 'PYTHONPATH=$WORKSPACE/src:$WORKSPACE/libs/sloscillations pytest --junitxml=pyunit.xml'
             }
             post {
                 always {
