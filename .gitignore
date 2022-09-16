@@ -8,3 +8,4 @@ jupyter/ofac_pds_bgr.csv
 jupyter/pds_bgr.csv
 jupyter/pds_fit.log
 jupyter/pds_fit_quantiles.csv
+jupyter/.ipynb_checkpoints/
