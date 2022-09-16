@@ -161,7 +161,7 @@ def DPi1_from_stretched_PDS(DPi1, q, freqs, pds, return_max=False, plot=False, s
 
 
 def peak_bag_period_spacing(pds, peaks, data,
-        maxiters = 10, niters = 5, dpi_only = False, ncores = 1):
+        maxiters = 10, niters = 5, dpi_only = False, ncores = 1, plot = False):
     """
     Asymptotic period spacing (ΔΠ1) from the periodogram of the 'stretched' PDS.
 
@@ -178,6 +178,7 @@ def peak_bag_period_spacing(pds, peaks, data,
         niters(int): Number of iterations to repeat the calculation of ΔΠ1, q and ε_g
         dpi_only(bool): Only infer the period spacing and don't calculate tau or q
         ncores(int): Number of cores to use for a parallel calculation
+        plot(bool): Plot diagnostic plots
 
     Returns:
         pds(pandas.DataFrame): Periodogram
@@ -258,12 +259,12 @@ def peak_bag_period_spacing(pds, peaks, data,
                                     alpha=data.alpha.values if np.isfinite(data.alpha.values) else None)
     ## Estimate ΔΠ1 self-consistently with some initial guesses using both a high and low initial guess
 
-    RC_test_dpi, RC_test_maximum, RC_sig = DPi1_from_stretched_PDS(RC_init, q_RC,
-                                                            freqs,
-                                                            pds_l023_removed,
-                                                            return_max=True,
-                                                            plot=argv.plot,
-                                                            search_range = RC_DPi_range)
+    _, RC_test_maximum, RC_sig = DPi1_from_stretched_PDS(RC_init, q_RC,
+                                                         freqs,
+                                                         pds_l023_removed,
+                                                         return_max = True,
+                                                         plot = plot,
+                                                         search_range = RC_DPi_range)
 
 
     if (RC_sig == False) and (data.DeltaNu.values < 4.0):
@@ -276,14 +277,12 @@ def peak_bag_period_spacing(pds, peaks, data,
         print('No significant peak detected in power spectrum and delta nu too low to obtain period spacing for RGB star')
         return(None, None, data)
 
-    RGB_test_dpi, RGB_test_maximum, RGB_sig = DPi1_from_stretched_PDS(RGB_init, q_RGB,
-                                                                freqs,
-                                                                pds_l023_removed,
-                                                                return_max=True,
-                                                                plot=argv.plot,
-                                                                search_range = RGB_DPi_range)
-    # If no significant peak detected in PSxPS then exit
-    #print("SIGS: ", RC_sig, RGB_sig)
+    _, RGB_test_maximum, RGB_sig = DPi1_from_stretched_PDS(RGB_init, q_RGB,
+                                                           freqs,
+                                                           pds_l023_removed,
+                                                           return_max = True,
+                                                           plot = plot,
+                                                           search_range = RGB_DPi_range)
 
     if (RC_sig == False) and (RGB_sig == False):
         data['DeltaPi1'] = np.nan
@@ -320,15 +319,15 @@ def peak_bag_period_spacing(pds, peaks, data,
     print(f"Starting DPi1: {curr_DPi1}")
 
     converged = False
-    for i in range(argv.maxiters):
+    for i in range(maxiters):
 
         old_DPi1 = curr_DPi1
         new_DPi1, val, sig = DPi1_from_stretched_PDS(curr_DPi1, q_init,
                                                      freqs,
                                                      pds_l023_removed,
-                                                     return_max=True,
-                                                     plot=argv.plot,
-                                                     search_range=search_range)
+                                                     return_max = True,
+                                                     plot = plot,
+                                                     search_range = search_range)
         if sig > 0.9:
             curr_DPi1 = new_DPi1
             curr_val = val
@@ -402,9 +401,6 @@ def peak_bag_period_spacing(pds, peaks, data,
     data['eps_g'] = 0
     data['DeltaPi1_sig'] = sig_best
 
-    if np.all(results[:,1] == 0):
-        data.to_csv(argv.data, index=False)
-
     # Update aritifical frequencies to compute zeta and tau for all frequencies
     params = {'calc_l0': True,
             'calc_l2': True,
@@ -420,8 +416,9 @@ def peak_bag_period_spacing(pds, peaks, data,
     freqs(params)
 
     # Compute stretched_pds
-    new_freq, tau, zeta = mixed_modes_utils.stretched_pds(pds.frequency.values,
-                                                              freqs.zeta)
+    _, tau, zeta = mixed_modes_utils.stretched_pds(pds.frequency.values,
+                                                          freqs.zeta)
+
     # PDS tau and zeta values
     pds['tau'] = tau
     pds['zeta'] = zeta
@@ -430,9 +427,11 @@ def peak_bag_period_spacing(pds, peaks, data,
     peaks['tau'] = mixed_modes_utils.peaks_stretched_period(peaks.frequency.values,
                                                             pds.frequency.values,
                                                             tau)
+
     # This function can also be used with zeta as it just builds a simple interpolation function
     peaks['zeta'] = mixed_modes_utils.peaks_stretched_period(peaks.frequency.values,
-                                                            pds.frequency.values,
-                                                            zeta)
+                                                             pds.frequency.values,
+                                                             zeta)
 
+    pds = pds.reset_index(drop = True)
     return(pds, peaks, data)

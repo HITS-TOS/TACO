@@ -10,3 +10,6 @@ Rscript src/peaksMLE.R --minAIC 2 --pds tests/data/test_peaks_mle_pds_bgr.csv --
 
 cd tests/data/test_peak_bag_mode_id02
 Rscript ../../../src/peakBagModeId02.R
+
+cd tests/data/test_peak_bag_period_spacing
+python3 ../../../src/peakBagPeriodSpacing.py

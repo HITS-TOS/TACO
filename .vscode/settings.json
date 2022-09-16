@@ -3,7 +3,7 @@
     "python.linting.enabled": true,
     "python.envFile": "${workspaceFolder}/.env",
     "terminal.integrated.env.linux": {
-        "PYTHONPATH": "${workspaceFolder}/src",
+        "PYTHONPATH": "${workspaceFolder}/src:${workspaceFolder}/libs/sloscillations",
         "PATH": "${workspaceFolder}/src:${env:PATH}"
     },
     "python.formatting.provider": "black",

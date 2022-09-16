@@ -16,11 +16,19 @@ def test_peak_bag_period_spacing():
     pds, peaks, data = peak_bag_period_spacing(pds, peaks, data)
     assert "DeltaPi1" in data
 
-# def test_peak_bag_period_spacing_001296068():
-#     """Unit test real data with ID 001296068"""
+def test_peak_bag_period_spacing_001296068():
+    """Unit test real data with ID 001296068"""
 
-#     pds = pd.read_csv("tests/data/test_peak_bag_mode_id02/pds_bgr.csv")
-#     peaks = pd.read_csv("tests/data/test_peak_bag_mode_id02/peaksMLE.csv")
-#     data = pd.read_csv("tests/data/test_peak_bag_mode_id02/summary.csv")
-#     peaks, data = peak_bag_mode_id02(pds, peaks, data)
-#     assert "frequency" in peaks
+    pds = pd.read_csv("tests/data/test_peak_bag_period_spacing/pds_bgr.csv")
+    peaks = pd.read_csv("tests/data/test_peak_bag_period_spacing/peaksMLE.csv")
+    data = pd.read_csv("tests/data/test_peak_bag_period_spacing/summary.csv")
+
+    pds, peaks, data = peak_bag_period_spacing(pds, peaks, data)
+
+    pds_reference = pd.read_csv("tests/data/test_peak_bag_period_spacing/result/pds_bgr.csv")
+    peaks_reference = pd.read_csv("tests/data/test_peak_bag_period_spacing/result/peaksMLE.csv")
+    data_reference = pd.read_csv("tests/data/test_peak_bag_period_spacing/result/summary.csv")
+
+    pd.testing.assert_frame_equal(pds, pds_reference)
+    pd.testing.assert_frame_equal(peaks, peaks_reference)
+    pd.testing.assert_frame_equal(data, data_reference)
