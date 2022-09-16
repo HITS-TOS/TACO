@@ -112,10 +112,10 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
     Dnu <- DeltaNu_from_numax(data$numax)
 
     ## Refine it using the PS of the PS. We look at Δν and Δν/2 and take the highest peak
-    psxps1 <- lsp(times = pds$frequency, x = pds$power, 
+    psxps1 <- lsp(times = pds$frequency, x = pds$power,
                     from = 0.3 * Dnu, to = 0.7 * Dnu,
                     type = "period", plot = FALSE, ofac = 10)
-    psxps2 <- lsp(times = pds$frequency, x = pds$power, 
+    psxps2 <- lsp(times = pds$frequency, x = pds$power,
                     from = 0.7 * Dnu, to = 1.3 * Dnu,
                     type = "period", plot = FALSE, ofac = 10)
     Dnu <- ifelse(psxps1$peak > psxps2$peak, psxps1$peak.at[1] * 2, psxps2$peak.at[1])
@@ -126,7 +126,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
     d02 <- d02_from_DeltaNu(Dnu)
 
     ## Refine the δν_02 with the PSxPS
-    psxps <- lsp(times = pds$frequency, x = pds$power, 
+    psxps <- lsp(times = pds$frequency, x = pds$power,
                  from = 0.7 * d02, to = 1.3 * d02,
                 type = "period", plot = FALSE, ofac = 10)
     d02 <- psxps$peak.at[1]
@@ -139,10 +139,10 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
     ## Mode identification for l=0,2 modes
     peaks <- peaks %>%
         tag_l02_peaks(pds = pds, DeltaNu = Dnu, d02 = d02,
-                      alpha = alpha, numax = data$numax,
-                    HBR = NULL, sigmaEnv = data$sigmaEnv,
-                    nuNyq = data$nuNyq,
-                    search.range = search.range)
+            alpha = alpha, numax = data$numax,
+            HBR = NULL, sigmaEnv = data$sigmaEnv,
+            nuNyq = data$nuNyq,
+            search.range = search.range)
 
     peaks.l0 <- peaks %>% filter(l == 0)
     dnu_est <- Dnu
@@ -249,7 +249,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
 
     print("Tagging any possible l=3 modes...")
     if (nrow(l3) > 0) {
-        
+
         tmp_l0 <- peaks %>% filter(l == 0)
 
         for (i in unique(l3$n)) {
@@ -260,12 +260,12 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                         slice(1)
 
             # TODO: Need to make sure checking against l=0 with right radial order!
-            closest_l0_amp = tmp_l0 %>% 
-                                filter(n == i) %>% 
+            closest_l0_amp = tmp_l0 %>%
+                                filter(n == i) %>%
                                 select(amplitude)
-            closest_l0_width = tmp_l0 %>% 
-                                filter(n == i) %>% 
-                                select(linewidth)        
+            closest_l0_width = tmp_l0 %>%
+                                filter(n == i) %>%
+                                select(linewidth)
 
             # Make sure there is a nearest l=0 before doing this
             if (is.na(tmp_l3$l) && !is.na(tmp_l3$linewidth)) {
@@ -282,7 +282,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
     peaks <- peaks %>% select(-x)
 
     # Fit through frequencies to estimate delta nu, epsilon and alpha
-    res <- DeltaNu_l0_fit(        
+    res <- DeltaNu_l0_fit(
                 peaks = peaks %>%
                     filter(l == 0) %>%
                     drop_na() %>% # in case have nan in frequency_sd
@@ -305,7 +305,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
         print("Epsilon p too large, altering radial orders and rerunning fit")
         peaks$n <- peaks$n + 1
         # Fit through frequencies to estimate delta nu, epsilon and alpha
-        res <- DeltaNu_l0_fit(        
+        res <- DeltaNu_l0_fit(
                     peaks = peaks %>%
                         filter(l == 0) %>%
                         drop_na() %>% # in case have nan in frequency_sd
@@ -348,7 +348,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                  ", d02: ", format(round(d02, 4))))
 
     ## Estimate central Δν from a linear fit through the 3 l=0 peaks closest to numax
-    central_res <- DeltaNu_l0_fit(        
+    central_res <- DeltaNu_l0_fit(
                     peaks = peaks %>%
                         filter(l == 0) %>%
                         mutate(absdiff = abs(frequency - data$numax)) %>%

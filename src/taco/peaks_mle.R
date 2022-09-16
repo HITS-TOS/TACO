@@ -93,19 +93,19 @@ peaks_mle_r <- function(pds, peaks, data, mixedpeaks, maxlwd,
                 maxlwd <- 1.5 * as.numeric(maxlwd)
                 print(paste("Maximum peak linewidth (HWHM) set, using value ", maxlwd, "uHz"))
             }
-        
+
             peaks.mle <-
                 peaks_MLE_sd(peaks = rest_peaks, pds = pds_l02_removed, maxLWD = maxlwd, naverages = navg) %>%
                 arrange(frequency) %>%
                 filter(AIC > minAIC)
-                
+
             # Add n,l & m columns so consistent with l=0,2 peaks file
             peaks.mle[,c("n","l")] <- NA
 
             ## Write the output
             write_csv(x = peaks.mle, file = argv$mixedoutput)
             ## Concatenate l=0,2 from first peaks file and mixed peaks file and save to peaksMLE.csv
-        
+
             peaks.full <- rbind(l02_peaks, peaks.mle)
 
         } else {

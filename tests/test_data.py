@@ -6,4 +6,3 @@ def test_data():
     assert d.modeIDFlag == 0
     assert d.numax == 0.0
     assert d.npeaks == 0
-    

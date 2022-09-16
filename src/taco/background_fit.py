@@ -26,7 +26,7 @@ class Settings(object):
         self._setup_attrs()
         assert kwargs.keys() <= self.__dict__.keys()
         self.__dict__.update(kwargs)
-    
+
     def get_mcmc_settings(self):
         """ MCMC subset of settings """
         kwargs = {k: self.__dict__[k] for k in (
@@ -127,7 +127,7 @@ def background_fit(pds, ofac_pds, data, **kwargs):
             flatchain = reader.get_chain(discard=settings.nwarmup, flat=True)
             lnprob = reader.get_log_prob(discard=settings.nwarmup, flat=True)
         else:
-            # Flattened chains and log-probability         
+            # Flattened chains and log-probability
             #tau = bg_fit.MCMC_sampler.get_autocorr_time()
             #print(f"Autocorrelation time: {tau}")
             #print(settings.nwarmup)
