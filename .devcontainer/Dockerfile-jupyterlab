@@ -5,7 +5,7 @@ LABEL maintainer="Bernd Doser <bernd.doser@h-its.org>"
 USER root
 
 RUN mamba install --quiet --yes \
-      'r-argparser' \ 
+      'r-argparser' \
       'r-modelr' && \
     mamba clean --all -f -y && \
     fix-permissions "${CONDA_DIR}" && \
@@ -23,6 +23,7 @@ RUN pip install \
       lightkurve \
       loguru \
       nbformat \
+      numba \
       numpy \
       pandas \
       plotly \

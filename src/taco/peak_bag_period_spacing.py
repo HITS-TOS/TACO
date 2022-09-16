@@ -1,25 +1,22 @@
-import site
 import sys
+
+sys.path.insert(0, 'libs/sloscillations')
+
+import site
+
 site.addsitedir('../../libs/sloscillations')
 
-import argparse
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-import scipy
-
-from astropy.timeseries import LombScargle
 from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from astropy.timeseries import LombScargle
+from joblib import Parallel, delayed
+from loguru import logger
+from scipy.stats import chi2
 from sloscillations import frequencies, mixed_modes_utils
 from tqdm import tqdm
-
-#from peakBagRotation import validate_arguments
-
-from scipy.stats import chi2
-
-from joblib import Parallel, delayed
-
-from loguru import logger
 
 
 #' It is assumed that DeltaNu is in μHz
@@ -162,56 +159,31 @@ def DPi1_from_stretched_PDS(DPi1, q, freqs, pds, return_max=False, plot=False, s
     else:
         return highest_peak_period, sig_prob #highest_peak > 5.99 #7.378 #9.210
 
-def validate_arguments(argv: argparse.Namespace) -> None:
+
+def peak_bag_period_spacing(pds, peaks, data,
+        maxiters = 10, niters = 5, dpi_only = False, ncores = 1):
     """
-    Raises an `IOError` if file given in argv doesn't exist.
+    Asymptotic period spacing (ΔΠ1) from the periodogram of the 'stretched' PDS.
 
-    Parameters
-    ----------
-    argv : NameSpace
-        argv namespace of inputs to file.
-    Returns
-    -------
-    None
+    Parameters:
+        pds(pandas.DataFrame): Periodogram
+            Columns:
+                Name: frequency, dtype: float[micro-Hertz]
+                Name: power, dtype: float
+        data(pandas.DataFrame): Summary data
+            Columns:
+                Name: numax, dtype: float
+                Name: sigmaEnv, dtype: float
+        maxiters(int): Maximum number of iterations to use in the self-consistent calculation of ΔΠ1
+        niters(int): Number of iterations to repeat the calculation of ΔΠ1, q and ε_g
+        dpi_only(bool): Only infer the period spacing and don't calculate tau or q
+        ncores(int): Number of cores to use for a parallel calculation
+
+    Returns:
+        pds(pandas.DataFrame): Periodogram
+        peaks(pandas.DataFrame): Identified peaks
+        data(pandas.DataFrame): Summary data
     """
-    # Loop over argparser arguments
-    for arg in vars(argv):
-        # Only look if attribute is a string, i.e. ignore ncores as not a file
-        # name
-        if type(getattr(argv, arg)) == str:
-            # If file doesn't exists then raise IOError
-            if not Path(getattr(argv, arg)).is_file():
-                raise IOError(f"{arg} file {getattr(argv, arg)} does not exist!")
-
-if __name__=="__main__":
-
-    # Get the filenames and options
-    parser = argparse.ArgumentParser(description="Asymptotic period spacing (ΔΠ1) from the periodogram of the 'stretched' PDS.")
-    parser.add_argument('--peaks', dest='peaks', default = "peaksMLE.csv",
-                        help = "File name of the identified peaks")
-    parser.add_argument('--summary', dest='summary', default='summary.csv',
-                        help = "File name of the csv file with summary values. It must contain numax and sigmaEnv")
-    parser.add_argument("--pds", dest='pds', default = "pds_bgr.csv",
-                        help = "File name of the csv file with the background-subtracted PDS It must contain the columns 'frequency' and 'power")
-    parser.add_argument("--full_pds", dest='full_pds', default = "pds.csv",
-                        help = "File name of the csv file with the original PDS It must contain the columns 'frequency' and 'power")
-    parser.add_argument("--maxiters", dest='maxiters', default = 10, type=int,
-                        help = "Maximum number of iterations to use in the self-consistent calculation of ΔΠ1")
-    parser.add_argument("--niters", dest='niters', default = 5, type=int,
-                        help = "Number of iterations to repeat the calculation of ΔΠ1, q and ε_g.")
-    parser.add_argument("--dpi_only", dest='dpi_only', default=False, type=bool,
-                        help = "Only infer the period spacing and don't calculate tau or q.")
-    parser.add_argument("--ncores", dest='ncores', default = 1, type=int,
-                        help = "Number of cores to use for a parallel calculation")
-    parser.add_argument("--plot", dest="plot", default=False, type=bool,
-                        help = "Plot diagnostic plots.")
-    argv = parser.parse_args()
-
-    # Check files exist by validating arguments in argparser
-    validate_arguments(argv)
-
-    # Read in summary file
-    summary = pd.read_csv(argv.summary)
 
     # Adding in FLAG for DeltaPi1 computation
     # 0 - computation succeeded
@@ -220,30 +192,19 @@ if __name__=="__main__":
     # 3 - No significant peak detected in either PS of stretched power spectrum
     # 4 - Algorithm didn't converge after specified number of iterations
 
-    if (summary.DeltaNu.values < 3.0):
-        summary['DeltaPi1'] = np.nan
-        summary['coupling'] = np.nan
-        summary['eps_g'] = np.nan
-        summary['DeltaPi1_val'] = np.nan
-        summary['DeltaPi1_Flag'] = 1
-        summary['DeltaPi1_sig'] = np.nan
-        summary.to_csv(argv.summary, index=False)
-        sys.exit('Delta nu too low to obtain period spacing for any star, exiting ...')
+    if (data.DeltaNu.values < 3.0):
+        data['DeltaPi1'] = np.nan
+        data['coupling'] = np.nan
+        data['eps_g'] = np.nan
+        data['DeltaPi1_val'] = np.nan
+        data['DeltaPi1_Flag'] = 1
+        data['DeltaPi1_sig'] = np.nan
+        print('Delta nu too low to obtain period spacing for any star')
+        return(None, None, data)
 
-    # Read in and filter peaks file to be within +/-3 sigmaEnv of numax
-    peaks = pd.read_csv(argv.peaks)
-    peaks = peaks.loc[abs(peaks.frequency.values - summary.numax.values) < 3*summary.sigmaEnv.values, ]
-
-    # Read in pds
-    pds = pd.read_csv(argv.pds)
-    pds = pds.loc[abs(pds.frequency.values - summary.numax.values) < 3*summary.sigmaEnv.values, ]
-
-
-    #plt.plot(pds.frequency, pds.power)
-    #plt.show()
-
-    # Read in original pds incase we need it
-    pds_full = pd.read_csv(argv.full_pds)
+    # Filter peaks file to be within +/-3 sigmaEnv of numax
+    peaks = peaks.loc[abs(peaks.frequency.values - data.numax.values) < 3 * data.sigmaEnv.values, ]
+    pds = pds.loc[abs(pds.frequency.values - data.numax.values) < 3 * data.sigmaEnv.values, ]
 
     # Split the peaks in the l=0,2,3 peaks (which have been already identified)
     # and the rest, which should hopefully be unidentified l=3
@@ -251,16 +212,11 @@ if __name__=="__main__":
     l0_peaks = peaks.loc[(peaks.l==0), ]
     l1_peaks = peaks.loc[(peaks.l == 1) | (np.isfinite(peaks.l) == False)]
 
-    #if len(l1_peaks) < 3:
-    #    sys.exit('Not enough peaks to determine period spacing')
-
-    #################################
-
     # Initial ΔΠ1 values
     RC_init = 300
-    RGB_init = DeltaPi1_from_DeltaNu_RGB(summary.DeltaNu.values
-                                         if np.isfinite(summary.DeltaNu.values)
-                                         else DeltaNu_from_numax(summary.numax.values))
+    RGB_init = DeltaPi1_from_DeltaNu_RGB(data.DeltaNu.values
+                                         if np.isfinite(data.DeltaNu.values)
+                                         else DeltaNu_from_numax(data.numax.values))
 
     # Compute ranges of period spacing to search for RC and RGB stars
     RC_DPi_range = np.array([100, 400])
@@ -280,9 +236,6 @@ if __name__=="__main__":
     q_RC = 0.3
     q_RGB = 0.2
 
-    # How much leeway we leave while estimating ΔΠ1 self-consistently. A larger range produces faster convergence but reduced stability
-    search_mult = np.array([0.9, 1.1])
-
     # We DON'T estimate epsilon_g here and instead do that in the next module
     # when searching for rotation
 
@@ -294,15 +247,15 @@ if __name__=="__main__":
 
     bw = np.mean(np.diff(pds.frequency.values))
     ratio = np.sum(fit_model(pds, l1_peaks)-1) / np.sum(fit_model(pds, l0_peaks)-1)
-    summary['visibility_ratio'] = ratio
+    data['visibility_ratio'] = ratio
     print(f"Visibility ratio (l=1/l=0): {ratio}")
 
     # Create artificial frequencies for creation of stretched power spectrum using values determined from TACO for this star
     freqs = frequencies.Frequencies(frequency=pds_l023_removed.frequency.values,
-                                    numax=summary.numax.values,
-                                    delta_nu=summary.DeltaNu.values if np.isfinite(summary.DeltaNu.values) else None,
-                                    epsilon_p=summary.eps_p.values if np.isfinite(summary.eps_p.values) else None,
-                                    alpha=summary.alpha.values if np.isfinite(summary.alpha.values) else None)
+                                    numax=data.numax.values,
+                                    delta_nu=data.DeltaNu.values if np.isfinite(data.DeltaNu.values) else None,
+                                    epsilon_p=data.eps_p.values if np.isfinite(data.eps_p.values) else None,
+                                    alpha=data.alpha.values if np.isfinite(data.alpha.values) else None)
     ## Estimate ΔΠ1 self-consistently with some initial guesses using both a high and low initial guess
 
     RC_test_dpi, RC_test_maximum, RC_sig = DPi1_from_stretched_PDS(RC_init, q_RC,
@@ -313,15 +266,15 @@ if __name__=="__main__":
                                                             search_range = RC_DPi_range)
 
 
-    if (RC_sig == False) and (summary.DeltaNu.values < 4.0):
-        summary['DeltaPi1'] = np.nan
-        summary['coupling'] = np.nan
-        summary['eps_g'] = np.nan
-        summary['DeltaPi1_val'] = np.nan
-        summary['DeltaPi1_Flag'] = 2
-        summary['DeltaPi1_sig'] = np.nan
-        summary.to_csv(argv.summary, index=False)
-        sys.exit('No significant peak detected in power spectrum and delta nu too low to obtain period spacing for RGB star, exiting ...')
+    if (RC_sig == False) and (data.DeltaNu.values < 4.0):
+        data['DeltaPi1'] = np.nan
+        data['coupling'] = np.nan
+        data['eps_g'] = np.nan
+        data['DeltaPi1_val'] = np.nan
+        data['DeltaPi1_Flag'] = 2
+        data['DeltaPi1_sig'] = np.nan
+        print('No significant peak detected in power spectrum and delta nu too low to obtain period spacing for RGB star')
+        return(None, None, data)
 
     RGB_test_dpi, RGB_test_maximum, RGB_sig = DPi1_from_stretched_PDS(RGB_init, q_RGB,
                                                                 freqs,
@@ -333,17 +286,17 @@ if __name__=="__main__":
     #print("SIGS: ", RC_sig, RGB_sig)
 
     if (RC_sig == False) and (RGB_sig == False):
-        summary['DeltaPi1'] = np.nan
-        summary['coupling'] = np.nan
-        summary['eps_g'] = np.nan
-        summary['DeltaPi1_val'] = np.nan
-        summary['DeltaPi1_sig'] = np.nan
-        summary['DeltaPi1_Flag'] = 3
-        summary.to_csv(argv.summary, index=False)
-        sys.exit('No significant peak detected in power spectrum of stretched power spectrum, exiting ...')
+        data['DeltaPi1'] = np.nan
+        data['coupling'] = np.nan
+        data['eps_g'] = np.nan
+        data['DeltaPi1_val'] = np.nan
+        data['DeltaPi1_sig'] = np.nan
+        data['DeltaPi1_Flag'] = 3
+        print('No significant peak detected in power spectrum of stretched power spectrum')
+        return(None, None, data)
 
     # If significant peak only found in one of two test spectra
-    elif (RC_sig < 0.9) and (RGB_sig >= 0.9) or (summary['DeltaNu'].values > 13.0): # Take delta_nu > 13uHz as definitely RGB to avoid secondary clump stars
+    elif (RC_sig < 0.9) and (RGB_sig >= 0.9) or (data['DeltaNu'].values > 13.0): # Take delta_nu > 13uHz as definitely RGB to avoid secondary clump stars
         DPi1_init = RGB_init
         q_init = q_RGB
         search_range = RGB_DPi_range
@@ -386,39 +339,27 @@ if __name__=="__main__":
                 converged = True
                 break
 
-    if converged == False:
-        summary['DeltaPi1'] = np.nan
-        summary['coupling'] = np.nan
-        summary['eps_g'] = np.nan
-        summary['DeltaPi1_val'] = np.nan
-        summary['DeltaPi1_Flag'] = 4
-        summary['DeltaPi1_sig'] = np.nan
-        summary.to_csv(argv.summary, index=False)
-
-        sys.exit('Algorithm did not converge, no period spacing found, exiting ...')
-
-    #if (curr_DPi1 < 50) and (abs(curr_DPi1 - DPi1_init) > 15.0):
-    #    summary['DeltaPi1'] = curr_DPi1
-    #    summary['coupling'] = np.nan
-    #    summary['eps_g'] = np.nan
-    #    summary['DeltaPi1_val'] = curr_val
-    #    summary['DeltaPi1_Flag'] = 5
-    #    summary.to_csv(argv.summary, index=False)
-    #    sys.exit('DPi1 value is too low, star needs to be checked, exiting ...')
-
-
+    if not converged:
+        data['DeltaPi1'] = np.nan
+        data['coupling'] = np.nan
+        data['eps_g'] = np.nan
+        data['DeltaPi1_val'] = np.nan
+        data['DeltaPi1_Flag'] = 4
+        data['DeltaPi1_sig'] = np.nan
+        print('Algorithm did not converge, no period spacing found')
+        return(None, None, data)
 
     print(f"DPi1: {curr_DPi1}")
 
-    if argv.dpi_only:
-        summary['DeltaPi1'] = curr_DPi1
-        summary['coupling'] = np.nan
-        summary['eps_g'] = np.nan
-        summary['DeltaPi1_val'] = curr_val
-        summary['DeltaPi1_Flag'] = 0
-        summary['DeltaPi1_sig'] = curr_sig
-        summary.to_csv(argv.summary, index=False)
-        sys.exit('Find DPi1 only flag set, exiting ...')
+    if dpi_only:
+        data['DeltaPi1'] = curr_DPi1
+        data['coupling'] = np.nan
+        data['eps_g'] = np.nan
+        data['DeltaPi1_val'] = curr_val
+        data['DeltaPi1_Flag'] = 0
+        data['DeltaPi1_sig'] = curr_sig
+        print('Find DPi1 only flag set')
+        return(None, None, data)
 
 
     # Find optimal coupling value
@@ -456,13 +397,13 @@ if __name__=="__main__":
 
     print(f"Best parameters q={q_best}, DPi={dpi_best} at significance level {sig_best}")
 
-    summary['DeltaPi1'] = dpi_best
-    summary['coupling'] = q_best
-    summary['eps_g'] = 0
-    summary['DeltaPi1_sig'] = sig_best
+    data['DeltaPi1'] = dpi_best
+    data['coupling'] = q_best
+    data['eps_g'] = 0
+    data['DeltaPi1_sig'] = sig_best
 
     if np.all(results[:,1] == 0):
-        summary.to_csv(argv.summary, index=False)
+        data.to_csv(argv.data, index=False)
 
     # Update aritifical frequencies to compute zeta and tau for all frequencies
     params = {'calc_l0': True,
@@ -494,7 +435,4 @@ if __name__=="__main__":
                                                             pds.frequency.values,
                                                             zeta)
 
-    # Write out results
-    summary.to_csv(argv.summary, index=False)
-    pds.to_csv(argv.pds, index=False)
-    peaks.to_csv(argv.peaks, index=False)
+    return(pds, peaks, data)

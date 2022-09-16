@@ -77,6 +77,7 @@ RUN pip install \
       lightkurve \
       loguru \
       nbformat \
+      numba \
       numpy \
       pandas \
       plotly \

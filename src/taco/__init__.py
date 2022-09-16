@@ -7,6 +7,7 @@ from .background_fit import background_fit
 from .peak_find import peak_find
 from .peaks_mle import peaks_mle
 from .peak_bag_mode_id02 import peak_bag_mode_id02
+from .peak_bag_period_spacing import peak_bag_period_spacing
 
 __doc__ = """
 TACO - Tools for Automated Characterisation of Oscillations
@@ -26,4 +27,5 @@ __all__ = [
     "peak_find",
     "peaks_mle",
     "peak_bag_mode_id02",
+    "peak_bag_period_spacing",
 ]
