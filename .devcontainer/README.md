@@ -38,8 +38,9 @@ pytest
 ```
 
 
-# Install TACO environment with conda 
+# Install TACO environment with conda
 
+```
 wget https://repo.anaconda.com/miniconda/Miniconda3-py38_4.12.0-Linux-x86_64.sh
 bash ./Miniconda3-py38_4.12.0-Linux-x86_64.sh
 
@@ -49,3 +50,4 @@ conda remove --name taco --all
 
 conda activate taco
 conda deactivate
+```
