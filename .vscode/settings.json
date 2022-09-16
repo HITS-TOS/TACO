@@ -10,5 +10,7 @@
     "python.testing.pytestArgs": [],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
-    "editor.stickyScroll.enabled": true
+    "editor.stickyScroll.enabled": true,
+    "files.trimTrailingWhitespace": true,
+    "files.trimFinalNewlines": true
 }
