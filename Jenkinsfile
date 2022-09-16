@@ -12,6 +12,16 @@ pipeline {
     }
 
     stages {
+        stage('Submodules') {
+            agent {
+                dockerfile {
+                    dir '.devcontainer'
+                }
+            }
+            steps {
+                sh 'git submodule update --init --recursive'
+            }
+        }
         stage('Static Code Checking') {
             agent {
                 dockerfile {
