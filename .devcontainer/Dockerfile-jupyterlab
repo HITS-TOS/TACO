@@ -34,7 +34,7 @@ RUN pip install \
 
 COPY . /TACO
 COPY jupyter/pipeline.ipynb "$HOME/work/pipeline.ipynb"
-COPY data/*.dat "$HOME/work/data/"
+COPY data/*.dat "$HOME/data/"
 
 ENV PYTHONPATH=$PYTHONPATH:/TACO/src:/TACO/libs/sloscillations
 
