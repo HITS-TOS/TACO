@@ -33,8 +33,8 @@ RUN pip install \
       sklearn
 
 COPY . /TACO
-COPY jupyter "$HOME/work"
-COPY data "$HOME/work/data"
+COPY jupyter/pipeline.ipynb "$HOME/work/pipeline.ipynb"
+COPY data/*.dat "$HOME/work/data/"
 
 ENV PYTHONPATH=$PYTHONPATH:/TACO/src:/TACO/libs/sloscillations
 

@@ -14,4 +14,4 @@ docker build -t taco-jupyterlab -f .devcontainer/Dockerfile-jupyterlab .
 docker run -it --rm -p 8888:8888 taco-jupyterlab
 ```
 
-Open the printed URL in your browser to access Jupyterlab. The jupyter notebook `juputer/pipeline.ipynb` is a good starting point.
+Open the printed URL in your browser to access Jupyterlab. The jupyter notebook `work/pipeline.ipynb` is a good starting point.
