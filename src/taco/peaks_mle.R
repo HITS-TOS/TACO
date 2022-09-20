@@ -192,5 +192,5 @@ peaks_mle_r <- function(pds, peaks, data, mixedpeaks, maxlwd,
                 mutate(npeaks = nrow(peaks.mle %>% filter(AIC > minAIC)))
         }
     }
-    return(list(peaks, data))
+    return(list(peaks.mle, data))
 }
