@@ -32,4 +32,10 @@ RUN pip install \
       scipy \
       sklearn
 
+COPY . /TACO
+COPY jupyter "$HOME/work"
+COPY data "$HOME/work/data"
+
+ENV PYTHONPATH=$PYTHONPATH:/TACO/src:/TACO/libs/sloscillations
+
 USER ${NB_UID}
