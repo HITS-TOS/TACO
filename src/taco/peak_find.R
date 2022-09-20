@@ -33,8 +33,8 @@ peak_find_r <- function(pds, ofac_pds, data, peaks, snr, prob,
 
         print("Removing l=0,2,3 first")
         peaks <- peaks %>%
-            filter(frequency > summary$numax - 3*summary$sigmaEnv,
-                   frequency < summary$numax + 3*summary$sigmaEnv)
+            filter(frequency > data$numax - 3 * data$sigmaEnv,
+                   frequency < data$numax + 3 * data$sigmaEnv)
 
         l02_peaks <- peaks %>%
             filter(l == 0 || l == 2 || l == 3)
@@ -45,12 +45,12 @@ peak_find_r <- function(pds, ofac_pds, data, peaks, snr, prob,
         # If max linewidth argument not set
         if (is.null(maxlwd)) {
             # Since this is for finding mixed modes we add in constraint that linewidth must be less than Gamma0
-            if(is.null(summary$gamma0)) {
-                maxlwd <- deltanu/2 + 0.1*deltanu/2
+            if(is.null(data$gamma0)) {
+                maxlwd <- deltanu / 2 + 0.1 * deltanu / 2
                 print(paste("Gamma0 from summary file is NA therefore setting to slightly larger than bin width: ", maxlwd, "uHz"))
                 #stop("Gamma0 from summary file is NA please supply a maximum linewidth")
             } else {
-                maxlwd <- 1.5*summary$gamma0
+                maxlwd <- 1.5 * data$gamma0
                 print(paste("Maximum peak linewidth (HWHM) not set, therefore set to Gamma0: ", maxlwd, "uHz"))
             }
         } else{
