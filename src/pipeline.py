@@ -63,7 +63,7 @@ def pipeline(argv):
         pds_bgr, oversampled_pds_bgr, data = taco.background_fit(
             pds, oversampled_pds, data,
             **settings['pipeline'][4]['background_fit'])
-    
+
         # 5) Find peaks
         peaks = taco.peak_find(pds_bgr, oversampled_pds_bgr, data,
             **settings['pipeline'][5]['peak_find'])
@@ -78,7 +78,7 @@ def pipeline(argv):
 
         # 8) Find mixed peaks
         mixed_peaks = taco.peak_find(
-            pds_bgr, oversampled_pds_bgr, peaks = peaks, removel02 = True,
+            pds_bgr, oversampled_pds_bgr, data, peaks = peaks, removel02 = True,
             **settings['pipeline'][8]['peak_find'])
 
         # 9) MLE with mixed peaks
