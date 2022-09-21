@@ -36,11 +36,15 @@ peak_find_r <- function(pds, ofac_pds, data, peaks, snr, prob,
             filter(frequency > data$numax - 3 * data$sigmaEnv,
                    frequency < data$numax + 3 * data$sigmaEnv)
 
-        l02_peaks <- peaks %>%
-            filter(l == 0 || l == 2 || l == 3)
+        if (nrow(peaks) != 0) {
+            l02_peaks <- peaks %>%
+                filter(l == 0 || l == 2 || l == 3)
 
-        pds_l02_removed <- pds %>%
-            mutate(power = power / fit_model(pds = ., peaks = l02_peaks))
+            pds_l02_removed <- pds %>%
+                mutate(power = power / fit_model(pds = ., peaks = l02_peaks))
+        } else {
+            pds_l02_removed <- new_pds
+        }
 
         # If max linewidth argument not set
         if (is.null(maxlwd)) {

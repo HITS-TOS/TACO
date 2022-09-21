@@ -10,7 +10,7 @@ from rpy2.robjects.packages import STAP
 def _none2null(none_obj):
     return ro.r("NULL")
 
-def peaks_mle(pds, peaks, data, mixedpeaks = None, maxlwd = None,
+def peaks_mle(pds, peaks, data, mixed_peaks = None, maxlwd = None,
               removel02 = False, minAIC = 2, navg = 1, finalfit = False):
     """
     MLE optimization for the peaks found by peakFind.R (or another way)
@@ -31,7 +31,7 @@ def peaks_mle(pds, peaks, data, mixedpeaks = None, maxlwd = None,
         data(pandas.DataFrame):Summary data
             Columns:
                 Name: numax, dtype: float
-        mixedpeaks(pandas.DataFrame): Mixed mode peaks from peak finding
+        mixed_peaks(pandas.DataFrame): Mixed mode peaks from peak finding
             Columns:
                 Name: frequency, dtype: float[micro-Hertz]
         maxlwd(float): Maximum search linewidth for resolved peaks in the CWT search
@@ -55,7 +55,7 @@ def peaks_mle(pds, peaks, data, mixedpeaks = None, maxlwd = None,
             r_peaks = ro.conversion.py2rpy(peaks)
             r_data = ro.conversion.py2rpy(data)
             result = peaks_mle.peaks_mle_r(r_pds, r_peaks, r_data,
-                 mixedpeaks = mixedpeaks,
+                 mixed_peaks = mixed_peaks,
                  maxlwd = maxlwd,
                  removel02 = removel02,
                  minAIC = minAIC,

@@ -8,7 +8,7 @@ library(readr, quietly = TRUE)
 source("src/peakFind_lib.R", chdir = TRUE)
 source("src/l02_modes_id.R", chdir = TRUE)
 
-peaks_mle_r <- function(pds, peaks, data, mixedpeaks, maxlwd,
+peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
                         removel02, minAIC, navg, finalfit) {
 
     peaks <- peaks %>% arrange(frequency)
@@ -29,21 +29,22 @@ peaks_mle_r <- function(pds, peaks, data, mixedpeaks, maxlwd,
     if (finalfit == TRUE) {
 
         if (nrow(peaks) == 0) {
-            peaks.mle <- tibble(frequency=double(),
-                                amplitude=double(),
-                                linewidth=double(),
-                                frequency_sd=double(),
-                                amplitude_sd=double(),
-                                linewidth_sd=double(),
-                                height=double(),
-                                AIC=double())
-            stop("No peaks detected so not proceeding with MLE fit")
-            return(peaks.mle)
+            peaks.mle <- tibble(frequency = double(),
+                                amplitude = double(),
+                                linewidth = double(),
+                                frequency_sd = double(),
+                                amplitude_sd = double(),
+                                linewidth_sd = double(),
+                                height = double(),
+                                AIC = double())
+            print("No peaks detected so not proceeding with MLE fit")
+            return(list(peaks.mle, data))
         }
 
-        peaks.mle <-
-            peaks_MLE_final_sd(peaks = peaks, pds = pds,
-                            final_fit_factor = 0.1, naverages = navg) %>%
+        peaks.mle <- peaks_MLE_final_sd(peaks = peaks,
+                                        pds = pds,
+                                        final_fit_factor = 0.1,
+                                        naverages = navg) %>%
             arrange(frequency)
 
         # 31/01/2020 Add n and l ID back in as no frequencies will have been removed
@@ -73,10 +74,11 @@ peaks_mle_r <- function(pds, peaks, data, mixedpeaks, maxlwd,
                 pds_l02_removed <- pds
             }
 
-            rest_peaks <- mixedpeaks %>% arrange(frequency)
+            rest_peaks <- mixed_peaks %>% arrange(frequency)
 
             if (nrow(rest_peaks) == 0) {
-                stop("No peaks detected so not proceeding with MLE fit")
+                print("No peaks detected so not proceeding with MLE fit")
+                return(list(peaks.mle, data))
             }
 
             # If max linewidth argument not set
@@ -94,32 +96,29 @@ peaks_mle_r <- function(pds, peaks, data, mixedpeaks, maxlwd,
                 print(paste("Maximum peak linewidth (HWHM) set, using value ", maxlwd, "uHz"))
             }
 
-            peaks.mle <-
-                peaks_MLE_sd(peaks = rest_peaks, pds = pds_l02_removed, maxLWD = maxlwd, naverages = navg) %>%
+            peaks.mle <- peaks_MLE_sd(peaks = rest_peaks,
+                                      pds = pds_l02_removed,
+                                      maxLWD = maxlwd,
+                                      naverages = navg) %>%
                 arrange(frequency) %>%
                 filter(AIC > minAIC)
 
             # Add n,l & m columns so consistent with l=0,2 peaks file
-            peaks.mle[,c("n","l")] <- NA
-
-            ## Write the output
-            write_csv(x = peaks.mle, file = argv$mixedoutput)
-            ## Concatenate l=0,2 from first peaks file and mixed peaks file and save to peaksMLE.csv
-
-            peaks.full <- rbind(l02_peaks, peaks.mle)
+            peaks.mle[, c("n", "l")] <- NA
 
         } else {
 
-            if(nrow(peaks) == 0){
-                peaks.mle <- data.frame(frequency=double(),
-                                        amplitude=double(),
-                                        linewidth=double(),
-                                        frequency_sd=double(),
-                                        amplitude_sd=double(),
-                                        linewidth_sd=double(),
-                                        height=double(),
-                                        AIC=double())
-                stop("No peaks detected so not proceeding with MLE fit")
+            if (nrow(peaks) == 0) {
+                peaks.mle <- data.frame(frequency = double(),
+                                        amplitude = double(),
+                                        linewidth = double(),
+                                        frequency_sd = double(),
+                                        amplitude_sd = double(),
+                                        linewidth_sd = double(),
+                                        height = double(),
+                                        AIC = double())
+                print("No peaks detected so not proceeding with MLE fit")
+                return(list(peaks.mle, data))
             }
 
             # 22/12/19 Add in maxlwd default so consistent with peakfind
