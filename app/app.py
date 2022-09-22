@@ -59,7 +59,7 @@ def load_ts(KIC, filtered=True):
     if filtered == True:
         ts = pd.read_csv(str(dir)+'/'+str(KIC)+'/filtered.csv')
     else:
-        ts = pd.read_csv(str(dir)+'/'+str(KIC)+'/raw.dat', delimiter=r'\s+', names=['time', 'flux'])
+        ts = pd.read_csv(str(dir)+'/'+str(KIC)+'/raw.dat', names=['time', 'flux'], comment = '#', header = None, delim_whitespace = True)
 
 
  #   if ts.flux.mean() > 1e3:
