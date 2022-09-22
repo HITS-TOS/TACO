@@ -50,6 +50,8 @@ def pipeline(argv):
         pds = taco.calc_pds(ts_filtered, **settings['pipeline'][1]['pds'],
             output_directory = Path(argv.output_directory, input_name))
 
+        pds.to_csv(Path(argv.output_directory, input_name, "pds.csv"), index = False)
+
         # 2) Oversampled PDS
         oversampled_pds = taco.calc_pds(ts_filtered, **settings['pipeline'][2]['oversampled_pds'],
             output_directory = Path(argv.output_directory, input_name))
@@ -64,11 +66,18 @@ def pipeline(argv):
             pds, oversampled_pds, data,
             **settings['pipeline'][4]['background_fit'])
 
+        pds_bgr.to_csv(Path(argv.output_directory, input_name, "pds_bgr.csv"), index = False)
+        data.to_csv(Path(argv.output_directory, input_name, "data.csv"), index = False)
+
         # 5) Find peaks
+        if argv.verbose > 0:
+            print('5) Find peaks')
         peaks = taco.peak_find(pds_bgr, oversampled_pds_bgr, data,
             **settings['pipeline'][5]['peak_find'])
 
         # 6) MLE
+        if argv.verbose > 0:
+            print('5) MLE')
         peaks_mle, data = taco.peaks_mle(pds_bgr, peaks, data,
             **settings['pipeline'][6]['peaks_mle'])
 

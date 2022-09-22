@@ -31,7 +31,7 @@ pipeline:
         output_quantiles: pds_fit_quantiles.csv
         posterior: pds_fit_posterior.h5
         save_posteriors: False
-        seed: -1
+        seed: 42
     - peak_find:
         snr: 1.1
         prob: 0.0001
