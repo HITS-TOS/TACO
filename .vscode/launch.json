@@ -1,0 +1,11 @@
+{
+    "configurations": [
+        {
+            "name": "Python: pipeline.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/pipeline.py",
+            "args": ["-s", "${workspaceFolder}/pipeline/pipeline_settings_full.yaml", "-i", "${workspaceFolder}/data"]
+        }
+    ]
+}
