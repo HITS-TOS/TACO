@@ -78,17 +78,21 @@ def pipeline(argv):
 
         # 8) Find mixed peaks
         mixed_peaks = taco.peak_find(
-            pds_bgr, oversampled_pds_bgr, data, peaks = peaks, removel02 = True,
+            pds_bgr, oversampled_pds_bgr, data, peaks = peaks_mle, removel02 = True,
             **settings['pipeline'][8]['peak_find'])
 
         # 9) MLE with mixed peaks
-        peaks, data = taco.peaks_mle(
+        peaks_mle, data = taco.peaks_mle(
             pds_bgr, peaks_mle, data, removel02 = True, mixed_peaks = mixed_peaks,
             **settings['pipeline'][9]['peaks_mle'])
 
         # 10) Final fit
-        peaks, data = taco.peaks_mle(pds_bgr, peaks, data, finalfit = True,
+        peaks_mle, data = taco.peaks_mle(pds_bgr, peaks_mle, data, finalfit = True,
             **settings['pipeline'][10]['peaks_mle'])
+
+        # 11) Bag_period_spacing
+        pds_bgr, peaks_mle, data = taco.peak_bag_period_spacing(pds_bgr, peaks_mle, data,
+            **settings['pipeline'][11]['peak_bag_period_spacing'])
 
 if __name__ == "__main__":
 

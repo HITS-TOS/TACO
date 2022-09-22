@@ -27,29 +27,35 @@ pipeline:
         nwarmup: 1000
         output_backg_model: out_backg_model.pkl
         output_ofac_pds_bgr: ofac_pds_bgr.csv
-        output_pds_pgr: pds_bgr.csv
+        output_pds_bgr: pds_bgr.csv
         output_quantiles: pds_fit_quantiles.csv
         posterior: pds_fit_posterior.h5
-        save_posteriors: false
+        save_posteriors: False
         seed: -1
-    - peakFind:
+    - peak_find:
         snr: 1.1
         prob: 0.0001
         maxlwd: NA
         minAIC: 2
         navg: 1
-    - peaksMLE:
+    - peaks_mle:
         minAIC: 2
-    - peakBagModeId02:
-    - peakFind:
+    - peak_bag_mode_id02:
+    - peak_find:
         snr: 1.1
         prob: 0.0001
         maxlwd: NA
         minAIC: 2
         navg: 1
-    - peaksMLE:
+    - peaks_mle:
         minAIC: 2
         init: peaksMLE.csv
         mixedpeaks: mixedpeaks.csv
-    - peaksMLE:
+    - peaks_mle:
         minAIC: 2
+    - peak_bag_period_spacing:
+        maxiters: 10
+        niters: 5
+        dpi_only: False
+        ncores: 1
+        plot: False
