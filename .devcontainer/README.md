@@ -62,5 +62,6 @@ docker run -it taco-base bash
 
 ```
 git clone --recurse-submodules https://github.com/HITS-TOS/TACO.git
+cd TACO
 python3 -m build
 ```

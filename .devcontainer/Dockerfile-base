@@ -28,4 +28,4 @@ RUN useradd --uid ${USER_UID} -m ${USERNAME} \
 
 USER ${USERNAME}
 
-WORKDIR "${HOME}"
+WORKDIR /home/${USERNAME}
