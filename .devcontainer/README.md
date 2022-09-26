@@ -51,3 +51,16 @@ conda remove --name taco --all
 conda activate taco
 conda deactivate
 ```
+
+
+## Test pip packaging
+
+```
+docker build -t taco-base -f .devcontainer/Dockerfile-base .
+docker run -it taco-base bash
+```
+
+```
+git clone --recurse-submodules https://github.com/HITS-TOS/TACO.git
+python3 -m build
+```
