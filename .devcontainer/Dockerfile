@@ -54,7 +54,7 @@ RUN apt-get update \
        tk \
        vim \
        wget \
-  && apt-get clean \
+ && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
 RUN Rscript -e 'install.packages(c( \
