@@ -104,7 +104,9 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
                 filter(AIC > minAIC)
 
             # Add n,l & m columns so consistent with l=0,2 peaks file
-            peaks.mle[, c("n", "l")] <- NA
+            peaks.mle[, c("n", "l")] <- NaN
+
+            peaks.mle <- rbind(l02_peaks, peaks.mle)
 
         } else {
 
