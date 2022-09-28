@@ -55,13 +55,34 @@ conda deactivate
 
 ## Test pip packaging
 
-```
-docker build -t taco-base -f .devcontainer/Dockerfile-base .
-docker run -it taco-base bash
-```
+# Build docker base container
 
 ```
-git clone --recurse-submodules https://github.com/HITS-TOS/TACO.git
-cd TACO
+docker build -t taco-base \
+    --build-arg USERNAME=$(id -un) \
+    --build-arg GROUPNAME=users \
+    --build-arg USER_UID=$(id -u) \
+    --build-arg USER_GID=$(id -g) \
+    -f .devcontainer/Dockerfile-base .
+```
+
+# Run docker base container
+
+```
+docker run -it --rm \
+    -v "${PWD}":/home/${USER}/work \
+    taco-base bash
+```
+
+# Build python wheel
+
+```
+cd work
 python3 -m build
+```
+
+# Test python wheel
+
+```
+pip install dist/taco-0.1-py3-none-any.whl
 ```

@@ -1,0 +1,13 @@
+argparse
+emcee
+lightkurve
+loguru
+nbformat
+numba
+numpy
+pandas
+plotly
+pyyaml
+rpy2==3.3.*
+scipy
+sklearn
