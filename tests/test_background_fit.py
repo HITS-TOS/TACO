@@ -38,10 +38,16 @@ def test_background_fit():
 def test_background_fit_001296068():
     """Unit test real data with ID 001296068"""
 
-    pds = pd.read_csv("tests/data/test_background_pds.csv")
-    ofac_pds = pd.read_csv("tests/data/test_background_ofac_pds.csv")
-    data = pd.read_csv("tests/data/test_background_summary.csv")
-    _, _, data = background_fit(pds, ofac_pds, data, seed = 42)
-    assert data['Hmax'][0] == pytest.approx(10407.676594861878, 1e-6)
-    assert data['Bmax'][0] == pytest.approx(3375.215027473658, 1e-6)
-    assert data['HBR'][0] == pytest.approx(3.083559568840864, 1e-6)
+    pds = pd.read_csv("tests/data/test_background_fit/pds.csv")
+    ofac_pds = pd.read_csv("tests/data/test_background_fit/ofac_pds.csv")
+    data = pd.read_csv("tests/data/test_background_fit/summary.csv")
+
+    pds_bgr, ofac_pds_bgr, data = background_fit(pds, ofac_pds, data, seed = 42)
+
+    pds_bgr_reference = pd.read_csv("tests/data/test_background_fit/result/pds_bgr.csv")
+    ofac_pds_bgr_reference = pd.read_csv("tests/data/test_background_fit/result/ofac_pds_bgr.csv")
+    data_reference = pd.read_csv("tests/data/test_background_fit/result/summary.csv")
+
+    pd.testing.assert_frame_equal(pds_bgr, pds_bgr_reference)
+    pd.testing.assert_frame_equal(ofac_pds_bgr, ofac_pds_bgr_reference)
+    pd.testing.assert_frame_equal(data, data_reference)

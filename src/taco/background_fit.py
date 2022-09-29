@@ -63,7 +63,9 @@ def background_fit(pds, ofac_pds, data, **kwargs):
         kwargs(dict):
 
     Returns:
-        data(pandas.DataFrame):Summary data
+        pds_bgr(pandas.DataFrame): Periodogram, background corrected
+        ofac_pds_bgr(pandas.DataFrame): Oversampled periodogram, background corrected
+        data(pandas.DataFrame): Summary data
             Columns:
                 Hmax(float):
                 Bmax(float):
