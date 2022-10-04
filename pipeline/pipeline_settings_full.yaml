@@ -35,16 +35,13 @@ pipeline:
     - peak_find:
         snr: 1.1
         prob: 0.0001
-        maxlwd: NA
         minAIC: 2
         navg: 1
     - peaks_mle:
         minAIC: 2
-    - peak_bag_mode_id02:
     - peak_find:
         snr: 1.1
         prob: 0.0001
-        maxlwd: NA
         minAIC: 2
         navg: 1
     - peaks_mle:
