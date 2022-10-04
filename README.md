@@ -22,6 +22,15 @@ git submodule update --init --recursive
 Note: As long as the repository is private a [personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token) is needed for the authentication.
 
 
+## Tests
+
+Tests are implemented using pytest and can be executed with
+
+```
+python3 -m pytest
+```
+
+
 ## Jupyterlab
 
 The Jupyterlab docker container provides a comfortable way to perform TACO modules and can by started with
