@@ -90,7 +90,8 @@ RUN pip install \
       black \
       ipykernel \
       pylint \
-      pytest
+      pytest \
+      pytest-timeout
 
 RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && locale-gen
 
