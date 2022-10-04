@@ -91,8 +91,8 @@ def background_fit(pds, ofac_pds, data, **kwargs):
     bg_fit.MCMC(bg_fit.bg_params, **settings.get_mcmc_settings())  # MCMC with binned PDS
     print("Finished initial MCMC with binned PDS")
 
-    chain_i = np.argmax(bg_fit.MCMC_sampler.lnprobability[:,-1])
-    theta0 = bg_fit.MCMC_sampler.chain[chain_i,-1,:]
+    chain_i = np.argmax(bg_fit.MCMC_sampler.get_log_prob()[-1,:])
+    theta0 = bg_fit.MCMC_sampler.get_chain()[-1,chain_i,:]
 
     while (i < 5 and not done_p):
         if (bg_fit.MCMCp["mixed_p"]
@@ -101,8 +101,8 @@ def background_fit(pds, ofac_pds, data, **kwargs):
             done_p = True
             print("MCMC with binned PDS done.")
         else:
-            chain_i = np.argmax(bg_fit.MCMC_sampler.lnprobability[:,-1])
-            theta0 = bg_fit.MCMC_sampler.chain[chain_i,-1,:]
+            chain_i = np.argmax(bg_fit.MCMC_sampler.get_log_prob()[-1,:])
+            theta0 = bg_fit.MCMC_sampler.get_chain()[-1,chain_i,:]
             #Pn, A1, b1, A2, b2, A3, b3, Pg, numax, sigmaEnv = theta0
             iguess = bg_fit.theta_to_dict(theta0)
             #iguess = {"Pn":Pn, "A1":A1, "b1":b1, "A2":A2, "b2":b2, "A3":A3, "b3":b3,
