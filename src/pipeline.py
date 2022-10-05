@@ -50,8 +50,6 @@ def pipeline(argv):
         pds = taco.calc_pds(ts_filtered, **settings['pipeline'][1]['pds'],
             output_directory = Path(argv.output_directory, input_name))
 
-        pds.to_csv(Path(argv.output_directory, input_name, "pds.csv"), index = False)
-
         # 2) Oversampled PDS
         oversampled_pds = taco.calc_pds(ts_filtered, **settings['pipeline'][2]['oversampled_pds'],
             output_directory = Path(argv.output_directory, input_name))
@@ -65,9 +63,6 @@ def pipeline(argv):
         pds_bgr, oversampled_pds_bgr, data = taco.background_fit(
             pds, oversampled_pds, data,
             **settings['pipeline'][4]['background_fit'])
-
-        pds_bgr.to_csv(Path(argv.output_directory, input_name, "pds_bgr.csv"), index = False)
-        data.to_csv(Path(argv.output_directory, input_name, "data.csv"), index = False)
 
         # 5) Find peaks
         if argv.verbose > 0:
@@ -101,6 +96,13 @@ def pipeline(argv):
         # 11) Bag_period_spacing
         pds_bgr, peaks_mle, data = taco.peak_bag_period_spacing(pds_bgr, peaks_mle, data,
             **settings['pipeline'][10]['peak_bag_period_spacing'])
+
+        # Write final results
+        data.to_csv(Path(argv.output_directory, input_name, "data.csv"), index = False)
+        pds.to_csv(Path(argv.output_directory, input_name, "pds.csv"), index = False)
+        pds_bgr.to_csv(Path(argv.output_directory, input_name, "pds_bgr.csv"), index = False)
+        peaks_mle.to_csv(Path(argv.output_directory, input_name, "peaks_mle.csv"), index = False)
+
 
 if __name__ == "__main__":
 
