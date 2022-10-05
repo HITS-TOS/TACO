@@ -17,3 +17,6 @@ Rscript ../../../src/peakBagModeId02.R
 
 cd tests/data/test_peak_bag_period_spacing
 python3 ../../../src/peakBagPeriodSpacing.py
+
+cd tests/data/test_peaks_mle_final_fit
+Rscript ../../../src/peaksMLE.R --minAIC 2 --finalfit TRUE --init peaksMLE.csv --mixedpeaks mixedpeaksMLE.csv
