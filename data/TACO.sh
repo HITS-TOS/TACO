@@ -35,8 +35,8 @@ do
         echo "MLE optimisation for peaks"
         time Rscript ../../src/peaksMLE.R  --minAIC 2 --removel02 TRUE --init peaksMLE.csv --mixedpeaks mixedpeaks.csv
         echo "MLE optimisation for peaks"
-        time Rscript ../../src/peaksMLE.R  --minAIC 2 --finalfit TRUE
-        
+        time Rscript ../../src/peaksMLE.R  --minAIC 2 --finalfit TRUE --init peaksMLE.csv --mixedpeaks mixedpeaksMLE.csv
+
     #fi
     cd - > /dev/null
     #break
