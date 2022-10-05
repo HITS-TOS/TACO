@@ -46,10 +46,10 @@ pipeline:
         navg: 1
     - peaks_mle:
         minAIC: 2
-        init: peaksMLE.csv
-        mixedpeaks: mixedpeaks.csv
+        navg: 1
     - peaks_mle:
         minAIC: 2
+        navg: 1
     - peak_bag_period_spacing:
         maxiters: 10
         niters: 5
