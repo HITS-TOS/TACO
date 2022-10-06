@@ -7,7 +7,7 @@ from taco import filter
 
 
 def test_filter():
-    ts = pd.DataFrame({"0": [1, 2, 3, 4], "1": [1, -1, math.inf, -1]})
+    ts = pd.DataFrame.from_dict({"0": [1, 2, 3, 4], "1": [1, -1, math.inf, -1]})
     ts_filtered, data = filter(ts)
     assert len(ts_filtered) == 3
     assert data["mean"].iloc[0] == -7.401486830834377e-17
@@ -27,6 +27,5 @@ input_data = StringIO("""
 def test_filter_2():
     ts = pd.read_csv(input_data, comment = '#', header = None, delim_whitespace=True)
     ts_filtered, data = filter(ts)
-    print(data)
     assert ts_filtered.iat[0, 2] == pytest.approx(-5.4567, 0.001)
     assert data["mean"].iloc[0] == -1.3895674734322306e-13

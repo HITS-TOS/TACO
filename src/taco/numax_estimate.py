@@ -13,16 +13,16 @@ def numax_estimate(pds, data, filter_width = 0.2):
     and the Nyquist frequency.
 
     Parameters:
-        pds(pandas.DataFrame):Periodogram
+        pds(pandas.DataFrame): Periodogram
             Columns:
                 Name: frequency, dtype: float[micro-Hertz]
                 Name: power, dtype: float
-        data(pandas.DataFrame):Summary data
+        data(pandas.DataFrame): Summary data
             Columns:
-                var(float):Variance of the time-series
-                nuNyq(float):Nyquist frequency
-        filterwidth(float):The width of the log-median filter used to remove the background
-                           for the wavelet numax estimation
+                var(float): Variance of the time-series
+                nuNyq(float): Nyquist frequency
+        filterwidth(float): The width of the log-median filter used to remove the background
+                            for the wavelet numax estimation
     """
 
     with open(Path(Path(__file__).parent, 'numax_estimate.R'), 'r') as f:

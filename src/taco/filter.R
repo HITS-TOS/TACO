@@ -1,24 +1,18 @@
 library(dplyr, quietly = TRUE, warn.conflicts = FALSE)
 
-filter_r <- function(lc, width, remove_gaps)
-{
+filter_r <- function(lc, data, width, remove_gaps) {
+
     names(lc)[1] <- "time"
     names(lc)[2] <- "flux"
 
-    lc <-
-        lc %>%
-        filter(is.finite(flux))
+    lc <- lc %>% filter(is.finite(flux))
 
     # Fill the single-point gaps with the mean of the two adjacent points
-    lc <-
-        lc %>%
-        mutate(dt = time - lag(time))
+    lc <- lc %>% mutate(dt = time - lag(time))
 
     deltat <- median(lc$dt, na.rm = TRUE)
 
-    lc <-
-        lc %>%
-        mutate(dt_int = round(dt / deltat))
+    lc <- lc %>% mutate(dt_int = round(dt / deltat))
 
     lc <-
         bind_rows(
@@ -69,16 +63,14 @@ filter_r <- function(lc, width, remove_gaps)
         flux     = lc$flux - smooth$y)
 
     # Some useful quantities
-    data <- tibble(
-        KIC         = NA,
-        raw_data    = NA,
-        mean        = mean(filtered$flux),
-        var         = var(filtered$flux),
-        start_date  = min(filtered$time),
-        end_date    = max(filtered$time),
-        fill_factor = nrow(filtered) *
-            median(diff(filtered$time)) /
-            diff(range(filtered$time)))
+    data$mean        <- mean(filtered$flux)
+    data$var         <- var(filtered$flux)
+    data$start_date  <- min(filtered$time)
+    data$end_date    <- max(filtered$time)
+    data$fill_factor <- nrow(filtered) *
+                        median(diff(filtered$time)) /
+                        diff(range(filtered$time))
 
     return(list(filtered, data))
+
 }

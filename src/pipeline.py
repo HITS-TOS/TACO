@@ -3,11 +3,27 @@
 """ TACO pipline module """
 
 import argparse
+from cmath import nan
 from pathlib import Path
-import yaml
 
 import pandas as pd
+import yaml
+
 import taco
+
+
+def get_kic_id(input_file):
+    """ Returns the KIC identifier from raw data file """
+
+    kic = float("nan")
+    h = open(input_file, 'r')
+    content = h.readlines()
+
+    for line in content:
+        if "KIC" in line:
+            kic = line.split()[-1]
+
+    return kic
 
 
 def pipeline(argv):
@@ -42,8 +58,13 @@ def pipeline(argv):
         Path(argv.output_directory, input_name).mkdir(exist_ok = True)
         ts_raw = pd.read_csv(input_file, comment = '#', header = None, delim_whitespace = True)
 
+        # Set Kepler Input Catalogue (KIC) identification number and raw_data filename
+        data = pd.DataFrame({"KIC": [get_kic_id(input_file)],
+                             "raw_data": [input_name]})
+
         # 0) Filter
-        ts_filtered, data = taco.filter(ts_raw, **settings['pipeline'][0]['filter'],
+        ts_filtered, data = taco.filter(ts_raw, data,
+            **settings['pipeline'][0]['filter'],
             output_directory = Path(argv.output_directory, input_name))
 
         # 1) PDS
@@ -54,8 +75,10 @@ def pipeline(argv):
         oversampled_pds = taco.calc_pds(ts_filtered, **settings['pipeline'][2]['oversampled_pds'],
             output_directory = Path(argv.output_directory, input_name))
 
-        # 3) Estimate numax
+        # Set Nyquist frequency
         data["nuNyq"] = pds["frequency"].iloc[-1]
+
+        # 3) Estimate numax
         data = taco.numax_estimate(pds, data,
             **settings['pipeline'][3]['numax_estimate'])
 
