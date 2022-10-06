@@ -3,6 +3,7 @@
 """ TACO pipline module """
 
 import argparse
+import subprocess
 from cmath import nan
 from pathlib import Path
 
@@ -25,6 +26,8 @@ def get_kic_id(input_file):
 
     return kic
 
+def get_git_revision_short_hash() -> str:
+    return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('ascii').strip()
 
 def pipeline(argv):
     """ TACO pipeline """
@@ -60,7 +63,8 @@ def pipeline(argv):
 
         # Set Kepler Input Catalogue (KIC) identification number and raw_data filename
         data = pd.DataFrame({"KIC": [get_kic_id(input_file)],
-                             "raw_data": [input_name]})
+                             "raw_data": [input_name],
+                             "git-rev-hash": [get_git_revision_short_hash()]})
 
         # 0) Filter
         ts_filtered, data = taco.filter(ts_raw, data,
