@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/usr/bin/env python3
 
 """ TACO pipline module """
 
@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pandas as pd
 import yaml
+from codetiming import Timer
 
 import taco
 
@@ -26,11 +27,16 @@ def get_kic_id(input_file):
 
     return kic
 
+
 def get_git_revision_short_hash() -> str:
     return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('ascii').strip()
 
+
 def pipeline(argv):
     """ TACO pipeline """
+
+    t = Timer("total")
+    t.start()
 
     if not argv.quiet:
         print(" ==========")
@@ -129,6 +135,8 @@ def pipeline(argv):
         pds.to_csv(Path(argv.output_directory, input_name, "pds.csv"), index = False)
         pds_bgr.to_csv(Path(argv.output_directory, input_name, "pds_bgr.csv"), index = False)
         peaks_mle.to_csv(Path(argv.output_directory, input_name, "peaks_mle.csv"), index = False)
+
+    t.stop()
 
 
 if __name__ == "__main__":
