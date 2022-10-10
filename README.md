@@ -41,3 +41,24 @@ docker run -it --rm -p 8888:8888 taco-jupyterlab
 ```
 
 Open the printed URL in your browser to access Jupyterlab. The jupyter notebook `work/pipeline.ipynb` is a good starting point.
+
+
+## Install TACO with conda
+
+Basing on [Miniconda](https://docs.conda.io/en/latest/miniconda.html), TACO can be installed with
+
+```
+conda env create
+conda activate taco
+```
+
+
+## Running high-throughput pipeline
+
+For processing a long list of stars the high-throughput pipeline is available:
+
+```
+pipeline.py -i <input directory> -s <settings file>
+```
+
+The pipeline is taking every `<name>.dat` file in the `input directory` and write the results in a directory `<name>`. A settings file with all entries is available at `pipeline/pipeline_settings_full.yaml`.
