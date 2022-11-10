@@ -4,7 +4,6 @@
 
 import argparse
 import subprocess
-from cmath import nan
 from pathlib import Path
 
 import pandas as pd
@@ -29,7 +28,12 @@ def get_kic_id(input_file):
 
 
 def get_git_revision_short_hash() -> str:
-    return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('ascii').strip()
+    result = 'N/A'
+    try:
+        result = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).decode('ascii').strip()
+    except Exception:
+        print('No git revision hash found.')
+    return result
 
 
 def pipeline(argv):
