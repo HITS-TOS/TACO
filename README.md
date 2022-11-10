@@ -55,10 +55,20 @@ conda activate taco
 
 ## Running high-throughput pipeline
 
-For processing a long list of stars the high-throughput pipeline is available:
-
+For processing a long list of stars the high-throughput pipeline is available.
+Before running the pipline, please execute
+```
+export PATH=$PWD/src:$PATH
+export PYTHONPATH=$PWD/src:$PWD/libs/sloscillations:$PYTHONPATH
+```
+once from the TACO root directory.
+Then the high-troughput pipline can be started with 
 ```
 pipeline.py -i <input directory> -s <settings file>
 ```
+taking every `<name>.dat` file in the `input directory` and write the results in a directory `<name>`.
+A settings file with all entries is available at `pipeline/pipeline_settings_full.yaml`.
 
-The pipeline is taking every `<name>.dat` file in the `input directory` and write the results in a directory `<name>`. A settings file with all entries is available at `pipeline/pipeline_settings_full.yaml`.
+**Tip**
+
+Copy the settings-file into a result directory and executing the pipline from there, leaves the run parameters documented.
