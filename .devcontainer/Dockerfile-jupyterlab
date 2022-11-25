@@ -15,7 +15,7 @@ RUN Rscript -e 'install.packages(c( \
       "lomb" \
     ), dependencies=TRUE, repos = "http://cran.us.r-project.org")'
 
-RUN Rscript -e 'devtools::install_version("ifultools", "2.0-23", repos = "http://cran.us.r-project.org")'
+RUN conda install -c conda-forge/label/gcc7 r-ifultools
 
 RUN pip install \
       argparse \
