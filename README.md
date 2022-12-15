@@ -72,3 +72,14 @@ A settings file with all entries is available at `pipeline/pipeline_settings_ful
 **Tip**
 
 Copy the settings-file into a result directory and executing the pipline from there, leaves the run parameters documented.
+
+
+## Tested operation system architectures
+
+TACO docker-jupyterlab was tested on:
+ - Linux (Ubuntu and CentOS)
+ - MacOS (M1-Chip) (please consider https://github.com/HITS-TOS/TACO/issues/25)
+ - Windows 11, Docker engine 4.15.0 using  WSL 2
+
+TACO conda high-throughput pipeline was tested on:
+ - Linux (CentOS)
