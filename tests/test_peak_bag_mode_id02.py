@@ -13,8 +13,9 @@ def test_peak_bag_mode_id02():
                          "DeltaNu": [1],
                          "eps_p": [1],
                          "gamma0": [1]})
-    peaks, data = peak_bag_mode_id02(pds, peaks, data)
+    peaks, flag, data = peak_bag_mode_id02(pds, peaks, data)
     assert "frequency" in peaks
+    assert flag == 1
 
 def test_peak_bag_mode_id02_001296068():
     """Unit test real data with ID 001296068"""
@@ -22,5 +23,6 @@ def test_peak_bag_mode_id02_001296068():
     pds = pd.read_csv("tests/data/test_peak_bag_mode_id02/pds_bgr.csv")
     peaks = pd.read_csv("tests/data/test_peak_bag_mode_id02/peaksMLE.csv")
     data = pd.read_csv("tests/data/test_peak_bag_mode_id02/summary.csv")
-    peaks, data = peak_bag_mode_id02(pds, peaks, data)
+    peaks, flag, data = peak_bag_mode_id02(pds, peaks, data)
     assert "frequency" in peaks
+    assert flag == 0
