@@ -32,6 +32,8 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                frequency < data$numax + 3 * data$sigmaEnv)
 
     deltanu <- pds$frequency[2] - pds$frequency[1]
+    
+    flag <- 0
 
     ## Check to see if there are any peaks in file, if not then stop
     if (nrow(peaks) == 0) {
@@ -62,8 +64,9 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                 Central_alpha_sd  = NaN,
                 gamma0    = NULL,
                 modeIDFlag = 1)
+        flag <- 1
         print("No peaks detected so not proceeding with mode ID")
-        return(list(peaks, data))
+        return(list(peaks, flag, data))
     } else if (nrow(peaks) < 3) {
         peaks$l <- NA
         data <- data %>%
@@ -82,8 +85,9 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                 Central_alpha_sd  = NaN,
                 gamma0    = NULL,
                 modeIDFlag = 1)
+        flag <- 1
         print("Not enough peaks detected so not proceeding with mode ID")
-        return(list(peaks, data))
+        return(list(peaks, flag, data))
     }
 
     if (data$numax < 5) {
@@ -103,9 +107,9 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                 Central_alpha_sd  = NaN,
                 gamma0    = NULL,
                 modeIDFlag = 2)
-        print("Numax < 10uHz and is too low for the automated
-               mode identification to be reliable.")
-        return(list(peaks, data))
+        flag <- 1
+        print("Numax < 10uHz and is too low for the automated mode identification to be reliable.")
+        return(list(peaks, flag, data))
     }
 
     ## Expected Δν from ν_max
@@ -174,10 +178,9 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                         Central_alpha_sd  = NaN,
                         gamma0    = NaN,
                         modeIDFlag = 3)
-
-        print("Not enough radial modes found to go any further.
-               Mode ID not performed and Δν not estimated")
-        return(list(peaks, data))
+        flag <- 1
+        print("Not enough radial modes found to go any further. Mode ID not performed and Δν not estimated")
+        return(list(peaks, flag, data))
     }
 
     # Fit through frequencies to estimate delta nu, epsilon and alpha
@@ -410,6 +413,6 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
             gamma0    = gamma0,
             modeIDFlag = 0)
 
-    return(list(peaks, data))
+    return(list(peaks, flag, data))
 
 }

@@ -201,7 +201,7 @@ def peak_bag_period_spacing(pds, peaks, data,
         data['DeltaPi1_Flag'] = 1
         data['DeltaPi1_sig'] = np.nan
         print('Delta nu too low to obtain period spacing for any star')
-        return(None, None, data)
+        return(pds, peaks, data)
 
     # Filter peaks file to be within +/-3 sigmaEnv of numax
     peaks = peaks.loc[abs(peaks.frequency.values - data.numax.values) < 3 * data.sigmaEnv.values, ]
@@ -275,7 +275,7 @@ def peak_bag_period_spacing(pds, peaks, data,
         data['DeltaPi1_Flag'] = 2
         data['DeltaPi1_sig'] = np.nan
         print('No significant peak detected in power spectrum and delta nu too low to obtain period spacing for RGB star')
-        return(None, None, data)
+        return(pds, peaks, data)
 
     _, RGB_test_maximum, RGB_sig = DPi1_from_stretched_PDS(RGB_init, q_RGB,
                                                            freqs,
@@ -292,7 +292,7 @@ def peak_bag_period_spacing(pds, peaks, data,
         data['DeltaPi1_sig'] = np.nan
         data['DeltaPi1_Flag'] = 3
         print('No significant peak detected in power spectrum of stretched power spectrum')
-        return(None, None, data)
+        return(pds, peaks, data)
 
     # If significant peak only found in one of two test spectra
     elif (RC_sig < 0.9) and (RGB_sig >= 0.9) or (data['DeltaNu'].values > 13.0): # Take delta_nu > 13uHz as definitely RGB to avoid secondary clump stars
@@ -346,7 +346,7 @@ def peak_bag_period_spacing(pds, peaks, data,
         data['DeltaPi1_Flag'] = 4
         data['DeltaPi1_sig'] = np.nan
         print('Algorithm did not converge, no period spacing found')
-        return(None, None, data)
+        return(pds, peaks, data)
 
     print(f"DPi1: {curr_DPi1}")
 
@@ -358,7 +358,7 @@ def peak_bag_period_spacing(pds, peaks, data,
         data['DeltaPi1_Flag'] = 0
         data['DeltaPi1_sig'] = curr_sig
         print('Find DPi1 only flag set')
-        return(None, None, data)
+        return(pds, peaks, data)
 
 
     # Find optimal coupling value

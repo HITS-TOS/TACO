@@ -45,5 +45,6 @@ def peak_bag_mode_id02(pds, peaks, data):
             result = peak_bag_mode_id02.peak_bag_mode_id02_r(r_pds, r_peaks, r_data)
 
             peaks = ro.conversion.rpy2py(result[0])
-            data = ro.conversion.rpy2py(result[1])
-            return peaks, data
+            flag = ro.conversion.rpy2py(result[1])
+            data = ro.conversion.rpy2py(result[2])
+            return peaks, flag, data
