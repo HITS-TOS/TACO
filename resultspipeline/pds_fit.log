@@ -1,0 +1,67 @@
+2022-12-19 10:06:56,740 INFO # Initial background values set by guesses using numax=22.74810947938048.
+2022-12-19 10:06:56,742 INFO # Sampling with the PDS binned with 300 bins.
+2022-12-19 10:06:56,742 INFO # Sampler started (for warmup).
+2022-12-19 10:06:56,742 INFO # Sampling 1000 iterations as warmup.
+2022-12-19 10:06:56,742 INFO  niter,niterC, slope,nchains,  Rhat,  mESS
+2022-12-19 10:06:59,059 INFO 000000,000000,   inf,0000500,   inf,000000
+2022-12-19 10:07:01,114 INFO 000500,000500,   inf,0001000,   inf,000000
+2022-12-19 10:07:01,114 INFO # Sampling for a minimum of 2000 iterations.
+2022-12-19 10:07:03,007 INFO 001500,000500,   inf,0000050,   inf,000000
+2022-12-19 10:07:04,852 INFO 002000,001000,   inf,0000050,   inf,000000
+2022-12-19 10:07:06,643 INFO 002500,001500,   inf,0000050,   inf,000000
+2022-12-19 10:07:08,438 INFO 003000,002000,   inf,0000050,   inf,000000
+2022-12-19 10:07:08,439 INFO # Sampling until reaching convergence, sufficient mixing and sample size.
+2022-12-19 10:07:14,389 INFO 003500,002500,1.02221,0002500,0.99999,003289
+2022-12-19 10:07:14,390 INFO # Updating background parameter estimations.
+2022-12-19 10:07:14,552 WARNING R[write to console]: 
+Attaching package: ‘broom’
+
+
+2022-12-19 10:07:14,553 WARNING R[write to console]: The following object is masked from ‘package:modelr’:
+
+    bootstrap
+
+
+2022-12-19 10:07:59,481 INFO # Initial background values set by guesses using numax=50.2093882403348.
+2022-12-19 10:07:59,485 INFO # Sampling with the PDS binned with 300 bins.
+2022-12-19 10:07:59,485 INFO # Sampler started (for warmup).
+2022-12-19 10:07:59,485 INFO # Sampling 1000 iterations as warmup.
+2022-12-19 10:07:59,485 INFO  niter,niterC, slope,nchains,  Rhat,  mESS
+2022-12-19 10:08:02,019 INFO 003500,003500,   inf,0000500,   inf,000000
+2022-12-19 10:08:04,481 INFO 000500,000500,   inf,0001000,   inf,000000
+2022-12-19 10:08:04,482 INFO # Sampling for a minimum of 2000 iterations.
+2022-12-19 10:08:06,871 INFO 001500,000500,   inf,0000050,   inf,000000
+2022-12-19 10:08:09,177 INFO 002000,001000,   inf,0000050,   inf,000000
+2022-12-19 10:08:11,417 INFO 002500,001500,   inf,0000050,   inf,000000
+2022-12-19 10:08:13,629 INFO 003000,002000,   inf,0000050,   inf,000000
+2022-12-19 10:08:13,629 INFO # Sampling until reaching convergence, sufficient mixing and sample size.
+2022-12-19 10:08:20,122 INFO 003500,002500,1.00733,0002500,1.00584,003463
+2022-12-19 10:08:20,123 INFO # Updating background parameter estimations.
+2022-12-19 10:12:40,069 WARNING R[write to console]: Warning messages:
+
+2022-12-19 10:12:40,070 WARNING R[write to console]: 1: 
+2022-12-19 10:12:40,071 WARNING R[write to console]: In system2("/usr/bin/otool", c("-L", shQuote(DSO)), stdout = TRUE) :
+2022-12-19 10:12:40,071 WARNING R[write to console]: 
+ 
+2022-12-19 10:12:40,071 WARNING R[write to console]:  running command ''/usr/bin/otool' -L '/Users/hekker/opt/miniconda3/envs/taco/lib/R/library/tcltk/libs//tcltk.so'' had status 1
+
+2022-12-19 10:12:40,071 WARNING R[write to console]: 2: 
+2022-12-19 10:12:40,071 WARNING R[write to console]: In sqrt(diag(solve(peak.hess))) :
+2022-12-19 10:12:40,071 WARNING R[write to console]:  NaNs produced
+
+2022-12-19 10:12:40,071 WARNING R[write to console]: 3: 
+2022-12-19 10:12:40,071 WARNING R[write to console]: In sqrt(diag(solve(peak.hess))) :
+2022-12-19 10:12:40,071 WARNING R[write to console]:  NaNs produced
+
+2022-12-19 10:12:40,071 WARNING R[write to console]: 4: 
+2022-12-19 10:12:40,071 WARNING R[write to console]: In sqrt(diag(solve(peak.hess))) :
+2022-12-19 10:12:40,071 WARNING R[write to console]:  NaNs produced
+
+2022-12-19 10:12:40,071 WARNING R[write to console]: 5: Unknown columns: `n`, `l`, `m` 
+
+2022-12-19 10:12:40,071 WARNING R[write to console]: 6: 
+2022-12-19 10:12:40,071 WARNING R[write to console]: In sqrt(diag(solve(peak.hess))) :
+2022-12-19 10:12:40,071 WARNING R[write to console]:  NaNs produced
+
+2022-12-19 10:12:40,072 WARNING R[write to console]: 7: Unknown columns: `n`, `l`, `m` 
+

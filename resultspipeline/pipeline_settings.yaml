@@ -1,0 +1,58 @@
+# The full listing of TACO module parameters are only for documentation porpose
+# For usage only the parameters different to the default value should be set,
+# so that the default value is coming from the module parameter list.
+
+pipeline:
+    - filter:
+        width: 40
+        remove_gaps: -1
+        output: filtered.csv
+    - pds:
+        output: pds.csv
+    - oversampled_pds:
+        oversample_factor:
+            inclusive_lower_bound: 365
+            small_dataset: 5
+            large_dataset: 2
+        output: oversampled_pds.csv
+    - numax_estimate:
+        filter_width: 0.2
+    - background_fit:
+        bins: 300
+        bkg_model: KeplerBg3Comp
+        logfile: pds_fit.log
+        maxsteps: 5000
+        minsteps: 2000
+        nwalkers: 50
+        nwarmup: 1000
+        output_backg_model: out_backg_model.pkl
+        output_ofac_pds_bgr: ofac_pds_bgr.csv
+        output_pds_bgr: pds_bgr.csv
+        output_quantiles: pds_fit_quantiles.csv
+        posterior: pds_fit_posterior.h5
+        save_posteriors: False
+        seed: 42
+    - peak_find:
+        snr: 1.1
+        prob: 0.0001
+        minAIC: 2
+        navg: 1
+    - peaks_mle:
+        minAIC: 2
+    - peak_find:
+        snr: 1.1
+        prob: 0.0001
+        minAIC: 2
+        navg: 1
+    - peaks_mle:
+        minAIC: 2
+        navg: 1
+    - peaks_mle:
+        minAIC: 2
+        navg: 1
+    - peak_bag_period_spacing:
+        maxiters: 10
+        niters: 5
+        dpi_only: False
+        ncores: 1
+        plot: False
