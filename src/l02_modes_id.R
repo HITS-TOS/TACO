@@ -477,17 +477,23 @@ tag_l02_pair <- function(peaks, pds, DeltaNu, d02, alpha, search.range, current_
      #       bounds0 <- -0.05
      #       bounds1 <- 0.15
      #   }
-
+        
+        
+        
         # If peak is closer to l=0 than l=2, assign l=0
-        if((min(abs(dist_l0)) < min(abs(dist_l2))) ){ #}& (dist_l0 > bounds0) & (dist_l0 < bounds1)){
+        if((min(abs(dist_l0)) < min(abs(dist_l2))) & nrow(closest_peak) > 1){ #}& (dist_l0 > bounds0) & (dist_l0 < bounds1)){
             l0_peak <- closest_peak[which.min(abs(dist_l0)),] %>%
                         mutate(l=0, n=ifelse(sign > 0, current_l0$n+1, current_l0$n-1))
             l2_peak <- NULL
         # Otherise assign l=2
-        } else if((min(abs(dist_l2)) < min(abs(dist_l0)))){#} & (dist_l2 > bounds0) & (dist_l2 < bounds1)) {
+        } else if((min(abs(dist_l2)) < min(abs(dist_l0))) & nrow(closest_peak) > 1){#} & (dist_l2 > bounds0) & (dist_l2 < bounds1)) {
             l2_peak <- closest_peak[which.min(abs(dist_l2)),] %>%
                         mutate(l=2, n=ifelse(sign > 0, current_l0$n, current_l0$n-2))
             l0_peak <- NULL
+        }else if(nrow(closest_peak) == 1){#} & (dist_l2 > bounds0) & (dist_l2 < bounds1)) {
+            l0_peak <- closest_peak[which.min(abs(dist_l0)),] %>%
+                        mutate(l=0, n=ifelse(sign > 0, current_l0$n+1, current_l0$n-1))
+            l2_peak <- NULL
         } else {
             return(peaks)
         }
@@ -856,7 +862,12 @@ DeltaNu_l2_fit <- function(peaks, numax, DeltaNu0, alpha0, eps_p0, d020,
         arrange(frequency) %>%
         filter(l==2)
     if(nrow(l2_peaks) == 0)
-        stop(paste("'peaks' does not have l=2 modes"))
+        print("'peaks' does not have l=2 modes")
+        return(
+            list(
+                d02      = 0.0,
+                d02_sd   = 0.0,
+                message  = ''))
    
    tmp_l2_0 <- l2_peaks %>%
        filter(n==min(l2_peaks$n))

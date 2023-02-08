@@ -34,5 +34,8 @@ def numax_estimate(pds, data, filter_width = 0.2):
         with localconverter(ro.default_converter + pandas2ri.converter):
             r_pds = ro.conversion.py2rpy(pds)
             r_data = ro.conversion.py2rpy(data)
-            r_data = numax_estimate.numax_estimate_r(r_pds, r_data, filter_width)
-            return(ro.conversion.rpy2py(r_data))
+            result = numax_estimate.numax_estimate_r(r_pds, r_data, filter_width)
+            
+            flag = ro.conversion.rpy2py(result[1])
+            data = ro.conversion.rpy2py(result[0])
+            return data, flag

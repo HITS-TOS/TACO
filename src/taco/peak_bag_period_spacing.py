@@ -103,61 +103,74 @@ def DPi1_from_stretched_PDS(DPi1, q, freqs, pds, return_max=False, plot=False, s
             }
     # Make computation - in our case this is for the computation of zeta
     freqs(params)
+    
     # Compute tau from the zeta value just computed
     new_frequency, tau, zeta = mixed_modes_utils.stretched_pds(pds.frequency.values,
                                                                freqs.zeta)
+    if tau.max() > 0:
+        # If the search range isn't given then default to frequency range
+        # corresponding to period range of 20-400s
+        #if search_range is None:
+        f = np.arange(1/(400.), 1/(20.), 0.1/tau.max())
+        #else:
+        #    f = np.arange(1/search_range[1], 1/search_range[0], 0.1/tau.max())
 
-    # If the search range isn't given then default to frequency range
-    # corresponding to period range of 20-400s
-    #if search_range is None:
-    f = np.arange(1/(400.), 1/(20.), 0.1/tau.max())
-    #else:
-    #    f = np.arange(1/search_range[1], 1/search_range[0], 0.1/tau.max())
+        # Set up Lomb-Scargle periodogram calculation
+        ls = LombScargle(tau, pds.power.values)
+        PSD_LS = ls.power(f)
+    
+        # Compute background noise level for significance level
+        # This means we can normalise the periodogram to SNR which makes significance
+        # level calculation much easier
 
-    # Set up Lomb-Scargle periodogram calculation
-    ls = LombScargle(tau, pds.power.values)
-    PSD_LS = ls.power(f)
+        noise = np.nanmedian(PSD_LS) / (1 - 1/9)**3
+    
+        # Cut down period and power arrays to search range if given
+        if search_range is None:
+            cut_f = f
+            cut_PSD_LS = PSD_LS
+        else:
+            cut_PSD_LS = PSD_LS[(1/f > search_range[0]) & (1/f < search_range[1])]
+            cut_f = f[(1/f > search_range[0]) & (1/f < search_range[1])]
+    
 
-    # Compute background noise level for significance level
-    # This means we can normalise the periodogram to SNR which makes significance
-    # level calculation much easier
-    noise = np.median(PSD_LS) / (1 - 1/9)**3
+        # Report significance level of highest peak in search area
+        sig_prob = chi2.cdf(np.nanmax(cut_PSD_LS/noise), df=2)
 
-    # Cut down period and power arrays to search range if given
-    if search_range is None:
-        cut_f = f
-        cut_PSD_LS = PSD_LS
+        # Highest peak
+        highest_peak_period = (1/cut_f)[cut_PSD_LS == cut_PSD_LS.max()].item()
+        highest_peak = np.nanmax(cut_PSD_LS/noise)
+
+        #logger.debug(f"Highest peak found at {highest_peak_period} seconds, with power {highest_peak} and significance {sig_prob}")
+
+        if plot:
+            plt.plot(1/cut_f, cut_PSD_LS/noise)
+            plt.axhline(5.99, linestyle='--', color='r', label=r'FAP 95.0%')
+            plt.xlabel(r'$\Delta\Pi_{1}$ (s)', fontsize=18)
+            plt.ylabel(r'Power (arb. units)', fontsize=18)
+            plt.legend(loc='best')
+            plt.show()
+
+        # Return candidate period spacing value as period spacing corresponding to
+        # highest peak in chosen search range.
+        if return_max:
+            # 9.21 is required level for chi-squared 2 d.o.f with FAP of 99%
+            # 7.378 is required level for chi-squared 2 d.o.f with FAP of 97.5%
+            # 5.99 is required level for chi-squared 2 d.o.f with FAP of 95.0%
+            return highest_peak_period, highest_peak, sig_prob #, highest_peak > 5.99 #7.378 #9.210
+        else:
+            return highest_peak_period, sig_prob #highest_peak > 5.99 #7.378 #9.210
     else:
-        cut_PSD_LS = PSD_LS[(1/f > search_range[0]) & (1/f < search_range[1])]
-        cut_f = f[(1/f > search_range[0]) & (1/f < search_range[1])]
-
-
-    # Report significance level of highest peak in search area
-    sig_prob = chi2.cdf(np.max(cut_PSD_LS/noise), df=2)
-
-    # Highest peak
-    highest_peak_period = (1/cut_f)[cut_PSD_LS == cut_PSD_LS.max()].item()
-    highest_peak = np.max(cut_PSD_LS/noise)
-
-    #logger.debug(f"Highest peak found at {highest_peak_period} seconds, with power {highest_peak} and significance {sig_prob}")
-
-    if plot:
-        plt.plot(1/cut_f, cut_PSD_LS/noise)
-        plt.axhline(5.99, linestyle='--', color='r', label=r'FAP 95.0%')
-        plt.xlabel(r'$\Delta\Pi_{1}$ (s)', fontsize=18)
-        plt.ylabel(r'Power (arb. units)', fontsize=18)
-        plt.legend(loc='best')
-        plt.show()
-
-    # Return candidate period spacing value as period spacing corresponding to
-    # highest peak in chosen search range.
-    if return_max:
-        # 9.21 is required level for chi-squared 2 d.o.f with FAP of 99%
-        # 7.378 is required level for chi-squared 2 d.o.f with FAP of 97.5%
-        # 5.99 is required level for chi-squared 2 d.o.f with FAP of 95.0%
-        return highest_peak_period, highest_peak, sig_prob #, highest_peak > 5.99 #7.378 #9.210
-    else:
-        return highest_peak_period, sig_prob #highest_peak > 5.99 #7.378 #9.210
+        highest_peak_period = 0
+        highest_peak = 0
+        sig_prob = False
+        if return_max:
+            # 9.21 is required level for chi-squared 2 d.o.f with FAP of 99%
+            # 7.378 is required level for chi-squared 2 d.o.f with FAP of 97.5%
+            # 5.99 is required level for chi-squared 2 d.o.f with FAP of 95.0%
+            return highest_peak_period, highest_peak, sig_prob #, highest_peak > 5.99 #7.378 #9.210
+        else:
+            return highest_peak_period, sig_prob #highest_peak > 5.99 #7.378 #9.210
 
 
 def peak_bag_period_spacing(pds, peaks, data,

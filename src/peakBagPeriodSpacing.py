@@ -125,6 +125,8 @@ def DPi1_from_stretched_PDS(DPi1, q, freqs, pds, return_max=False, plot=False, s
     # This means we can normalise the periodogram to SNR which makes significance
     # level calculation much easier
     noise = np.median(PSD_LS) / (1 - 1/9)**3
+    print("noise: ",noise)
+    print("median(PSD_LS): ",np.median(PSD_LS))
    
     # Cut down period and power arrays to search range if given
     if search_range is None:

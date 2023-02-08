@@ -2,7 +2,7 @@ import numpy as np
 import sklearn
 
 from sklearn.neighbors import KDTree 
-from sloscillations import frequencies, mixed_modes_utils
+from libs.sloscillations.sloscillations import frequencies, mixed_modes_utils
 
 from tqdm import tqdm
 from typing import List, Optional, Tuple, Union

@@ -67,7 +67,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
         flag <- 1
         print("No peaks detected so not proceeding with mode ID")
         return(list(peaks, flag, data))
-    } else if (nrow(peaks) < 3) {
+    } else if (nrow(peaks) < 7) {
         peaks$l <- NA
         data <- data %>%
             mutate(DeltaNu = NaN,
@@ -108,7 +108,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                 gamma0    = NULL,
                 modeIDFlag = 2)
         flag <- 1
-        print("Numax < 10uHz and is too low for the automated mode identification to be reliable.")
+        print("Numax < 10 uHz and is too low for the automated mode identification to be reliable.")
         return(list(peaks, flag, data))
     }
 

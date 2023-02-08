@@ -23,6 +23,8 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
         pds %>%
         filter(frequency > data$numax - 3 * data$sigmaEnv &
                frequency < data$numax + 3 * data$sigmaEnv)
+               
+    flag <- 0
 
     deltanu <- diff(pds$frequency[1:2])
 
@@ -38,7 +40,8 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
                                 height = double(),
                                 AIC = double())
             print("No peaks detected so not proceeding with MLE fit")
-            return(list(peaks.mle, data))
+            flag <- 1
+            return(list(peaks.mle, flag, data))
         }
 
         peaks.mle <- peaks_MLE_final_sd(peaks = peaks,
@@ -77,8 +80,17 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
             rest_peaks <- mixed_peaks %>% arrange(frequency)
 
             if (nrow(rest_peaks) == 0) {
+                peaks.mle <- tibble(frequency = double(),
+                                    amplitude = double(),
+                                    linewidth = double(),
+                                    frequency_sd = double(),
+                                    amplitude_sd = double(),
+                                    linewidth_sd = double(),
+                                    height = double(),
+                                    AIC = double())
                 print("No peaks detected so not proceeding with MLE fit")
-                return(list(peaks.mle, data))
+                flag <- 1
+                return(list(peaks.mle, flag, data))
             }
 
             # If max linewidth argument not set
@@ -120,7 +132,8 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
                                         height = double(),
                                         AIC = double())
                 print("No peaks detected so not proceeding with MLE fit")
-                return(list(peaks.mle, data))
+                flag <- 1
+                return(list(peaks.mle, flag, data))
             }
 
             # 22/12/19 Add in maxlwd default so consistent with peakfind
@@ -193,5 +206,5 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
                 mutate(npeaks = nrow(peaks.mle %>% filter(AIC > minAIC)))
         }
     }
-    return(list(peaks.mle, data))
+    return(list(peaks.mle, flag, data))
 }

@@ -5,7 +5,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from sklearn.neighbors import KDTree 
-from sloscillations import frequencies, mixed_modes_utils
+from libs.sloscillations.sloscillations import frequencies, mixed_modes_utils
 
 import itertools
 from . import refine_rotation_parameters
