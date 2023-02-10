@@ -1,6 +1,14 @@
 import site
 import sys
 site.addsitedir('../')
+#import sys
+
+#sys.path.insert(0, '../libs/sloscillations')
+
+#import site
+
+#site.addsitedir('../libs/sloscillations')
+
 
 from bokeh.models.layouts import Column
 from numpy.lib.function_base import angle
@@ -28,21 +36,21 @@ from pathlib import Path
 import itertools
 
 def find_stars():
-    dir = Path().cwd().parent / "result_reference"
-    dirs = dir.rglob('*/summary.csv')
+    dir = Path().cwd().parent / "resultspipeline"
+    dirs = dir.rglob('*/data.csv')
     KICs = ['KIC '+str(i).split('/')[-2].lstrip('0') for i in dirs]
     return KICs
 
 #@st.cache
 def load_summary(KIC):
-    dir = Path().cwd().parent / "result_reference"
+    dir = Path().cwd().parent / "resultspipeline"
     KIC = KIC.lstrip('KIC ').zfill(9)
-    summary = pd.read_csv(str(dir)+'/'+str(KIC)+'/summary.csv')
+    summary = pd.read_csv(str(dir)+'/'+str(KIC)+'/data.csv')
     return summary
 
 #@st.cache
 def load_psd(KIC, background_removed=True):
-    dir = Path().cwd().parent / "result_reference"
+    dir = Path().cwd().parent / "resultspipeline"
     KIC = KIC.lstrip('KIC ').zfill(9)
     #print(KIC)
     if background_removed == True:
@@ -53,13 +61,13 @@ def load_psd(KIC, background_removed=True):
     return psd
 
 def load_ts(KIC, filtered=True):
-    dir = Path().cwd().parent / "result_reference"
+    dir = Path().cwd().parent / "resultspipeline"
     KIC = KIC.lstrip('KIC ').zfill(9)
     #print(KIC)
-    if filtered == True:
-        ts = pd.read_csv(str(dir)+'/'+str(KIC)+'/filtered.csv')
-    else:
-        ts = pd.read_csv(str(dir)+'/'+str(KIC)+'/raw.dat', names=['time', 'flux'], comment = '#', header = None, delim_whitespace = True)
+#    if filtered == True:
+    ts = pd.read_csv(str(dir)+'/'+str(KIC)+'/filtered.csv')
+ #   else:
+ #       ts = pd.read_csv(str(dir)+'/'+str(KIC)+'/raw.dat', names=['time', 'flux'], comment = '#', header = None, delim_whitespace = True)
 
 
  #   if ts.flux.mean() > 1e3:
@@ -71,12 +79,12 @@ def load_ts(KIC, filtered=True):
 
 #@st.cache
 def load_peaks(KIC, peakFind=False):
-    dir = Path().cwd().parent / "result_reference"
+    dir = Path().cwd().parent / "resultspipeline"
     KIC = KIC.lstrip('KIC ').zfill(9)
-    if peakFind == False:
-        peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/peaksMLE.csv')
-    else:
-        peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/peaks.csv')
+   # if peakFind == False:
+    peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/peaks_MLE.csv')
+    #else:
+    #    peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/peaks.csv')
 
     return peaks
 
@@ -502,8 +510,8 @@ def visualise_echelle(psd_bgr, peaks, summary, session):
 def visualise_stretched_echelle(psd_bgr, peaks, summary, session):
 
     #st.write(psd_bgr)
-
-    from sloscillations import frequencies, mixed_modes_utils
+    
+    from libs.sloscillations.sloscillations import frequencies, mixed_modes_utils
     from src.lib.rotation import rotation_utils
 
     orig_DPi1 = summary['DeltaPi1'].item()
@@ -634,7 +642,7 @@ def visualise_reggae(psd_bgr, peaks, summary, session):
 
     #st.write(psd_bgr)
 
-    from sloscillations import frequencies, mixed_modes_utils
+    from libs.sloscillations.sloscillations import frequencies, mixed_modes_utils
     from src.lib.rotation import rotation_utils
 
     orig_numax = summary['numax'].item()
@@ -672,8 +680,8 @@ def visualise_reggae(psd_bgr, peaks, summary, session):
 
     DeltaNu = st.sidebar.slider('Δν (μHz)', min_value=orig_DeltaNu*0.9, max_value=orig_DeltaNu*1.1, value=orig_DeltaNu, key=session.run_id)
     eps_p = st.sidebar.slider('ε_p', min_value=0.0, max_value=2.0, value = orig_eps_p, key = session.run_id)
-    alpha = st.sidebar.slider('α', min_value=0.0, max_value=0.05, value=orig_alpha, key=session.run_id)
-    d02 = st.sidebar.slider('δν₀₂ (μHz)', min_value=0.0, max_value=orig_d02*1.5, value=orig_d02, key=session.run_id)
+    alpha = st.sidebar.slider('α', min_value=0.0, max_value=0.15, value=orig_alpha, key=session.run_id)
+    d02 = st.sidebar.slider('δν₀₂ (μHz)', min_value=0.0, max_value=orig_DeltaNu*0.5, value=orig_d02, key=session.run_id)
     #d01 = st.sidebar.slider('δν₀₁ (μHz)', min_value=-orig_DeltaNu/3, max_value=orig_DeltaNu/3, value=orig_d01, key=session.run_id)
     d01 = st.sidebar.number_input('δν₀₁ (μHz)', min_value=-orig_DeltaNu/3, max_value=orig_DeltaNu/3, value=orig_d01, key=session.run_id)
 
@@ -681,7 +689,7 @@ def visualise_reggae(psd_bgr, peaks, summary, session):
     #DPi1 = st.sidebar.slider('ΔΠ₁ (s)', min_value=orig_DPi1*0.9, max_value=orig_DPi1*1.1, value=orig_DPi1, key=session.run_id)
     DPi1 = st.sidebar.number_input('ΔΠ₁ (s)', min_value=0.0, max_value=400.0, value=orig_DPi1, key=session.run_id)
     #coupling = st.sidebar.slider('q', min_value=0.0, max_value=0.8, value=orig_coupling, key=session.run_id)
-    coupling = st.sidebar.number_input('q', min_value=0.0, max_value=0.8, value=orig_coupling, key=session.run_id)
+    coupling = st.sidebar.number_input('q', min_value=0.0, max_value=1.0, value=orig_coupling, key=session.run_id)
     #eps_g = st.sidebar.slider('ε', min_value=-1.0, max_value=1.0, value=float(orig_eps_g), key=session.run_id)
     eps_g = st.sidebar.number_input('ε_g', min_value=-1.0, max_value=1.0, value=float(orig_eps_g), key=session.run_id)
     # splitting = st.sidebar.slider('δνₛ (μHz)', min_value=0., max_value=500.0/1e3, value=orig_splitting, key=session.run_id)
