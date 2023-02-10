@@ -85,7 +85,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                 Central_alpha_sd  = NaN,
                 gamma0    = NULL,
                 modeIDFlag = 1)
-        flag <- 1
+        flag <- 2
         print("Not enough peaks detected so not proceeding with mode ID")
         return(list(peaks, flag, data))
     }
@@ -107,11 +107,33 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                 Central_alpha_sd  = NaN,
                 gamma0    = NULL,
                 modeIDFlag = 2)
-        flag <- 1
+        flag <- 3
         print("Numax < 10 uHz and is too low for the automated mode identification to be reliable.")
         return(list(peaks, flag, data))
     }
 
+    if (data$numax > 0.9*data$nuNyq ) {
+        data <- data %>%
+            mutate(DeltaNu = NaN,
+                DeltaNu_sd = NaN,
+                dNu02     = NaN,
+                eps_p     = NaN,
+                eps_p_sd  = NaN,
+                alpha     = NaN,
+                alpha_sd  = NaN,
+                Central_DeltaNu = NaN,
+                Central_DeltaNu_sd = NaN,
+                Central_eps_p     = NaN,
+                Central_eps_p_sd  = NaN,
+                Central_alpha     = NaN,
+                Central_alpha_sd  = NaN,
+                gamma0    = NULL,
+                modeIDFlag = 2)
+        flag <- 4
+        print("Numax > 0.9 * Nyquist frequency. This is too high for the automated mode identification to be reliable.")
+        return(list(peaks, flag, data))
+    }
+    
     ## Expected Δν from ν_max
     Dnu <- DeltaNu_from_numax(data$numax)
 
@@ -178,7 +200,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                         Central_alpha_sd  = NaN,
                         gamma0    = NaN,
                         modeIDFlag = 3)
-        flag <- 1
+        flag <- 5
         print("Not enough radial modes found to go any further. Mode ID not performed and Δν not estimated")
         return(list(peaks, flag, data))
     }
