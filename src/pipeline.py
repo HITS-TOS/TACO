@@ -86,11 +86,11 @@ def pipeline(argv):
             with open('stars.csv', mode = 'a') as fstar:
                 writer = csv.writer(fstar, delimiter = ',')
                 #set all flags to 1
-                flag_numax = [1]
-                flag_mle_resolved = [1]
-                flag_02 = [1]
-                flag_mle_mixed = [1]
-                flag_mle_final = [1]
+                flag_numax = [-1]
+                flag_mle_resolved = [-1]
+                flag_02 = [-1]
+                flag_mle_mixed = [-1]
+                flag_mle_final = [-1]
 
                 # Set Kepler Input Catalogue (KIC) identification number and raw_data filename
                 data = pd.DataFrame({"KIC": [get_kic_id(input_file)],
