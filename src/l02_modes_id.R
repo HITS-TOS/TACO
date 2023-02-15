@@ -862,51 +862,55 @@ DeltaNu_l2_fit <- function(peaks, numax, DeltaNu0, alpha0, eps_p0, d020,
                           return_res = FALSE) {
     #alpha0 <- alpha_obs_from_n_max(n_max = (numax/DeltaNu0))
     #print(5*alpha0)
+    print("d020")
+    print(d020)
     l2_peaks <-
         peaks %>%
         arrange(frequency) %>%
         filter(l==2)
+    
     if(nrow(l2_peaks) == 0)
         print("'peaks' does not have l=2 modes")
-        return(
-            list(
-                d02      = 0.0,
-                d02_sd   = 0.0,
-                message  = ''))
-   
-   tmp_l2_0 <- l2_peaks %>%
-       filter(n==min(l2_peaks$n))
-   l2mnfreq <- weighted.mean(tmp_l2_0$frequency,tmp_l2_0$amplitude,.,na.rm=TRUE)
-   l2totampl <- sum(tmp_l2_0$amplitude)
-   l2_unique <- tmp_l2_0 %>%
-        mutate(frequency = l2mnfreq, amplitude = l2totampl) %>%
-        slice(1)
-
-   for (i in unique(l2_peaks$n)){
-       tmp_l2 <- l2_peaks %>%
-            filter(n==i)
-       l2mnfreq <- weighted.mean(tmp_l2$frequency,tmp_l2$amplitude,.,na.rm=TRUE)
-       l2totampl <- sum(tmp_l2$amplitude)
-       tmp_l2 <- tmp_l2 %>%
+        list(
+             d02      = 0.0,
+             d02_sd   = 0.0,
+             message  = '')
+             
+    if(nrow(l2_peaks) > 0) {
+        tmp_l2_0 <- l2_peaks %>%
+            filter(n==min(l2_peaks$n))
+        l2mnfreq <- weighted.mean(tmp_l2_0$frequency,tmp_l2_0$amplitude,.,na.rm=TRUE)
+        l2totampl <- sum(tmp_l2_0$amplitude)
+        l2_unique <- tmp_l2_0 %>%
             mutate(frequency = l2mnfreq, amplitude = l2totampl) %>%
             slice(1)
-       if (i > min(l2_peaks$n)){
-           l2_unique <-
-             bind_rows(l2_unique,tmp_l2)
-           }
-       }
+
+        for (i in unique(l2_peaks$n)){
+            tmp_l2 <- l2_peaks %>%
+                filter(n==i)
+            l2mnfreq <- weighted.mean(tmp_l2$frequency,tmp_l2$amplitude,.,na.rm=TRUE)
+            l2totampl <- sum(tmp_l2$amplitude)
+            tmp_l2 <- tmp_l2 %>%
+                mutate(frequency = l2mnfreq, amplitude = l2totampl) %>%
+                slice(1)
+       
+            if (i > min(l2_peaks$n)){
+                l2_unique <-
+                    bind_rows(l2_unique,tmp_l2)
+             }
+        }
     
-    l2_peaks <- l2_unique
-    res2 <-
-        optim(
-            # I use theta = (DeltaNu, epsilonp, alpha)
-            par = c(d020),   # initial values
-            fn = function(theta) {
-                n_max <- numax/DeltaNu0 - eps_p0 # Using updated expression from Mosser et al. (2018)
-                pks <-
-                    l2_peaks %>%
-                    mutate(predFreq =
-                               l2_from_UP(
+        l2_peaks <- l2_unique
+        res2 <-
+            optim(
+                # I use theta = (DeltaNu, epsilonp, alpha)
+                par = c(d020),   # initial values
+                fn = function(theta) {
+                    n_max <- numax/DeltaNu0 - eps_p0 # Using updated expression from Mosser et al. (2018)
+                    pks <-
+                        l2_peaks %>%
+                        mutate(predFreq =
+                                  l2_from_UP(
                                   N       = .$n,
                                   eps_p   = eps_p0,
                                   alpha   = alpha0,
@@ -914,30 +918,34 @@ DeltaNu_l2_fit <- function(peaks, numax, DeltaNu0, alpha0, eps_p0, d020,
                                   DeltaNu = DeltaNu0,
                                   d02     = theta[1]),
                            diffsq = (frequency - predFreq)^2)
-                if(weight.by.amplitudes) {
-                    pks <-
-                        pks %>% mutate(diffsq = amplitude * diffsq)
-                }
-                res2 <-
-                    pks %>%
-                    summarise(sqdiff_sum = sum(diffsq)) %>%
-                    as.numeric()
+                    
+                    if(weight.by.amplitudes) {
+                        pks <-
+                            pks %>% mutate(diffsq = amplitude * diffsq)
+                    }
+                   
+                    res2 <-
+                        pks %>%
+                        summarise(sqdiff_sum = sum(diffsq)) %>%
+                        as.numeric()
                 return(res2)
             },
             control = list(
-                parscale = c(1e-3)
-            ),
-            method = "L-BFGS-B",
-            ## Limits on:  DeltaNu, epsilonp,      alpha)
-            lower = c(0.5*d020),
-            upper = c(2.0*d020),
-            hessian = TRUE
-        )
-    if(return_res == TRUE){
-        return(res2)
+                    parscale = c(1e-3)
+                ),
+                method = "L-BFGS-B",
+                ## Limits on:  DeltaNu, epsilonp,      alpha)
+                lower = c(0.5*d020),
+                upper = c(2.0*d020),
+                hessian = TRUE
+                )
+                if(return_res == TRUE){
+                    return(res2)
+            }
+        sd <- sqrt(diag(solve(res2$hessian)))
+        #if(res$convergence != 0) stop("Error (DeltaNu_l_fit): optim didn't converge")
     }
-    sd <- sqrt(diag(solve(res2$hessian)))
-    #if(res$convergence != 0) stop("Error (DeltaNu_l_fit): optim didn't converge")
+   
     return(
         list(
             d02      = res2$par[1],
