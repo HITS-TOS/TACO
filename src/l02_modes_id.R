@@ -281,14 +281,14 @@ tag_central_l02 <- function(peaks, pds, DeltaNu, d02, numax,
 
     central_l0_expected <-
         numax + deltanu * pds.ccf$lag[which.max(pds.ccf$acf)]
- #   print(central_l0_expected)
+    print(central_l0_expected)
   
     continue_c <- TRUE
     count <- 0
     while(continue_c){
         central_l0 <-
             peaks %>%
-            filter(!(is.na(linewidth)) & ((amplitude/max(amplitude)) > 0.55)) %>%
+            filter(!(is.na(linewidth)) & ((amplitude/mean(amplitude,na.rm = TRUE)) > 1.) & ((amplitude/(mean(amplitude,na.rm = TRUE)+ 3.0*mad(amplitude,na.rm = TRUE))) < 1.)) %>%
             mutate(l0_dist = abs(frequency - central_l0_expected)) %>%
             arrange(l0_dist) %>%
             slice(1) %>%
@@ -296,18 +296,22 @@ tag_central_l02 <- function(peaks, pds, DeltaNu, d02, numax,
             mutate(l = 0)
     # 31/05/2021 moved the assignment of the order up and included the correct one for both of the l=0 and l=2 mode (SH)
     # 10/08/2020 Changed from round to floor!!!!!
-        n_order <- floor(central_l0$frequency/DeltaNu - eps_p_from_Dnu(DeltaNu))
+         n_order <- floor(central_l0$frequency/DeltaNu - eps_p_from_Dnu(DeltaNu))
     #n_order <- round(central_l0$frequency/DeltaNu - eps_p_from_Dnu(DeltaNu))
    
         central_l0 <-
             peaks %>%
-            filter(!(is.na(linewidth)), !is.na(linewidth_sd), linewidth > 0.6*deltanu,((amplitude/max(amplitude)) > 0.55)) %>%
+            filter(!(is.na(linewidth)), !is.na(linewidth_sd), linewidth > 0.6*deltanu,((amplitude/mean(amplitude, na.rm = TRUE)) > 1.),((amplitude/(mean(amplitude,na.rm = TRUE)+ 3.0*mad(amplitude,na.rm = TRUE))) < 1.))  %>%
             mutate(l0_dist = abs(frequency - central_l0_expected)) %>%
             arrange(l0_dist) %>%
             slice(1) %>%
             select(-l0_dist) %>%
             mutate(l = 0) %>%
             mutate(n = n_order)
+        print(central_l0)
+        print(central_l0$frequency - 1.7*d02)
+        print(central_l0$frequency - 0.5*d02)
+        
         central_l2 <-
             peaks %>%
             filter(!is.na(linewidth), !is.na(linewidth_sd), linewidth > 0.3*deltanu,
@@ -321,6 +325,7 @@ tag_central_l02 <- function(peaks, pds, DeltaNu, d02, numax,
                 #slice(1) %>%
                 mutate(l = 2) %>%
                 mutate(n = n_order-1)
+       print(nrow(central_l2))
        if(nrow(central_l2) > 0){
            continue_c <- FALSE
        } else if (nrow(central_l2) == 0){
@@ -384,7 +389,7 @@ tag_l02_pair <- function(peaks, pds, DeltaNu, d02, alpha, search.range, current_
     }
     # Combine into single tibble
     current_l02 <- bind_rows(current_l0, current_l2)
-    #print(current_l02)
+    print(current_l02)
     #print(l2mnfreq)
     
     # Estimate d02 from frequencies
@@ -396,8 +401,8 @@ tag_l02_pair <- function(peaks, pds, DeltaNu, d02, alpha, search.range, current_
     if(sign > 0) predictedl2 <- (l2mnfreq + (DeltaNu * (1.0 + (alpha) * (current_radial_order  - central_radial_order))))
     if(sign < 0) predictedl2 <- (l2mnfreq - (DeltaNu * (1.0 + (alpha) * (current_radial_order  - 2 - central_radial_order))))
     
-    #print(predictedl2)
-    #print(predictedl0)
+    print(predictedl2)
+    print(predictedl0)
     
     closest_peak_info <- peaks %>%
                             filter(!is.na(linewidth), !is.na(linewidth_sd), linewidth > 0.3*deltanu, # This line might be a bit suspect as will fail when get to shorter datasets! Maybe better to take widest peak e.g.
