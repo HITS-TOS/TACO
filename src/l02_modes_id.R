@@ -868,14 +868,7 @@ DeltaNu_l2_fit <- function(peaks, numax, DeltaNu0, alpha0, eps_p0, d020,
         peaks %>%
         arrange(frequency) %>%
         filter(l==2)
-    
-    if(nrow(l2_peaks) == 0)
-        print("'peaks' does not have l=2 modes")
-        list(
-             d02      = 0.0,
-             d02_sd   = 0.0,
-             message  = '')
-             
+         
     if(nrow(l2_peaks) > 0) {
         tmp_l2_0 <- l2_peaks %>%
             filter(n==min(l2_peaks$n))
@@ -944,13 +937,19 @@ DeltaNu_l2_fit <- function(peaks, numax, DeltaNu0, alpha0, eps_p0, d020,
             }
         sd <- sqrt(diag(solve(res2$hessian)))
         #if(res$convergence != 0) stop("Error (DeltaNu_l_fit): optim didn't converge")
+       
+        return(
+            list(
+                d02      = res2$par[1],
+                d02_sd   = sd[1],
+                message  = res2$message))
     }
-   
-    return(
+    if(nrow(l2_peaks) == 0)
+        print("'peaks' does not have l=2 modes")
         list(
-            d02      = res2$par[1],
-            d02_sd   = sd[1],
-            message  = res2$message))
+             d02      = 0.0,
+             d02_sd   = 0.0,
+             message  = '')
 }
 
 radial_order_shift_from_l0 <- function(peaks, numax, DeltaNu, epsilonp, alphaobs) {
