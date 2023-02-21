@@ -37,7 +37,7 @@ import itertools
 
 def find_stars():
     dir = Path().cwd().parent / "resultspipeline"
-    dirs = dir.rglob('*/data.csv')
+    dirs = dir.rglob('*/summary.csv')
     KICs = ['KIC '+str(i).split('/')[-2].lstrip('0') for i in dirs]
     return KICs
 
@@ -45,7 +45,7 @@ def find_stars():
 def load_summary(KIC):
     dir = Path().cwd().parent / "resultspipeline"
     KIC = KIC.lstrip('KIC ').zfill(9)
-    summary = pd.read_csv(str(dir)+'/'+str(KIC)+'/data.csv')
+    summary = pd.read_csv(str(dir)+'/'+str(KIC)+'/summary.csv')
     return summary
 
 #@st.cache
@@ -63,11 +63,12 @@ def load_psd(KIC, background_removed=True):
 def load_ts(KIC, filtered=True):
     dir = Path().cwd().parent / "resultspipeline"
     KIC = KIC.lstrip('KIC ').zfill(9)
-    #print(KIC)
-#    if filtered == True:
-    ts = pd.read_csv(str(dir)+'/'+str(KIC)+'/filtered.csv')
- #   else:
- #       ts = pd.read_csv(str(dir)+'/'+str(KIC)+'/raw.dat', names=['time', 'flux'], comment = '#', header = None, delim_whitespace = True)
+   # print(KIC)
+    if filtered == True:
+        ts = pd.read_csv(str(dir)+'/'+str(KIC)+'/filtered.csv')
+    else:
+ #       ts = pd.read_csv(str(dir)+'/'+str(KIC)+'.dat', names=['time', 'flux'], comment = '#', header = None, delim_whitespace = True)
+         ts = pd.read_csv(str(dir)+'/'+str(KIC)+'.dat', delimiter=r'\s+', names=['time', 'flux', 'err_flux'], comment = '#')
 
 
  #   if ts.flux.mean() > 1e3:
@@ -78,14 +79,22 @@ def load_ts(KIC, filtered=True):
     return ts
 
 #@st.cache
-def load_peaks(KIC, peakFind=False):
+def load_peaks(KIC, peakFind=False, resolved=False, final=True):
     dir = Path().cwd().parent / "resultspipeline"
     KIC = KIC.lstrip('KIC ').zfill(9)
-   # if peakFind == False:
-    peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/peaks_MLE.csv')
-    #else:
-    #    peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/peaks.csv')
-
+    if peakFind == False:
+        if resolved == False:
+            peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/mixed_peaks_MLE.csv')
+        else:
+            peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/peaks_MLE.csv')
+        if final == True:
+            peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')
+    else:
+        if resolved == False:
+            peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/mixed_peaks.csv')
+        if resolved == True:
+            peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/peaks.csv')
+            
     return peaks
 
 def visualise_timeseries(filtered_ts, unfiltered_ts, summary):
@@ -97,14 +106,14 @@ def visualise_timeseries(filtered_ts, unfiltered_ts, summary):
         x_axis_label="Time (days)",
         y_axis_label=r"Flux (ppm)",
         match_aspect=True,
-        x_range=(filtered_ts.time.min(), filtered_ts.time.max()),
+        x_range=(unfiltered_ts.time.min(), unfiltered_ts.time.max()),
         #y_range=(psd.power.min()*0.5, psd.power.max()*1.1)
     )
-    p.line(filtered_ts.time, filtered_ts.flux, color='black', legend_label=r'Filtered timeseries')
+    p.line(unfiltered_ts.time, unfiltered_ts.flux, color='black', legend_label=r'Unfiltered timeseries')
 
-    if st.sidebar.checkbox("Show unfiltered timeseries"):
-        p.line(unfiltered_ts.time, unfiltered_ts.flux, color='red', legend_label=r'Unfiltered timeseries')
-
+    if st.sidebar.checkbox("Show filtered timeseries"):
+        p.line(filtered_ts.time, filtered_ts.flux, color='red', legend_label=r'Filtered timeseries')
+        
     p.legend.click_policy="hide"
     st.bokeh_chart(p)
 
@@ -216,14 +225,18 @@ def visualise_psd(psd, summary):
         p.legend.location = 'bottom_left'
     st.bokeh_chart(p)
 
-def visualise_pds_bgr(psd_bgr, peaks, summary, peakFind=None):
+def visualise_pds_bgr(psd_bgr, peaksMLE_final, peaksMLE_odd, peaksMLE_even, summary, peakFind_mixed, peakFind_even):
     #if st.sidebar.checkbox('Show background-removed power spectrum'):
     psd_bgr = psd_bgr.loc[np.abs(psd_bgr['frequency'].values - summary['numax'].values) < 3*summary['sigmaEnv'].values, ]
 
-    overplot_peaks = st.checkbox("Overplot peaks from peakFind")
+    overplot_evenmode_peaks = st.checkbox("Overplot even mode peaks from peakFind")
+    
+    overplot_mixedmode_peaks = st.checkbox("Overplot odd mode peaks from peakFind")
 
-    overplot_fit = st.checkbox("Overplot MLE fit")
+    overplot_fit = st.checkbox("Overplot final MLE fit")
 
+    overplot_fit_odd = st.checkbox("Overplot MLE fit odd modes")
+    
     overplot_fit_even = st.checkbox("Overplot MLE fit even modes")
 
 
@@ -242,21 +255,30 @@ def visualise_pds_bgr(psd_bgr, peaks, summary, peakFind=None):
 
     AIC_cut = st.sidebar.slider('AIC cut', min_value=-100.0, max_value=100., value=2.)
 
-    if overplot_peaks:
+    if overplot_evenmode_peaks:
 
-        if peakFind is not None:
-            model_pf = app_helpers.construct_peaksmodel(psd_bgr, peakFind.loc[peakFind.AIC.values > AIC_cut, ])
-            p.line(psd_bgr.frequency, model_pf, color="purple", line_width=3)
+        model_pf = app_helpers.construct_peaksmodel(psd_bgr, peakFind_even.loc[peakFind_even.AIC.values > AIC_cut, ])
+        p.line(psd_bgr.frequency, model_pf, color="purple", line_width=3, legend_label=r'even mode peaks')
+    
+    if overplot_mixedmode_peaks:
+
+        model_pf = app_helpers.construct_peaksmodel(psd_bgr, peakFind_mixed.loc[peakFind_mixed.AIC.values > AIC_cut, ])
+        p.line(psd_bgr.frequency, model_pf, color="blue", line_width=3, legend_label=r'odd mode peaks')
 
     if overplot_fit:
 
-        model = app_helpers.construct_peaksmodel(psd_bgr, peaks.loc[peaks.AIC.values > AIC_cut, ])
-        p.line(psd_bgr.frequency, model, color="orange", line_width=3)
+        model = app_helpers.construct_peaksmodel(psd_bgr, peaksMLE_final.loc[peaksMLE_final.AIC.values > AIC_cut, ])
+        p.line(psd_bgr.frequency, model, color="orange", line_width=3, legend_label=r'final MLE fit')
+
+    if overplot_fit_odd:
+
+        model = app_helpers.construct_peaksmodel(psd_bgr, peaksMLE_odd.loc[peaksMLE_odd.AIC.values > AIC_cut, ])
+        p.line(psd_bgr.frequency, model, color="red", line_width=3, legend_label=r'MLE fit odd modes')
 
     if overplot_fit_even:
 
-        model = app_helpers.construct_peaksmodel(psd_bgr, peaks.loc[(peaks.l % 2 == 0) & (peaks.AIC.values > AIC_cut), ])
-        p.line(psd_bgr.frequency, model, color="red", line_width=3)
+        model = app_helpers.construct_peaksmodel(psd_bgr, peaksMLE_even.loc[peaksMLE_even.AIC.values > AIC_cut, ])
+        p.line(psd_bgr.frequency, model, color="pink", line_width=3, legend_label=r'MLE fit even modes')
 
 
 
@@ -270,13 +292,13 @@ def visualise_pds_bgr(psd_bgr, peaks, summary, peakFind=None):
         #    p.line(psd_bgr.frequency, model_l02+1, color="green", line_width=3, legend_label="l=0/2 (Even)")
         #    p.line(psd_bgr.frequency, model_l1+1, color="red", line_width=3, legend_label="l=1/3 (Odd)")
     if st.sidebar.checkbox("Mode identification"):
-        p.circle(peaks.loc[(peaks.l == 0) & (peaks.AIC.values > AIC_cut), 'frequency'], len(peaks.loc[(peaks.l == 0) & (peaks.AIC.values > AIC_cut), 'frequency'])*[psd_bgr.power.max()/2],
+        p.circle(peaksMLE_final.loc[(peaksMLE_final.l == 0) & (peaksMLE_final.AIC.values > AIC_cut), 'frequency'], len(peaksMLE_final.loc[(peaksMLE_final.l == 0) & (peaksMLE_final.AIC.values > AIC_cut), 'frequency'])*[psd_bgr.power.max()/2],
                 size=10, color="red", alpha=0.5, legend_label='l=0')
-        p.square(peaks.loc[(peaks.l == 2) & (peaks.AIC.values > AIC_cut), 'frequency'],
-                len(peaks.loc[(peaks.l == 2) & (peaks.AIC.values > AIC_cut), 'frequency'])*[psd_bgr.power.max()/2],
+        p.square(peaksMLE_final.loc[(peaksMLE_final.l == 2) & (peaksMLE_final.AIC.values > AIC_cut), 'frequency'],
+                len(peaksMLE_final.loc[(peaksMLE_final.l == 2) & (peaksMLE_final.AIC.values > AIC_cut), 'frequency'])*[psd_bgr.power.max()/2],
                 size=10, color="green", alpha=0.5, legend_label='l=2')
-        p.hex(peaks.loc[(peaks.l == 3) & (peaks.AIC.values > AIC_cut), 'frequency'],
-                len(peaks.loc[(peaks.l == 3) & (peaks.AIC.values > AIC_cut), 'frequency'])*[psd_bgr.power.max()/2],
+        p.hex(peaksMLE_final.loc[(peaksMLE_final.l == 3) & (peaksMLE_final.AIC.values > AIC_cut), 'frequency'],
+                len(peaksMLE_final.loc[(peaksMLE_final.l == 3) & (peaksMLE_final.AIC.values > AIC_cut), 'frequency'])*[psd_bgr.power.max()/2],
                 size=10, color="orange", alpha=0.5, legend_label='l=3')
          # Colour by rotation splitting as well
    #     if st.sidebar.checkbox("Include rotational splitting"):
@@ -301,10 +323,10 @@ def visualise_pds_bgr(psd_bgr, peaks, summary, peakFind=None):
               ["","full fit","even mode fit"])
 
     if res_plot == "full fit":
-        model = app_helpers.construct_peaksmodel(psd_bgr, peaks.loc[peaks.AIC.values > AIC_cut, ])
+        model = app_helpers.construct_peaksmodel(psd_bgr, peaksMLE_final.loc[peaksMLE_final.AIC.values > AIC_cut, ])
 
     if res_plot == "even mode fit":
-        model = app_helpers.construct_peaksmodel(psd_bgr, peaks.loc[(peaks.l % 2 == 0) & (peaks.AIC.values > AIC_cut), ])
+        model = app_helpers.construct_peaksmodel(psd_bgr, peaksMLE_final.loc[(peaks.l % 2 == 0) & (peaksMLE_final.AIC.values > AIC_cut), ])
 
 
     if res_plot != "":
@@ -471,11 +493,14 @@ def visualise_echelle(psd_bgr, peaks, summary, session):
         l3_size = const*peaks.loc[(peaks.l == 3) & (peaks.AIC.values >= AIC_cut), 'amplitude']
 
     else:
-        l0_size = 10.0
-        l2_size = 10.0
-        l1_size = 10.0
-        l3_size = 10.0
-
+    
+        const = 10.0
+        
+        l0_size = const*np.ones(len(l0_x))
+        l2_size = const*np.ones(len(l2_x))
+        l1_size = const*np.ones(len(l1_x))
+        l3_size = const*np.ones(len(l3_x))
+        
     source = ColumnDataSource(data = {
             "red_freq": np.r_[l0_x, l2_x, l1_x, l3_x],
             "frequency": np.r_[l0_y, l2_y, l1_y, l3_y],
@@ -485,8 +510,6 @@ def visualise_echelle(psd_bgr, peaks, summary, session):
                        np.array(["l=3"]*len(l3_x))],
             "size": np.r_[l0_size, l2_size, l1_size, l3_size]
     })
-
-
 
 
     p.scatter(x="red_freq", y="frequency", size="size", source=source,
@@ -601,6 +624,8 @@ def visualise_stretched_echelle(psd_bgr, peaks, summary, session):
     # plt.scatter(y_theo, model_freqs[:,0], marker='x')
     # plt.scatter(y_theo_p1, model_freqs[:,1], marker='x')
     # plt.scatter(y_theo_n1, model_freqs[:,2], marker='x')
+
+    psd_bgr = psd_bgr.loc[np.abs(psd_bgr['frequency'].values - summary['numax'].values) < 3*summary['sigmaEnv'].values, ]
 
     p = figure(
         title="",
@@ -878,14 +903,18 @@ def main():
             st.header("MLE Fit Explorer")
             st.sidebar.header("MLE Fit Settings")
             psd_bgr = load_psd(selected_KIC, background_removed=True)
-            peaksMLE = load_peaks(selected_KIC)
-            peakFind = load_peaks(selected_KIC, peakFind=True)
-            visualise_pds_bgr(psd_bgr, peaksMLE, summary, peakFind)
+            peaksMLE_final = load_peaks(selected_KIC)
+            peaksMLE_odd = load_peaks(selected_KIC,peakFind = False, resolved = False, final=False)
+            peaksMLE_even = load_peaks(selected_KIC,peakFind = False, resolved = True, final=False)
+            peakFind_mixed = load_peaks(selected_KIC, peakFind=True, resolved = False)
+            peakFind_even = load_peaks(selected_KIC, peakFind=True, resolved = True)
+            visualise_pds_bgr(psd_bgr, peaksMLE_final, peaksMLE_odd, peaksMLE_even,summary, peakFind_mixed,peakFind_even)
             if st.checkbox('Show MLE fit parameters'):
                 st.write('MLE parameters')
-                st.write(peaksMLE)
+                st.write(peaksMLE_final)
                 st.write("peakFind parameters")
-                st.write(peakFind)
+                st.write(peakFind_mixed)
+                st.write(peakFind_even)
 
         elif page == "Frequency Echelle":
             st.header("Frequency Echelle Explorer")
