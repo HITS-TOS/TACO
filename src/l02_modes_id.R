@@ -281,7 +281,7 @@ tag_central_l02 <- function(peaks, pds, DeltaNu, d02, numax,
 
     central_l0_expected <-
         numax + deltanu * pds.ccf$lag[which.max(pds.ccf$acf)]
-    print(central_l0_expected)
+    #print(central_l0_expected)
   
     continue_c <- TRUE
     count <- 0
@@ -308,9 +308,9 @@ tag_central_l02 <- function(peaks, pds, DeltaNu, d02, numax,
             select(-l0_dist) %>%
             mutate(l = 0) %>%
             mutate(n = n_order)
-        print(central_l0)
-        print(central_l0$frequency - 1.7*d02)
-        print(central_l0$frequency - 0.5*d02)
+        #print(central_l0)
+        #print(central_l0$frequency - 1.7*d02)
+        #print(central_l0$frequency - 0.5*d02)
         
         central_l2 <-
             peaks %>%
@@ -325,7 +325,7 @@ tag_central_l02 <- function(peaks, pds, DeltaNu, d02, numax,
                 #slice(1) %>%
                 mutate(l = 2) %>%
                 mutate(n = n_order-1)
-       print(nrow(central_l2))
+       #print(nrow(central_l2))
        if(nrow(central_l2) > 0){
            continue_c <- FALSE
        } else if (nrow(central_l2) == 0){
@@ -388,8 +388,8 @@ tag_l02_pair <- function(peaks, pds, DeltaNu, d02, alpha, search.range, current_
         return (peaks)
     }
     # Combine into single tibble
-    current_l02 <- bind_rows(current_l0, current_l2)
-    print(current_l02)
+    #current_l02 <- bind_rows(current_l0, current_l2)
+    #print(current_l02)
     #print(l2mnfreq)
     
     # Estimate d02 from frequencies
@@ -401,8 +401,8 @@ tag_l02_pair <- function(peaks, pds, DeltaNu, d02, alpha, search.range, current_
     if(sign > 0) predictedl2 <- (l2mnfreq + (DeltaNu * (1.0 + (alpha) * (current_radial_order  - central_radial_order))))
     if(sign < 0) predictedl2 <- (l2mnfreq - (DeltaNu * (1.0 + (alpha) * (current_radial_order  - 2 - central_radial_order))))
     
-    print(predictedl2)
-    print(predictedl0)
+    #print(predictedl2)
+    #print(predictedl0)
     
     closest_peak_info <- peaks %>%
                             filter(!is.na(linewidth), !is.na(linewidth_sd), linewidth > 0.3*deltanu, # This line might be a bit suspect as will fail when get to shorter datasets! Maybe better to take widest peak e.g.
@@ -486,6 +486,9 @@ tag_l02_pair <- function(peaks, pds, DeltaNu, d02, alpha, search.range, current_
         
         
         # If peak is closer to l=0 than l=2, assign l=0
+        #print(closest_peak)
+        #print(dist_l0)
+        #print(dist_l2)
         if((min(abs(dist_l0)) < min(abs(dist_l2))) & nrow(closest_peak) > 1){ #}& (dist_l0 > bounds0) & (dist_l0 < bounds1)){
             l0_peak <- closest_peak[which.min(abs(dist_l0)),] %>%
                         mutate(l=0, n=ifelse(sign > 0, current_l0$n+1, current_l0$n-1))
@@ -495,10 +498,16 @@ tag_l02_pair <- function(peaks, pds, DeltaNu, d02, alpha, search.range, current_
             l2_peak <- closest_peak[which.min(abs(dist_l2)),] %>%
                         mutate(l=2, n=ifelse(sign > 0, current_l0$n, current_l0$n-2))
             l0_peak <- NULL
-        }else if(nrow(closest_peak) == 1){#} & (dist_l2 > bounds0) & (dist_l2 < bounds1)) {
-            l0_peak <- closest_peak[which.min(abs(dist_l0)),] %>%
+        } else if(nrow(closest_peak) == 1){#} & (dist_l2 > bounds0) & (dist_l2 < bounds1)) {
+            if((min(abs(dist_l0)) < min(abs(dist_l2)))){
+                l0_peak <- closest_peak[which.min(abs(dist_l0)),] %>%
                         mutate(l=0, n=ifelse(sign > 0, current_l0$n+1, current_l0$n-1))
-            l2_peak <- NULL
+                l2_peak <- NULL
+            }else if ((min(abs(dist_l2)) < min(abs(dist_l0)))){
+                l2_peak <- closest_peak[which.min(abs(dist_l2)),] %>%
+                            mutate(l=2, n=ifelse(sign > 0, current_l0$n, current_l0$n-2))
+                l0_peak <- NULL
+            }
         } else {
             return(peaks)
         }
@@ -624,8 +633,6 @@ tag_l02_peaks <- function(peaks, pds, DeltaNu, d02, alpha, numax, HBR, sigmaEnv,
     #print(l2mnfreq)
             
     print("CENTRAL PEAKS")
-    print(l0)
-    print(l2)
     print("=======================")
             
     if ((nrow(l2) > 0) & (nrow(l0) > 0)) {
@@ -862,8 +869,7 @@ DeltaNu_l2_fit <- function(peaks, numax, DeltaNu0, alpha0, eps_p0, d020,
                           return_res = FALSE) {
     #alpha0 <- alpha_obs_from_n_max(n_max = (numax/DeltaNu0))
     #print(5*alpha0)
-    print("d020")
-    print(d020)
+ 
     l2_peaks <-
         peaks %>%
         arrange(frequency) %>%

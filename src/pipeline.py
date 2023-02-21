@@ -69,7 +69,7 @@ def pipeline(argv):
     else:
         with open('stars.csv', mode = 'w') as fstar:
             writer = csv.writer(fstar, delimiter = ',')
-            writer.writerow(['ID', 'flag_numax', 'flag_mle_resolved','flag_02','flag_mle_mixed','flag_mle_final'])
+            writer.writerow(['ID', 'flag_numax', 'flag_mle_resolved','flag_02','flag_mle_mixed','flag_mle_final','flag_dP'])
         fstar.close()
         
     data = pd.read_csv('stars.csv')
@@ -91,15 +91,16 @@ def pipeline(argv):
                 flag_02 = [-1]
                 flag_mle_mixed = [-1]
                 flag_mle_final = [-1]
+                flag_dP = -1
 
                 # Set Kepler Input Catalogue (KIC) identification number and raw_data filename
-                data = pd.DataFrame({"KIC": [get_kic_id(input_file)],
+                summary = pd.DataFrame({"KIC": [get_kic_id(input_file)],
                                 "raw_data": [input_name],
                                 "git-rev-hash": [get_git_revision_short_hash()]})
 
                 # 0) Filter
                 print('0) Filter lightcurves')
-                ts_filtered, data = taco.filter(ts_raw, data,
+                ts_filtered, summary = taco.filter(ts_raw, summary,
                     **settings['pipeline'][0]['filter'],
                     output_directory = Path(argv.output_directory, input_name))
 
@@ -114,82 +115,84 @@ def pipeline(argv):
                     output_directory = Path(argv.output_directory, input_name))
                 
                 # Set Nyquist frequency
-                data["nuNyq"] = pds["frequency"].iloc[-1]
+                summary["nuNyq"] = pds["frequency"].iloc[-1]
 
                 # 3) Estimate numax
                 print('3) Estimate numax')
-                data, flag_numax = taco.numax_estimate(pds, data,
+                summary, flag_numax = taco.numax_estimate(pds, summary,
                     **settings['pipeline'][3]['numax_estimate'])
                     
-                data.to_csv(Path(argv.output_directory, input_name, "data.csv"), index = False)
+                summary.to_csv(Path(argv.output_directory, input_name, "summary.csv"), index = False)
 
                 if flag_numax[0] == 0.0:
                     # 4) Background fit
                     print('4) Fit background')
-                    pds_bgr, oversampled_pds_bgr, data = taco.background_fit(
-                        pds, oversampled_pds, data,
-                        **settings['pipeline'][4]['background_fit'])
-                
-                    data.to_csv(Path(argv.output_directory, input_name, "data.csv"), index = False)
+                    pds_bgr, oversampled_pds_bgr, summary = taco.background_fit(
+                        pds, oversampled_pds, summary,
+                        **settings['pipeline'][4]['background_fit'],
+                        output_directory = Path(argv.output_directory, input_name))
+                    summary.to_csv(Path(argv.output_directory, input_name, "summary.csv"), index = False)
                     pds_bgr.to_csv(Path(argv.output_directory, input_name, "pds_bgr.csv"), index = False)
 
                 
                     # 5) Find peaks
                     print('5) Find resolved peaks')
-                    peaks = taco.peak_find(pds_bgr, oversampled_pds_bgr, data,
+                    peaks = taco.peak_find(pds_bgr, oversampled_pds_bgr, summary,
                         **settings['pipeline'][5]['peak_find'])
+                    peaks.to_csv(Path(argv.output_directory, input_name, "peaks.csv"), index = False)
     
                     # 6) MLE
                     if (len(peaks.frequency)) >= 1:
                         print('6) MLE fit peaks')
-                        peaks_mle, flag_mle_resolved, data = taco.peaks_mle(pds_bgr, peaks, data,
+                        peaks_mle, flag_mle_resolved, summary = taco.peaks_mle(pds_bgr, peaks, summary,
                             **settings['pipeline'][6]['peaks_mle'])
-                        data.to_csv(Path(argv.output_directory, input_name, "data.csv"), index = False)
+                        summary.to_csv(Path(argv.output_directory, input_name, "summary.csv"), index = False)
                         peaks_mle.to_csv(Path(argv.output_directory, input_name, "peaks_mle.csv"), index = False)
             
                         # 7) Bag mode id02
                         if (((len(peaks_mle.frequency)) >= 3) and (flag_mle_resolved[0] == 0.0)):
                             print('7) Identify 0,2 modes')
-                            peaks_mle, flag_02, data = taco.peak_bag_mode_id02(pds_bgr, peaks_mle, data)
-                            data.to_csv(Path(argv.output_directory, input_name, "data.csv"), index = False)
+                            peaks_mle, flag_02, summary = taco.peak_bag_mode_id02(pds_bgr, peaks_mle, summary)
+                            summary.to_csv(Path(argv.output_directory, input_name, "summary.csv"), index = False)
                             peaks_mle.to_csv(Path(argv.output_directory, input_name, "peaks_mle.csv"), index = False)
         
                             # 8) Find mixed peaks
                             if flag_02[0] == 0.0:
                                 print('8) Find mixed peaks')
                                 mixed_peaks = taco.peak_find(
-                                    pds_bgr, oversampled_pds_bgr, data, peaks = peaks_mle, removel02 = True,
+                                    pds_bgr, oversampled_pds_bgr, summary, peaks = peaks_mle, removel02 = True,
                                     **settings['pipeline'][7]['peak_find'])
-                                data.to_csv(Path(argv.output_directory, input_name, "data.csv"), index = False)
-                                peaks_mle.to_csv(Path(argv.output_directory, input_name, "peaks_mle.csv"), index = False)
+                                summary.to_csv(Path(argv.output_directory, input_name, "summary.csv"), index = False)
+                                mixed_peaks.to_csv(Path(argv.output_directory, input_name, "mixed_peaks.csv"), index = False)
 
                                 # 9) MLE with mixed peaks
                                 print('9) MLE fit mixed peaks')
-                                mixed_peaks, flag_mle_mixed, data = taco.peaks_mle(
-                                    pds_bgr, peaks_mle, data, mixed_peaks = mixed_peaks, removel02 = True,
+                                mixed_peaks, flag_mle_mixed, summary = taco.peaks_mle(
+                                    pds_bgr, peaks_mle, summary, mixed_peaks = mixed_peaks, removel02 = True,
                                     **settings['pipeline'][8]['peaks_mle'])
-                                data.to_csv(Path(argv.output_directory, input_name, "data.csv"), index = False)
-                                peaks_mle.to_csv(Path(argv.output_directory, input_name, "peaks_mle.csv"), index = False)
+                                summary.to_csv(Path(argv.output_directory, input_name, "summary.csv"), index = False)
+                                mixed_peaks.to_csv(Path(argv.output_directory, input_name, "mixed_peaks_mle.csv"), index = False)
 
                                 # 10) Final fit
                                 if (flag_mle_mixed[0] == 0.0):
                                     print('10) Final fit all peaks')
-                                    mixed_peaks, flag_mle_final, data = taco.peaks_mle(pds_bgr, peaks_mle, data,
+                                    all_peaks, flag_mle_final, summary = taco.peaks_mle(pds_bgr, peaks_mle, summary,
                                         mixed_peaks = mixed_peaks, finalfit = True,
                                         **settings['pipeline'][9]['peaks_mle'])
-                                    data.to_csv(Path(argv.output_directory, input_name, "data.csv"), index = False)
-                                    peaks_mle.to_csv(Path(argv.output_directory, input_name, "peaks_mle.csv"), index = False)
+                                    summary.to_csv(Path(argv.output_directory, input_name, "summary.csv"), index = False)
+                                    all_peaks.to_csv(Path(argv.output_directory, input_name, "final_peaks_mle.csv"), index = False)
 
                                     # 11) Bag_period_spacing
                                     if (flag_mle_final[0] == 0.0):
                                         print('11) Find period spacing')
-                                        pds_bgr, mixed_peaks, data = taco.peak_bag_period_spacing(pds_bgr, mixed_peaks, data,
+                                        pds_bgr, all_peaks, flag_dP, summary = taco.peak_bag_period_spacing(pds_bgr, all_peaks, summary,
                                             **settings['pipeline'][10]['peak_bag_period_spacing'])
-                                        data.to_csv(Path(argv.output_directory, input_name, "data.csv"), index = False)
-                                        peaks_mle.to_csv(Path(argv.output_directory, input_name, "peaks_mle.csv"), index = False)
+                                        summary.to_csv(Path(argv.output_directory, input_name, "summary.csv"), index = False)
+                                        all_peaks.to_csv(Path(argv.output_directory, input_name, "final_peaks_mle.csv"), index = False)
+                                        pds_bgr.to_csv(Path(argv.output_directory, input_name, "pds_bgr.csv"), index = False)
 
                 # Write final results
-                writer.writerow([input_name, flag_numax[0], flag_mle_resolved[0], flag_02[0], flag_mle_mixed[0], flag_mle_final[0]])
+                writer.writerow([input_name, flag_numax[0], flag_mle_resolved[0], flag_02[0], flag_mle_mixed[0], flag_mle_final[0], flag_dP])
             fstar.close()
     t.stop()
     
