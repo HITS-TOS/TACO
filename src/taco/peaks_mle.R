@@ -11,14 +11,14 @@ source("src/l02_modes_id.R", chdir = TRUE)
 peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
                         removel02, minAIC, navg, finalfit) {
 
+    
     peaks <- peaks %>% arrange(frequency)
-
+    
     ## Trim to relevant region
     peaks <-
         peaks %>%
         filter(frequency > data$numax - 3 * data$sigmaEnv &
                frequency < data$numax + 3 * data$sigmaEnv)
-
     pds <-
         pds %>%
         filter(frequency > data$numax - 3 * data$sigmaEnv &
@@ -44,6 +44,8 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
             return(list(peaks.mle, flag, data))
         }
 
+        peaks <- bind_rows(peaks,mixed_peaks)
+        peaks <- peaks %>% arrange(frequency)
         peaks.mle <- peaks_MLE_final_sd(peaks = peaks,
                                         pds = pds,
                                         final_fit_factor = 0.1,
@@ -67,8 +69,9 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
             print("Removing l=0,2,3 first")
             if (nrow(peaks) != 0) {
                 l02_peaks <-
-                    peaks %>%
-                    filter(l == 0 | l == 2 | l == 3)
+                    peaks #%>%
+                    #filter(l == 0 | l == 2 | l == 3)
+                    #filter(l != NA)
                 pds_l02_removed <-
                     pds %>%
                     mutate(power = power / fit_model(pds = ., peaks = l02_peaks))
@@ -76,7 +79,6 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
                 l02_peaks <- peaks
                 pds_l02_removed <- pds
             }
-
             rest_peaks <- mixed_peaks %>% arrange(frequency)
 
             if (nrow(rest_peaks) == 0) {
@@ -118,7 +120,7 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
             # Add n,l & m columns so consistent with l=0,2 peaks file
             peaks.mle[, c("n", "l")] <- NaN
 
-            peaks.mle <- rbind(l02_peaks, peaks.mle)
+            #peaks.mle <- rbind(l02_peaks, peaks.mle)
 
         } else {
 
@@ -191,9 +193,9 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
                     k2 <- 3*nrow(peaks.mle2) - sum(is.na(peaks.mle2$linewidth))
                     AIC2 <- model_AIC(LL2, k2, N)
 
-                    print("AIC")
-                    print(AIC1)
-                    print(AIC2)
+                    #print("AIC")
+                    #print(AIC1)
+                    #print(AIC2)
 
                     # If second model is better then keep it
                     if (AIC2 < AIC1) {

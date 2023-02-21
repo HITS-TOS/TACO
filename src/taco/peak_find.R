@@ -38,7 +38,8 @@ peak_find_r <- function(pds, ofac_pds, data, peaks, snr, prob,
 
         if (nrow(peaks) != 0) {
             l02_peaks <- peaks %>%
-                filter(l == 0 || l == 2 || l == 3)
+                #filter(l == 0 || l == 2 || l == 3)
+                filter(l != "NA")
 
             pds_l02_removed <- pds %>%
                 mutate(power = power / fit_model(pds = ., peaks = l02_peaks))

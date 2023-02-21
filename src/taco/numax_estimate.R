@@ -16,8 +16,7 @@ numax_estimate_r <- function(pds, data, filter_width) {
                 mutate(numax0_flag = as.factor(numax0_flag))
         if (is.numeric(data$numax0)) {
             if(data$numax0_flag == FALSE) {
-                print(paste("Skipping initial numax estimation for",
-                    basename(getwd())))
+                print(paste("Skipping initial numax estimation "))
                 do_estimation <- FALSE
             }
         }
@@ -27,11 +26,9 @@ numax_estimate_r <- function(pds, data, filter_width) {
         if(!("numax0_flag" %in% names(data)))
             data$numax0_flag <- FALSE
         if(data$numax0_flag == FALSE) {
-            print(paste("Initial estimation of numax for KIC",
-                basename(getwd())))
+            print(paste("Initial estimation of numax"))
         } else {
-            print(paste("Attempting again the estimation of numax for KIC",
-                basename(getwd())))
+            print(paste("Attempting again the estimation of numax"))
         }
 
         ## Approximate the power spectrum background using a moving median filter in log-space

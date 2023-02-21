@@ -156,7 +156,8 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                  from = 0.7 * d02, to = 1.3 * d02,
                 type = "period", plot = FALSE, ofac = 10)
     d02 <- psxps$peak.at[1]
-
+    print(paste0("Initial d02 from PSxPS ", d02))
+    
     # Expected alpha from Δν
     n_max <- data$numax / Dnu - eps_p_from_Dnu(Dnu)
     alpha <- 1.5 * alpha_obs_from_n_max(n_max) # overestimating alpha a bit to avoid issues at extreme frequencies
@@ -435,6 +436,10 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
             gamma0    = gamma0,
             modeIDFlag = 0)
 
+    peaks <-
+        peaks %>%
+        filter(l != "NA")
+            
     return(list(peaks, flag, data))
 
 }

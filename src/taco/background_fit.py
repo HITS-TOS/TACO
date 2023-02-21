@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import emcee
 import lib.background.KeplerLCBgFit
 import lib.background.mESS as mESS
@@ -43,7 +45,7 @@ class Settings(object):
         return kwargs
 
 
-def background_fit(pds, ofac_pds, data, **kwargs):
+def background_fit(pds, ofac_pds, data, output = '', output_directory = '', **kwargs):
     """
     Background fitting using emcee's MCMC procedure
 
@@ -82,13 +84,13 @@ def background_fit(pds, ofac_pds, data, **kwargs):
     # Fetch background model
     bkg_model = getattr(lib.background.KeplerLCBgFit, settings.bkg_model)
 
-    bg_fit = bkg_model(pds, data['numax0'][0], data['nuNyq'][0], logfile = settings.logfile)
+    bg_fit = bkg_model(pds, data['numax0'][0], data['nuNyq'][0], logfile = Path(output_directory,settings.logfile))
     minESS = mESS.minESS(bg_fit.ndim, alpha=0.05, eps=0.1)
     i = 0
     done_p = False
 
     print("Starting initial MCMC with binned PDS. Number of bins:", settings.bins)
-    bg_fit.MCMC(bg_fit.bg_params, **settings.get_mcmc_settings())  # MCMC with binned PDS
+    bg_fit.MCMC(bg_fit.bg_params, output_directory, **settings.get_mcmc_settings())  # MCMC with binned PDS
     print("Finished initial MCMC with binned PDS")
 
     chain_i = np.argmax(bg_fit.MCMC_sampler.get_log_prob()[-1,:])
@@ -109,7 +111,7 @@ def background_fit(pds, ofac_pds, data, **kwargs):
             #          "Pg":Pg, "numax":numax, "sigmaEnv":sigmaEnv}
             print("Attempting again (%s/5) the MCMC with binned PDS. Number of bins: %s" %
                   (i, settings.bins))
-            bg_fit.MCMC(iguess, **settings.get_mcmc_settings())
+            bg_fit.MCMC(iguess, output_directory, **settings.get_mcmc_settings())
             i = i + 1
 
     if not done_p:
@@ -123,7 +125,6 @@ def background_fit(pds, ofac_pds, data, **kwargs):
         if settings.save_posteriors:
             # Read in chains
             reader = emcee.backends.HDFBackend(settings.posterior, read_only=True)
-
             #print(reader.get_autocorr_time())
             # Flattened chains and log-probability
             flatchain = reader.get_chain(discard=settings.nwarmup, flat=True)
@@ -173,6 +174,6 @@ def background_fit(pds, ofac_pds, data, **kwargs):
         for idx, row in bkg_summary.iterrows():
             data[row['parameter']] = row['Q50']
 
-        bkg_summary.to_csv(settings.output_quantiles, index = False)
+        bkg_summary.to_csv(Path(output_directory,settings.output_quantiles), index = False)
 
     return(pds_bgr, ofac_pds_bgr, data)
