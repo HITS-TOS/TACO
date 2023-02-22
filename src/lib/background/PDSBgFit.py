@@ -6,6 +6,7 @@ import numpy as np
 import scipy
 import scipy.optimize as op
 import emcee
+from pathlib import Path
 from . import mESS
 from sklearn import linear_model
 from .Rhat import Rhat
@@ -225,8 +226,7 @@ class PDSBgFit(object):
 
 
 
-    def MCMC(self, iguess, nwalkers, backend_filename, save_posteriors=False, nwarmup=1000,
-             minsteps=1000, maxsteps=10000, bins=-1, alpha=0.05, eps=0.1):
+    def MCMC(self, iguess, output_directory, nwalkers, backend_filename, save_posteriors=False, nwarmup=1000, minsteps=1000, maxsteps=10000, bins=-1, alpha=0.05, eps=0.1):
         """
         Make an MCMC parameter estimation.
         Parameters:
@@ -268,7 +268,7 @@ class PDSBgFit(object):
 
         if save_posteriors:
             # Set up the backend
-            backend = emcee.backends.HDFBackend(backend_filename)
+            backend = emcee.backends.HDFBackend(Path(output_directory,backend_filename))
             # Clear the backend in case the file already exists
             backend.reset(nwalkers, self.ndim)
         else:
