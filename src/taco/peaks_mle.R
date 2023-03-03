@@ -48,7 +48,7 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
         peaks <- peaks %>% arrange(frequency)
         peaks.mle <- peaks_MLE_final_sd(peaks = peaks,
                                         pds = pds,
-                                        final_fit_factor = 0.1,
+                                        final_fit_factor = 0.3,
                                         naverages = navg) %>%
             arrange(frequency)
 
