@@ -926,7 +926,6 @@ peak_find <- function(pds, min.snr = 3, p=0.0001, linewidth.range = NULL, use.AI
         #peaks_with_EFPp(deltanu) %>%
         #mutate(EFP = EFPp*nrow(pds))
     #stop()
-
     return(peaks)
 }
 
@@ -956,7 +955,6 @@ peaks_MLE2 <- function(peaks, pds, maxLWD, other_peaks = NULL, hessian = FALSE, 
     # Start with +/- 10%
     peaks.freq.low <- peaks$frequency - final_fit_factor*peaks$frequency
     peaks.freq.upp <- peaks$frequency + final_fit_factor*peaks$frequency
-
   } else {
     # Not final fit so set up upper and lower limits as usual
     if (N == 1) {

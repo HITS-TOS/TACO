@@ -46,15 +46,16 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
 
         peaks <- bind_rows(peaks,mixed_peaks)
         peaks <- peaks %>% arrange(frequency)
-        peaks.mle <- peaks_MLE_final_sd(peaks = peaks,
-                                        pds = pds,
-                                        final_fit_factor = 0.3,
-                                        naverages = navg) %>%
-            arrange(frequency)
 
+        #peaks.mle <- peaks_MLE_final_sd(peaks = peaks,
+        #                                pds = pds,
+        #                                final_fit_factor = 0.3,
+        #                                naverages = navg) %>%
+        #    arrange(frequency)
+        peaks.mle <- peaks
         # 31/01/2020 Add n and l ID back in as no frequencies will have been removed
-        peaks.mle$n <- peaks$n
-        peaks.mle$l <- peaks$l
+        #peaks.mle$n <- peaks$n
+        #peaks.mle$l <- peaks$l
 
         # Filter now by AIC - this is done to enable line above (so can use peaks)
         # rather than having to filter to find right peaks
@@ -69,12 +70,12 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
             print("Removing l=0,2,3 first")
             if (nrow(peaks) != 0) {
                 l02_peaks <-
-                    peaks #%>%
-                    #filter(l == 0 | l == 2 | l == 3)
+                    peaks %>%
+                    filter(l == 0 | l == 2 | l == 3)
                     #filter(l != NA)
                 pds_l02_removed <-
                     pds %>%
-                    mutate(power = power / fit_model(pds = ., peaks = l02_peaks))
+                    mutate(power = (power / fit_model(pds = ., peaks = l02_peaks)))
             } else {
                 l02_peaks <- peaks
                 pds_l02_removed <- pds

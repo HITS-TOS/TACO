@@ -298,7 +298,7 @@ class PDSBgFit(object):
         #    self.__log_MCMC()
         #    iters = self.MCMC_sampler.chain.shape[1]
         #    self.MCMCp["niters"]  = iters
-
+        
         for sample in self.MCMC_sampler.sample(pos, iterations=nwarmup, progress=True):
             # Check for convergence every "step_size" steps
             if self.MCMC_sampler.iteration % self.MCMCp["step_size"]:
@@ -313,7 +313,7 @@ class PDSBgFit(object):
         self.MCMCp["nwarmup"] = self.MCMCp["niters"]
         # Minimum iterations after warmup
         self._log_message("# Sampling for a minimum of %s iterations." % minsteps)
-
+        
         for sample in self.MCMC_sampler.sample(sample, iterations=minsteps, progress=True):
             # Check for convergence every "step_size" steps
             if self.MCMC_sampler.iteration % self.MCMCp["step_size"]:
@@ -323,9 +323,6 @@ class PDSBgFit(object):
             self.MCMCp["niters"]  = iters
             self.MCMCp["chains"] = self.__get_chains(self.MCMC_sampler).transpose(1, 0, 2)
             self.__log_MCMC()
-
-
-
 
         self._log_message("# Sampling until reaching convergence, sufficient mixing and sample size.")
         minESS = mESS.minESS(self.ndim, alpha, eps)

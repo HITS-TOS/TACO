@@ -38,15 +38,14 @@ peak_find_r <- function(pds, ofac_pds, data, peaks, snr, prob,
 
         if (nrow(peaks) != 0) {
             l02_peaks <- peaks %>%
-                #filter(l == 0 || l == 2 || l == 3)
-                filter(l != "NA")
+                filter(l == 0 | l == 2 | l == 3)
 
             pds_l02_removed <- pds %>%
-                mutate(power = power / fit_model(pds = ., peaks = l02_peaks))
+                mutate(power = (power / fit_model(pds = ., peaks = l02_peaks)))
         } else {
             pds_l02_removed <- new_pds
         }
-
+        
         # If max linewidth argument not set
         if (is.null(maxlwd)) {
             # Since this is for finding mixed modes we add in constraint that linewidth must be less than Gamma0

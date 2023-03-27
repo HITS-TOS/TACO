@@ -84,7 +84,7 @@ def background_fit(pds, ofac_pds, data, output = '', output_directory = '', **kw
     # Fetch background model
     bkg_model = getattr(lib.background.KeplerLCBgFit, settings.bkg_model)
 
-    bg_fit = bkg_model(pds, data['numax0'][0], data['nuNyq'][0], logfile = Path(output_directory,settings.logfile))
+    bg_fit = bkg_model(pds, data['numax0'][0], data['numax0_sd'][0], data['nuNyq'][0], logfile = Path(output_directory,settings.logfile))
     minESS = mESS.minESS(bg_fit.ndim, alpha=0.05, eps=0.1)
     i = 0
     done_p = False

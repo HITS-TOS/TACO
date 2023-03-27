@@ -140,6 +140,8 @@ numax_estimate_r <- function(pds, data, filter_width) {
             #27.10.2021 after a visual check with Nathalie; numax_CWTMexHat seems much better!!!
             data$numax0 <- data$numax_CWTMexHat
         }
+        data$numax0 <- (data$numax_var+data$numax_Morlet+data$numax_CWTMexHat)/3.0
+        data$numax0_sd <- (max(data$numax_var,data$numax_Morlet,data$numax_CWTMexHat) - min(data$numax_var,data$numax_Morlet,data$numax_CWTMexHat))/2.0
     }
 
     return(list(data,flag))

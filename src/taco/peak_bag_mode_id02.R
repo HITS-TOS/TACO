@@ -15,7 +15,7 @@ source("src/l02_modes_id.R", chdir = TRUE)
 peak_bag_mode_id02_r <- function(pds, peaks, data) {
 
     ## Arbitrary parameters that I use
-    MAX.ERROR <- 0.03 # Discard taggings where the square difference
+    MAX.ERROR <- 0.05 # Discard taggings where the square difference
                       # between expected and predicted frequencies
                       # is greater than MAX.ERROR*Δν
     search.range <- c(0.75, 1.25) # Look for the next l=0,2 modes
@@ -237,21 +237,24 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
     }
     # Extract uncertainties
     eps_p_sd <- res$eps_p_sd
-
+   
     # fit for d02, while keeping delta nu, epsilon and alpha fixed
-    res2 <- DeltaNu_l2_fit(
-                peaks = peaks %>%
-                filter(l == 2) %>%
+    
+    if (nrow(peaks.l2) > 0){
+        res2 <- DeltaNu_l2_fit(
+                    peaks = peaks %>%
+                    filter(l == 2) %>%
                     arrange(frequency),
-                numax = data$numax,
-                DeltaNu0 = Dnu,
-                alpha0 = alpha,
-                eps_p0 = eps_p,
-                d020 = d02)
+                    numax = data$numax,
+                    DeltaNu0 = Dnu,
+                    alpha0 = alpha,
+                    eps_p0 = eps_p,
+                    d020 = d02)
 
-    # extract d02 values
-    d02 <- res2$d02
-    d02_sd <- res2$d02_sd
+        # extract d02 values
+        d02 <- res2$d02
+        d02_sd <- res2$d02_sd
+    }
 
     print(paste0("Initial fit to radial modes gives dnu: ", round(Dnu, 2),
           ", eps: ", round(eps_p, 2),
@@ -260,12 +263,18 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
 
     ## Make the tagging again with the new Δν
     peaks.l0 <- peaks %>% filter(l == 0)
+    peaks.l2 <- peaks %>% filter(l == 2)
+   
+    if (nrow(peaks.l2) > 0){
+        ## Get the central small frequency separation (δν_02) if possible
+        d02_est <- central_d02(peaks = peaks, numax = data$numax)
 
-    ## Get the central small frequency separation (δν_02) if possible
-    d02_est <- central_d02(peaks = peaks, numax = data$numax)
-
-    ## Get the central small frequency separation (δν_02) if possible
-    d02.central <- central_d02(peaks = peaks, numax = data$numax)
+        ## Get the central small frequency separation (δν_02) if possible
+        d02.central <- central_d02(peaks = peaks, numax = data$numax)
+    } else {
+        d02_est <- 0.0
+        d02.central <- 0.0
+    }
 
     # 31/01/2020 Tag l=3 as wide modes around where expected
     peaks$x <- (peaks$frequency / Dnu - eps_p) %% 1
@@ -351,20 +360,22 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
     alpha_sd <- res$alpha_sd
 
     # fit for d02, while keeping delta nu, epsilon and alpha fixed
-    res2 <- DeltaNu_l2_fit(
+    if (nrow(peaks.l2) > 0){
+        res2 <- DeltaNu_l2_fit(
                 peaks = peaks %>%
                     filter(l == 2) %>%
                     arrange(frequency),
-                numax = data$numax,
-                DeltaNu0 = Dnu,
-                alpha0 = alpha,
-                eps_p0 = eps_p,
-                d020 = d02)
+                    numax = data$numax,
+                    DeltaNu0 = Dnu,
+                    alpha0 = alpha,
+                    eps_p0 = eps_p,
+                    d020 = d02)
 
-    # extract d02 values
-    d02 <- res2$d02
-    d02_sd <- res2$d02_sd
-
+        # extract d02 values
+        d02 <- res2$d02
+        d02_sd <- res2$d02_sd
+    }
+    
     print(paste0("Final dnu: ", format(round(Dnu, 3), nsmall = 3),
                  "+/- ", format(round(Dnu_sd, 3), nsmall = 3),
                  " uHz, and eps: ", format(round(eps_p, 3), nsmall = 3),
@@ -438,7 +449,8 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
 
     peaks <-
         peaks %>%
-        filter(l != "NA")
+        filter(l == 0 | l == 2 | l == 3)
+        #filter(l != "NA")
             
     return(list(peaks, flag, data))
 

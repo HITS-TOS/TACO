@@ -37,11 +37,12 @@ class _KeplerLCBgFit(PDSBgFit):
                 "sigmaEnv" : [0.28,  0.88]} # Mosser (2012) converted from denv to sigma
 
 
-    def __init__(self, pds, numax0, nuNyq, logfile=None):
+    def __init__(self, pds, numax0, numax0_sd, nuNyq, logfile=None):
         """
         We require the PDS and an initial guess at numax: 'numax0'
         """
         PDSBgFit.__init__(self, pds, logfile)
+        self.numax0_sd = numax0_sd
         self.numax0 = numax0
         self.nuNyq = nuNyq
         self.bg_params = self.guesses_from_numax(numax0)
@@ -107,20 +108,23 @@ class KeplerBg3Comp(_KeplerLCBgFit):
             #print(5)
             return -np.inf
         # Prior 6
-        if not ((b1 > 0) and (b3 < 1.1*self.nuNyq) and (b3 > (self.numax0 * 0.7))):
+        if not ((b1 > 0) and (b3 < 1.1*self.nuNyq) and (((numax * 0.9) < b3 < (numax * 1.1)) or ((numax * 0.9) < b2 < (numax * 1.1)))):
             #print(6)
             return -np.inf
         # Prior 7
-        if not ((self.numax0 * 0.7) < numax < (self.numax0 * 1.3)):
+        if not ((self.numax0 - 1.1*self.numax0_sd) < numax < (self.numax0 + 1.1*self.numax0_sd)):
             #print(7)
             return -np.inf
         # Prior 8
-        Pg0 = self.guess_from_numax("Pg", self.numax0)
-        if not ((Pg0 * 0.1) < Pg < (Pg0 * 6)):
+        if not ((Pg > 0) and (Pg < 1.2*self._maxPDS)):
             #print(8)
             return -np.inf
+        #Pg0 = self.guess_from_numax("Pg", numax)
+        #if not ((Pg0 * 0.1) < Pg < (Pg0 * 6)):
+        #    #print(8)
+        #    return -np.inf
         # Prior 9
-        sigmaEnv0 = self.guess_from_numax("sigmaEnv", self.numax0)
+        sigmaEnv0 = self.guess_from_numax("sigmaEnv", numax)
         if not ((sigmaEnv0 * 0.3) < sigmaEnv < (sigmaEnv0 * 3.0)):
             #print(9)
             return -np.inf
