@@ -122,26 +122,58 @@ numax_estimate_r <- function(pds, data, filter_width) {
         ## Estimate the final numax from the previous results
         ## ==================================================
 
-        if (abs(1 - data$numax_CWTMexHat/data$numax_Morlet) < 0.2 |
-            abs(1 - data$numax_var/data$numax_Morlet) < 0.2)
-        {
-            data$numax0 <-data$numax_Morlet
+        #if (abs(1 - data$numax_CWTMexHat/data$numax_Morlet) < 0.2 |
+        #    abs(1 - data$numax_var/data$numax_Morlet) < 0.2)
+        #{
+        #    data$numax0 <-data$numax_Morlet
+        #    data$numax0_flag <- FALSE
+        #    flag <- 0
+        #} else if (abs(1 - data$numax_CWTMexHat/data$numax_var) < 0.2) {
+        #    data$numax0 <- data$numax_CWTMexHat
+        #    flag <- 0
+        #    data$numax0_flag <- FALSE
+        #} else {
+        #    # 29/06/2020 Does this even work for MS stars? var estimate will
+        #    # always be dodgy!
+        #    data$numax0_flag <- TRUE
+        #    flag <- 1
+        #    #27.10.2021 after a visual check with Nathalie; numax_CWTMexHat seems much better!!!
+        #   data$numax0 <- data$numax_CWTMexHat
+        #}
+       
+       
+       if (abs(1 - min(data$numax_CWTMexHat,data$numax_Morlet)/max(data$numax_CWTMexHat,data$numax_Morlet)) < 0.5 &
+           abs(1 - min(data$numax_var,data$numax_Morlet)/max(data$numax_var,data$numax_Morlet)) < 0.5 &
+           abs(1 - min(data$numax_CWTMexHat,data$numax_var)/max(data$numax_CWTMexHat,data$numax_var)) < 0.5){
+            data$numax0 <- (data$numax_var+data$numax_Morlet+data$numax_CWTMexHat)/3.0
+            data$numax0_sd <- (max(data$numax_var,data$numax_Morlet,data$numax_CWTMexHat) - min(data$numax_var,data$numax_Morlet,data$numax_CWTMexHat))/2.0
             data$numax0_flag <- FALSE
             flag <- 0
-        } else if (abs(1 - data$numax_CWTMexHat/data$numax_var) < 0.2) {
-            data$numax0 <- data$numax_CWTMexHat
-            flag <- 0
+        } else if (abs(1 - min(data$numax_CWTMexHat,data$numax_Morlet)/max(data$numax_CWTMexHat,data$numax_Morlet)) < 0.5 ){
+            data$numax0 <- (data$numax_Morlet+data$numax_CWTMexHat)/2.0
+            data$numax0_sd <- (max(data$numax_Morlet,data$numax_CWTMexHat) - min(data$numax_Morlet,data$numax_CWTMexHat))/2.0
             data$numax0_flag <- FALSE
+            flag <- 0
+        } else if (abs(1 - min(data$numax_CWTMexHat,data$numax_var)/max(data$numax_CWTMexHat,data$numax_var)) < 0.5 ){
+            data$numax0 <- (data$numax_var+data$numax_CWTMexHat)/2.0
+            data$numax0_sd <- (max(data$numax_var,data$numax_CWTMexHat) - min(data$numax_var,data$numax_CWTMexHat))/2.0
+            data$numax0_flag <- FALSE
+            flag <- 0
+        } else if (abs(1 - min(data$numax_var,data$numax_Morlet)/max(data$numax_var,data$numax_Morlet)) < 0.5 ){
+            data$numax0 <- (data$numax_var+data$numax_Morlet)/2.0
+            data$numax0_sd <- (max(data$numax_var,data$numax_Morlet) - min(data$numax_var,data$numax_Morlet))/2.0
+            data$numax0_flag <- FALSE
+            flag <- 0
         } else {
-            # 29/06/2020 Does this even work for MS stars? var estimate will
-            # always be dodgy!
+            if (data$numax_CWTMexHat > 0) {
+                data$numax0 <- min(data$numax_var,data$numax_Morlet,data$numax_CWTMexHat)
+            } else {
+                data$numax0 <- min(data$numax_var,data$numax_Morlet)
+            }
+            data$numax0_sd <- 0.0
             data$numax0_flag <- TRUE
             flag <- 1
-            #27.10.2021 after a visual check with Nathalie; numax_CWTMexHat seems much better!!!
-            data$numax0 <- data$numax_CWTMexHat
         }
-        data$numax0 <- (data$numax_var+data$numax_Morlet+data$numax_CWTMexHat)/3.0
-        data$numax0_sd <- (max(data$numax_var,data$numax_Morlet,data$numax_CWTMexHat) - min(data$numax_var,data$numax_Morlet,data$numax_CWTMexHat))/2.0
     }
 
     return(list(data,flag))

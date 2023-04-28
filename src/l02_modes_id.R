@@ -289,7 +289,7 @@ tag_central_l02 <- function(peaks, pds, DeltaNu, d02, numax,
     while(continue_c){
         central_l0 <-
             peaks %>%
-            filter(!(is.na(linewidth)) & ((amplitude/mean(amplitude,na.rm = TRUE)) > 1.2) & ((amplitude/(mean(amplitude,na.rm = TRUE)+ 30.0*mad(amplitude,na.rm = TRUE))) < 1.)) %>%
+            filter(!(is.na(linewidth)) & ((amplitude/mean(amplitude,na.rm = TRUE)) > 1.1) & ((amplitude/(mean(amplitude,na.rm = TRUE)+ 30.0*mad(amplitude,na.rm = TRUE))) < 1.)) %>%
             mutate(l0_dist = abs(frequency - central_l0_expected)) %>%
             arrange(l0_dist) %>%
             slice(1) %>%
@@ -299,10 +299,10 @@ tag_central_l02 <- function(peaks, pds, DeltaNu, d02, numax,
     # 10/08/2020 Changed from round to floor!!!!!
          n_order <- floor(central_l0$frequency/DeltaNu - eps_p_from_Dnu(DeltaNu))
     #n_order <- round(central_l0$frequency/DeltaNu - eps_p_from_Dnu(DeltaNu))
-        #print(central_l0)
+        print(central_l0)
         central_l0 <-
             peaks %>%
-            filter(!(is.na(linewidth)), !is.na(linewidth_sd), linewidth > 0.6*deltanu,((amplitude/mean(amplitude, na.rm = TRUE)) > 1.2),((amplitude/(mean(amplitude,na.rm = TRUE)+ 30.0*mad(amplitude,na.rm = TRUE))) < 1.))  %>%
+            filter(!(is.na(linewidth)), !is.na(linewidth_sd), linewidth > 0.6*deltanu,((amplitude/mean(amplitude, na.rm = TRUE)) > 1.1),((amplitude/(mean(amplitude,na.rm = TRUE)+ 30.0*mad(amplitude,na.rm = TRUE))) < 1.))  %>%
             mutate(l0_dist = abs(frequency - central_l0_expected)) %>%
             arrange(l0_dist) %>%
             slice(1) %>%

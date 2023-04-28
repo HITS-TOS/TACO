@@ -123,8 +123,8 @@ def pipeline(argv):
                     **settings['pipeline'][3]['numax_estimate'])
                     
                 summary.to_csv(Path(argv.output_directory, input_name, "summary.csv"), index = False)
-
-                if flag_numax[0] == 0.0:
+                
+                if flag_numax[0] <= 1:
                     # 4) Background fit
                     print('4) Fit background')
                     pds_bgr, oversampled_pds_bgr, summary = taco.background_fit(
