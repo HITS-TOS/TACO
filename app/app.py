@@ -84,17 +84,31 @@ def load_peaks(KIC, peakFind=False, resolved=False, final=True):
     KIC = KIC.lstrip('KIC ').zfill(9)
     if peakFind == False:
         if resolved == False:
-            peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/mixed_peaks_MLE.csv')
+            mixed_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/mixed_peaks_MLE.csv')
+            if mixed_peaks_MLE_file.is_file():
+                peaks = pd.read_csv(mixed_peaks_MLE_file)
+            #peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/mixed_peaks_MLE.csv')
         else:
-            peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/peaks_MLE.csv')
+            peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/peaks_MLE.csv')
+            if peaks_MLE_file.is_file():
+                peaks = pd.read_csv(peaks_MLE_file)
+            #peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/peaks_MLE.csv')
         if final == True:
-            peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')
+            final_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')
+            if final_peaks_MLE_file.is_file():
+                peaks = pd.read_csv(final_peaks_MLE_file)
+            #peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')
     else:
         if resolved == False:
-            peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/mixed_peaks.csv')
+            mixed_peaks_file = Path(str(dir)+'/'+str(KIC)+'/mixed_peaks.csv')
+            if mixed_peaks_file.is_file():
+                peaks = pd.read_csv(mixed_peaks_file)
+            #peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/mixed_peaks.csv')
         if resolved == True:
-            peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/peaks.csv')
-            
+            peaks_file = Path(str(dir)+'/'+str(KIC)+'/peaks.csv')
+            if peaks_file.is_file():
+                peaks = pd.read_csv(peaks_file)
+            #peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/peaks.csv')
     return peaks
 
 def visualise_timeseries(filtered_ts, unfiltered_ts, summary):
@@ -125,29 +139,30 @@ def visualise_psd(psd, summary):
 
     # If data is short cadence then don't plot it all
     if len(psd) > 6e4:
-        st.write("Data is short cadence, only plotting data below 300 uHz!")
-        cond = psd.frequency < 300
+        st.write("Data is short cadence, only plotting data below 3000 uHz!")
+        cond = psd.frequency < 3000
         psd = psd.loc[cond, ]
         #psd = psd.iloc[::10, :]
 
-    overplot_fit = False
-    if st.sidebar.checkbox("Overplot background fit"):
-        overplot_fit = True
+    overplot_fit = True
+    if st.sidebar.checkbox("No background fit"):
+        overplot_fit = False
 
-    if st.sidebar.checkbox('log x-axis'):
-        x_axis_type = 'log'
-    else:
+    if st.sidebar.checkbox('linear x-axis'):
         x_axis_type = 'linear'
-    if st.sidebar.checkbox('log y-axis'):
-        y_axis_type = 'log'
     else:
+        x_axis_type = 'log'
+        
+    if st.sidebar.checkbox('linear y-axis'):
         y_axis_type = 'linear'
-
-    Initial_numax = False
-    if st.sidebar.checkbox('Plot initial numax estimates'):
-        Initial_numax = True
     else:
+        y_axis_type = 'log'
+
+    Initial_numax = True
+    if st.sidebar.checkbox('No initial numax estimates'):
         Initial_numax = False
+    else:
+        Initial_numax = True
 
     p = figure(
         title="",
@@ -162,8 +177,8 @@ def visualise_psd(psd, summary):
 
     p.line(psd.frequency, psd.power, color="black", legend_label=r'Data')
 
-    if overplot_fit == True:
-
+    if (overplot_fit == True) & ('Pn' in summary):
+        
         theta = summary.loc[:, 'Pn':'sigmaEnv']
 
         n_comps = np.array([i.startswith("A") for i in list(theta)]).sum()
@@ -207,7 +222,9 @@ def visualise_psd(psd, summary):
         p.line(psd.frequency, comps[-1], color="blue", line_dash='dashed', line_width=3, legend_label=r'White Noise')
         p.line(psd.frequency, bg_fit_no_osc, color="red", line_dash='dashed', line_width=3, legend_label=r'Full model (no oscillations)')
         p.line(psd.frequency, bg_fit, color="red", line_width=3, legend_label=r'Full model')
-
+    else:
+        st.write("No background parameters available to show a fit")
+        
     if Initial_numax == True:
         power = np.linspace(psd.power.min()*0.5, psd.power.max()*1.1, 1000)
         p.line(summary.numax_var.values*np.ones_like(power), power, color="turquoise", line_width=3, line_dash='dotted', legend_label=r'numax estimate from variance')
@@ -225,19 +242,19 @@ def visualise_psd(psd, summary):
         p.legend.location = 'bottom_left'
     st.bokeh_chart(p)
 
-def visualise_pds_bgr(psd_bgr, peaksMLE_final, peaksMLE_odd, peaksMLE_even, summary, peakFind_mixed, peakFind_even):
+def visualise_pds_bgr(KIC,psd_bgr, summary):
     #if st.sidebar.checkbox('Show background-removed power spectrum'):
     psd_bgr = psd_bgr.loc[np.abs(psd_bgr['frequency'].values - summary['numax'].values) < 3*summary['sigmaEnv'].values, ]
 
-    overplot_evenmode_peaks = st.checkbox("Overplot even mode peaks from peakFind")
+    #overplot_evenmode_peaks = st.checkbox("Overplot even mode peaks from peakFind")
     
-    overplot_mixedmode_peaks = st.checkbox("Overplot odd mode peaks from peakFind")
+    #overplot_mixedmode_peaks = st.checkbox("Overplot odd mode peaks from peakFind")
 
-    overplot_fit = st.checkbox("Overplot final MLE fit")
+    #overplot_fit = st.checkbox("Overplot final MLE fit")
 
-    overplot_fit_odd = st.checkbox("Overplot MLE fit odd modes")
+    #overplot_fit_odd = st.checkbox("Overplot MLE fit odd modes")
     
-    overplot_fit_even = st.checkbox("Overplot MLE fit even modes")
+    #overplot_fit_even = st.checkbox("Overplot MLE fit even modes")
 
 
     p = figure(
@@ -255,33 +272,31 @@ def visualise_pds_bgr(psd_bgr, peaksMLE_final, peaksMLE_odd, peaksMLE_even, summ
 
     AIC_cut = st.sidebar.slider('AIC cut', min_value=-100.0, max_value=100., value=2.)
 
-    if overplot_evenmode_peaks:
+  #  if overplot_evenmode_peaks:
 
-        model_pf = app_helpers.construct_peaksmodel(psd_bgr, peakFind_even.loc[peakFind_even.AIC.values > AIC_cut, ])
-        p.line(psd_bgr.frequency, model_pf, color="purple", line_width=3, legend_label=r'even mode peaks')
+  #      model_pf = app_helpers.construct_peaksmodel(psd_bgr, peakFind_even.loc[peakFind_even.AIC.values > AIC_cut, ])
+  #      p.line(psd_bgr.frequency, model_pf, color="purple", line_width=3, legend_label=r'even mode peaks')
     
-    if overplot_mixedmode_peaks:
+  #  if overplot_mixedmode_peaks:
 
-        model_pf = app_helpers.construct_peaksmodel(psd_bgr, peakFind_mixed.loc[peakFind_mixed.AIC.values > AIC_cut, ])
-        p.line(psd_bgr.frequency, model_pf, color="blue", line_width=3, legend_label=r'odd mode peaks')
+  #      model_pf = app_helpers.construct_peaksmodel(psd_bgr, peakFind_mixed.loc[peakFind_mixed.AIC.values > AIC_cut, ])
+  #      p.line(psd_bgr.frequency, model_pf, color="blue", line_width=3, legend_label=r'odd mode peaks')
 
-    if overplot_fit:
+  #  if overplot_fit:
 
-        model = app_helpers.construct_peaksmodel(psd_bgr, peaksMLE_final.loc[peaksMLE_final.AIC.values > AIC_cut, ])
-        p.line(psd_bgr.frequency, model, color="orange", line_width=3, legend_label=r'final MLE fit')
+  #     model = app_helpers.construct_peaksmodel(psd_bgr, peaksMLE_final.loc[peaksMLE_final.AIC.values > AIC_cut, ])
+  #      p.line(psd_bgr.frequency, model, color="orange", line_width=3, legend_label=r'final MLE fit')
 
-    if overplot_fit_odd:
+  #  if overplot_fit_odd:
 
-        model = app_helpers.construct_peaksmodel(psd_bgr, peaksMLE_odd.loc[peaksMLE_odd.AIC.values > AIC_cut, ])
-        p.line(psd_bgr.frequency, model, color="red", line_width=3, legend_label=r'MLE fit odd modes')
+  #      model = app_helpers.construct_peaksmodel(psd_bgr, peaksMLE_odd.loc[peaksMLE_odd.AIC.values > AIC_cut, ])
+  #      p.line(psd_bgr.frequency, model, color="red", line_width=3, legend_label=r'MLE fit odd modes')
 
-    if overplot_fit_even:
+   # if overplot_fit_even:
 
-        model = app_helpers.construct_peaksmodel(psd_bgr, peaksMLE_even.loc[peaksMLE_even.AIC.values > AIC_cut, ])
-        p.line(psd_bgr.frequency, model, color="pink", line_width=3, legend_label=r'MLE fit even modes')
-
-
-
+   #     model = app_helpers.construct_peaksmodel(psd_bgr, peaksMLE_even.loc[peaksMLE_even.AIC.values > AIC_cut, ])
+   #     p.line(psd_bgr.frequency, model, color="pink", line_width=3, legend_label=r'MLE fit even modes')
+        
         #model_l02, model_l1 = app_helpers.construct_MLEmodel(psd_bgr, peaks)
         # Add 1 because no background added to individual models
         #full_model = model_l02 + model_l1 + 1
@@ -291,15 +306,75 @@ def visualise_pds_bgr(psd_bgr, peaksMLE_final, peaksMLE_odd, peaksMLE_even, summ
             # Have to add background of 1 as not included when individual models created
         #    p.line(psd_bgr.frequency, model_l02+1, color="green", line_width=3, legend_label="l=0/2 (Even)")
         #    p.line(psd_bgr.frequency, model_l1+1, color="red", line_width=3, legend_label="l=1/3 (Odd)")
-    if st.sidebar.checkbox("Mode identification"):
-        p.circle(peaksMLE_final.loc[(peaksMLE_final.l == 0) & (peaksMLE_final.AIC.values > AIC_cut), 'frequency'], len(peaksMLE_final.loc[(peaksMLE_final.l == 0) & (peaksMLE_final.AIC.values > AIC_cut), 'frequency'])*[psd_bgr.power.max()/2],
+    dir = Path().cwd().parent / "resultspipeline"
+    KIC = KIC.lstrip('KIC ').zfill(9)
+    final_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')
+    if final_peaks_MLE_file.is_file():
+        peaks = pd.read_csv(final_peaks_MLE_file)
+        if st.sidebar.checkbox("Mode identification"):
+            p.circle(peaks.loc[(peaks.l == 0) & (peaks.AIC.values > AIC_cut), 'frequency'], len(peaks.loc[(peaks.l == 0) & (peaks.AIC.values > AIC_cut), 'frequency'])*[psd_bgr.power.max()/2],
                 size=10, color="red", alpha=0.5, legend_label='l=0')
-        p.square(peaksMLE_final.loc[(peaksMLE_final.l == 2) & (peaksMLE_final.AIC.values > AIC_cut), 'frequency'],
-                len(peaksMLE_final.loc[(peaksMLE_final.l == 2) & (peaksMLE_final.AIC.values > AIC_cut), 'frequency'])*[psd_bgr.power.max()/2],
+            p.square(peaks.loc[(peaks.l == 2) & (peaks.AIC.values > AIC_cut), 'frequency'],
+                len(peaks.loc[(peaks.l == 2) & (peaks.AIC.values > AIC_cut), 'frequency'])*[psd_bgr.power.max()/2],
                 size=10, color="green", alpha=0.5, legend_label='l=2')
-        p.hex(peaksMLE_final.loc[(peaksMLE_final.l == 3) & (peaksMLE_final.AIC.values > AIC_cut), 'frequency'],
-                len(peaksMLE_final.loc[(peaksMLE_final.l == 3) & (peaksMLE_final.AIC.values > AIC_cut), 'frequency'])*[psd_bgr.power.max()/2],
+            p.hex(peaks.loc[(peaks.l == 3) & (peaks.AIC.values > AIC_cut), 'frequency'],
+                len(peaks.loc[(peaks.l == 3) & (peaks.AIC.values > AIC_cut), 'frequency'])*[psd_bgr.power.max()/2],
                 size=10, color="orange", alpha=0.5, legend_label='l=3')
+        
+        overplot_fit = False
+        if st.sidebar.checkbox("Overplot final MLE fit"):
+            peaks = pd.read_csv(final_peaks_MLE_file)
+            model = app_helpers.construct_peaksmodel(psd_bgr, peaks.loc[peaks.AIC.values > AIC_cut, ])
+            p.line(psd_bgr.frequency, model, color="orange", line_width=3, legend_label=r'final MLE fit')
+            #peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')
+    else:
+        st.write("no final MLE fit parameters were obtained")
+        st.write("no mode identifications were obtained")
+     
+    peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/peaks_MLE.csv')
+    if peaks_MLE_file.is_file():
+        overplot_even_fit = False
+        if st.sidebar.checkbox("Overplot even mode MLE fit"):
+            peaks = pd.read_csv(peaks_MLE_file)
+            model = app_helpers.construct_peaksmodel(psd_bgr, peaks.loc[peaks.AIC.values > AIC_cut, ])
+            p.line(psd_bgr.frequency, model, color="pink", line_width=3, legend_label=r'even mode MLE fit')
+            #peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')
+    else:
+        st.write("no even mode MLE fit parameters were obtained")
+        
+    peaks_file = Path(str(dir)+'/'+str(KIC)+'/peaks.csv')
+    if peaks_file.is_file():
+        overplot_even_peaks = False
+        if st.sidebar.checkbox("Overplot resolved mode peaks"):
+            peaks = pd.read_csv(peaks_file)
+            model = app_helpers.construct_peaksmodel(psd_bgr, peaks.loc[peaks.AIC.values > AIC_cut, ])
+            p.line(psd_bgr.frequency, model, color="blue", line_width=3, legend_label=r'resolved peaks')
+            #peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')
+    else:
+        st.write("no resolved mode peaks were obtained")
+     
+    mixed_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/mixed_peaks_MLE.csv')
+    if mixed_peaks_MLE_file.is_file():
+        overplot_odd_fit = False
+        if st.sidebar.checkbox("Overplot odd mode MLE fit"):
+            peaks = pd.read_csv(mixed_peaks_MLE_file)
+            model = app_helpers.construct_peaksmodel(psd_bgr, peaks.loc[peaks.AIC.values > AIC_cut, ])
+            p.line(psd_bgr.frequency, model, color="red", line_width=3, legend_label=r'odd mode MLE fit')
+            #peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')
+    else:
+        st.write("no final odd mode MLE fit parameters were obtained")
+        
+    mixed_peaks_file = Path(str(dir)+'/'+str(KIC)+'/mixed_peaks.csv')
+    if mixed_peaks_file.is_file():
+        overplot_odd_peaks = False
+        if st.sidebar.checkbox("Overplot odd mode peaks"):
+            peaks = pd.read_csv(mixed_peaks_file)
+            model = app_helpers.construct_peaksmodel(psd_bgr, peaks.loc[peaks.AIC.values > AIC_cut, ])
+            p.line(psd_bgr.frequency, model, color="purple", line_width=3, legend_label=r'odd mode peaks')
+            #peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')
+    else:
+        st.write("no odd mode peaks were obtained")
+            
          # Colour by rotation splitting as well
    #     if st.sidebar.checkbox("Include rotational splitting"):
    #         p.triangle(peaks.loc[(peaks.l == 1) & (peaks.m == -1) & (peaks.AIC.values > AIC_cut), 'frequency'],
@@ -318,152 +393,158 @@ def visualise_pds_bgr(psd_bgr, peaksMLE_final, peaksMLE_odd, peaksMLE_even, summ
     p.legend.click_policy="hide"
     st.bokeh_chart(p)
 
-    res_plot = st.sidebar.selectbox(
-              "plot residuals",
-              ["","full fit","even mode fit"])
+    #res_plot = st.sidebar.selectbox(
+    #          "plot residuals",
+    #          ["","full fit","even mode fit"])
 
-    if res_plot == "full fit":
-        model = app_helpers.construct_peaksmodel(psd_bgr, peaksMLE_final.loc[peaksMLE_final.AIC.values > AIC_cut, ])
+    #if res_plot == "full fit":
+    #    model = app_helpers.construct_peaksmodel(psd_bgr, peaksMLE_final.loc[peaksMLE_final.AIC.values > AIC_cut, ])
 
-    if res_plot == "even mode fit":
-        model = app_helpers.construct_peaksmodel(psd_bgr, peaksMLE_final.loc[(peaks.l % 2 == 0) & (peaksMLE_final.AIC.values > AIC_cut), ])
+    #if res_plot == "even mode fit":
+    #    model = app_helpers.construct_peaksmodel(psd_bgr, peaksMLE_final.loc[(peaks.l % 2 == 0) & (peaksMLE_final.AIC.values > AIC_cut), ])
 
 
-    if res_plot != "":
-        res = psd_bgr.power / model
-        p = figure(
-            title="",
-            x_axis_label="Frequency (μHz)",
-            y_axis_label="SNR",
-            match_aspect=True,
-            x_range=(psd_bgr.frequency.min(), psd_bgr.frequency.max()),
-            y_range=(0, res.max()),
-            plot_height=400,
-            plot_width=600
-        )
-        p.line(psd_bgr.frequency, psd_bgr.power / model, color="black")
+    #if res_plot != "":
+    #    res = psd_bgr.power / model
+    #    p = figure(
+    #        title="",
+    #        x_axis_label="Frequency (μHz)",
+    #        y_axis_label="SNR",
+    #        match_aspect=True,
+    #        x_range=(psd_bgr.frequency.min(), psd_bgr.frequency.max()),
+    #        y_range=(0, res.max()),
+    #        plot_height=400,
+    #        plot_width=600
+    #    )
+    #    p.line(psd_bgr.frequency, psd_bgr.power / model, color="black")
 
   #      if overplot_fit == "Full fit":
   #          p.line(psd_bgr.frequency, psd_bgr.power.values/full_model, color="black")
   #      elif overplot_fit == "Odd/Even degrees":
   #          p.line(psd_bgr.frequency, psd_bgr.power.values/(model_l02+1), color="black")
   #          p.line(psd_bgr.frequency, model_l1+1, color="red", line_width=3, legend_label="l=1/3 (Odd)")
-        st.bokeh_chart(p)
+        #st.bokeh_chart(p)
 
 
 
 
-def visualise_echelle(psd_bgr, peaks, summary, session):
+def visualise_echelle(KIC, psd_bgr, summary, session):
 
-    MARKERS = ["circle", "square", "triangle", "hex"]
-    MODE_DEGREE = ["l=0", "l=2", "l=1", "l=3"]
-    COLOURS = ["red", "green", "blue", "orange"]
+    dir = Path().cwd().parent / "resultspipeline"
+    KIC = KIC.lstrip('KIC ').zfill(9)
+    final_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')
+    if final_peaks_MLE_file.is_file():
+        peaks = pd.read_csv(final_peaks_MLE_file)
+        
+        MARKERS = ["circle", "square", "triangle", "hex"]
+        MODE_DEGREE = ["l=0", "l=2", "l=1", "l=3"]
+        COLOURS = ["red", "green", "blue", "orange"]
 
-    numax = summary['numax'].item()
-    orig_DeltaNu = summary['DeltaNu'].item()
-    if not np.isfinite(orig_DeltaNu):
-        orig_DeltaNu = 0.254 * numax **0.756
-    orig_eps = summary['eps_p'].item()
-    if not np.isfinite(orig_eps):
-        orig_eps = 1.0
-    orig_alpha = summary['alpha'].item()
-    if not np.isfinite(orig_alpha):
-        orig_alpha = 0.0
-    orig_d02 = summary['dNu02'].item()
-    if not np.isfinite(orig_d02):
-        orig_d02 = 0.125 * orig_DeltaNu
-    if (orig_eps) > 1.7 or (orig_eps < 0):
-        st.write('Epsilon p is outside correct range, something went wrong!')
-        orig_eps = 0.0
+        numax = summary['numax'].item()
+        orig_DeltaNu = summary['DeltaNu'].item()
+        if not np.isfinite(orig_DeltaNu):
+            orig_DeltaNu = 0.254 * numax **0.756
+        orig_eps = summary['eps_p'].item()
+        if not np.isfinite(orig_eps):
+            orig_eps = 1.0
+        orig_alpha = summary['alpha'].item()
+        if not np.isfinite(orig_alpha):
+            orig_alpha = 0.0
+        orig_d02 = summary['dNu02'].item()
+        if not np.isfinite(orig_d02):
+            orig_d02 = 0.125 * orig_DeltaNu
+        if (orig_eps) > 1.7 or (orig_eps < 0):
+            st.write('Epsilon p is outside correct range, something went wrong!')
+            orig_eps = 0.0
 
-    # Save original deltanu in case reset needed
-    DeltaNu = orig_DeltaNu
-    eps_p = orig_eps
-    alpha = orig_alpha
-    d02 = orig_d02
+        # Save original deltanu in case reset needed
+        DeltaNu = orig_DeltaNu
+        eps_p = orig_eps
+        alpha = orig_alpha
+        d02 = orig_d02
 
-    # Set up sliders
-    reset = st.sidebar.button('Reset parameters')
-    if reset:
-        session.run_id += 1
-    save = st.sidebar.button('Save parameters')
-    if save:
-        st.write('Doesn\'t do anything at the moment, but will do soon!')
-    DeltaNu = st.sidebar.slider('Δν (μHz)', min_value=orig_DeltaNu*0.85, max_value=orig_DeltaNu*1.15, value=orig_DeltaNu, step = orig_DeltaNu/1e3, key=session.run_id, format="%.3f")
-    eps_p = st.sidebar.slider('ε', min_value=0.0, max_value=1.7, value=orig_eps, key=session.run_id, format="%.3f")
+        # Set up sliders
+        reset = st.sidebar.button('Reset parameters')
+        if reset:
+            session.run_id += 1
+        save = st.sidebar.button('Save parameters')
+        if save:
+            st.write('Doesn\'t do anything at the moment, but will do soon!')
+        DeltaNu = st.sidebar.slider('Δν (μHz)', min_value=orig_DeltaNu*0.85, max_value=orig_DeltaNu*1.15, value=orig_DeltaNu, step = orig_DeltaNu/1e3, key=session.run_id, format="%.3f")
+        eps_p = st.sidebar.slider('ε', min_value=0.0, max_value=1.7, value=orig_eps, key=session.run_id, format="%.3f")
 
 
-    AIC_cut = st.sidebar.slider('AIC cut', min_value=-10.0, max_value=20., value=2.0, key=session.run_id)
+        AIC_cut = st.sidebar.slider('AIC cut', min_value=-10.0, max_value=20., value=2.0, key=session.run_id)
 
-    psd_bgr = psd_bgr.loc[np.abs(psd_bgr['frequency'].values - summary['numax'].values) < 3*summary['sigmaEnv'].values, ]
+        psd_bgr = psd_bgr.loc[np.abs(psd_bgr['frequency'].values - summary['numax'].values) < 3*summary['sigmaEnv'].values, ]
 
-    p = figure(
-    title="",
-    x_axis_label="Frequency modulo Δν (μHz)",
-    y_axis_label="Frequency (μHz)",
-    match_aspect=True,
-    x_range=(0, DeltaNu),
-    y_range=(psd_bgr.frequency.min(), psd_bgr.frequency.max()),
-    plot_height=400,
-    plot_width=600
-    )
+        p = figure(
+        title="",
+        x_axis_label="Frequency modulo Δν (μHz)",
+        y_axis_label="Frequency (μHz)",
+        match_aspect=True,
+        x_range=(0, DeltaNu),
+        y_range=(psd_bgr.frequency.min(), psd_bgr.frequency.max()),
+        plot_height=400,
+        plot_width=600
+        )
 
-    dh = DeltaNu
+        dh = DeltaNu
 
-    echelle_offset = 0.2
+        echelle_offset = 0.2
 
-    # l=0 x and y values
-    #'eps_p mod Dnu', eps_p*DeltaNu % DeltaNu
-    l0_x = ((peaks.loc[(peaks.l == 0) & (peaks.AIC.values >= AIC_cut), 'frequency'] - eps_p*DeltaNu + echelle_offset*DeltaNu) % DeltaNu).values
-    l0_y = peaks.loc[(peaks.l == 0) & (peaks.AIC.values >= AIC_cut), 'frequency'].values
-    # l=2 x and y values
-    l2_x = ((peaks.loc[(peaks.l == 2) & (peaks.AIC.values >= AIC_cut), 'frequency'] - eps_p*DeltaNu + echelle_offset*DeltaNu) % DeltaNu).values
-    l2_y = peaks.loc[(peaks.l == 2) & (peaks.AIC.values >= AIC_cut), 'frequency'].values
-    # l=1/3 x and y values
-    #'', np.isnan(peaks.l.values)
-    l1_x = ((peaks.loc[((peaks.l == 1) | np.isnan(peaks.l.values)) & (peaks.AIC.values >= AIC_cut), 'frequency'] - eps_p*DeltaNu + echelle_offset*DeltaNu) % DeltaNu).values
-    l1_y = peaks.loc[((peaks.l == 1) | np.isnan(peaks.l.values)) & (peaks.AIC.values >= AIC_cut), 'frequency'].values
-    # l=3 x and y values
-    l3_x = ((peaks.loc[(peaks.l == 3) & (peaks.AIC.values >= AIC_cut), 'frequency'] - eps_p*DeltaNu + echelle_offset*DeltaNu) % DeltaNu).values
-    l3_y = peaks.loc[(peaks.l == 3) & (peaks.AIC.values >= AIC_cut), 'frequency'].values
+        # l=0 x and y values
+        #'eps_p mod Dnu', eps_p*DeltaNu % DeltaNu
+        l0_x = ((peaks.loc[(peaks.l == 0) & (peaks.AIC.values >= AIC_cut), 'frequency'] - eps_p*DeltaNu + echelle_offset*DeltaNu) % DeltaNu).values
+        l0_y = peaks.loc[(peaks.l == 0) & (peaks.AIC.values >= AIC_cut), 'frequency'].values
+        # l=2 x and y values
+        l2_x = ((peaks.loc[(peaks.l == 2) & (peaks.AIC.values >= AIC_cut), 'frequency'] - eps_p*DeltaNu + echelle_offset*DeltaNu) % DeltaNu).values
+        l2_y = peaks.loc[(peaks.l == 2) & (peaks.AIC.values >= AIC_cut), 'frequency'].values
+        # l=1/3 x and y values
+        #'', np.isnan(peaks.l.values)
+        l1_x = ((peaks.loc[((peaks.l == 1) | np.isnan(peaks.l.values)) & (peaks.AIC.values >= AIC_cut), 'frequency'] - eps_p*DeltaNu + echelle_offset*DeltaNu) % DeltaNu).values
+        l1_y = peaks.loc[((peaks.l == 1) | np.isnan(peaks.l.values)) & (peaks.AIC.values >= AIC_cut), 'frequency'].values
+        # l=3 x and y values
+        l3_x = ((peaks.loc[(peaks.l == 3) & (peaks.AIC.values >= AIC_cut), 'frequency'] - eps_p*DeltaNu + echelle_offset*DeltaNu) % DeltaNu).values
+        l3_y = peaks.loc[(peaks.l == 3) & (peaks.AIC.values >= AIC_cut), 'frequency'].values
 
-    if st.sidebar.checkbox("Overplot theoretical frequencies"):
+        if st.sidebar.checkbox("Overplot theoretical frequencies"):
 
-        alpha = st.sidebar.slider('α', min_value=0.0, max_value=5e-2, step=1e-4, value=orig_alpha, key=session.run_id, format="%.4f")
-        d02 = st.sidebar.slider('d02 (μHz)', min_value=0.0, max_value=orig_DeltaNu*0.3, value=orig_d02, key=session.run_id, format="%.4f")
+            alpha = st.sidebar.slider('α', min_value=0.0, max_value=5e-2, step=1e-4, value=orig_alpha, key=session.run_id, format="%.4f")
+            d02 = st.sidebar.slider('d02 (μHz)', min_value=0.0, max_value=orig_DeltaNu*0.3, value=orig_d02, key=session.run_id, format="%.4f")
 
-        # Estimate minimum and maximum radial orders
-        min_n = np.floor(psd_bgr.frequency.min() / DeltaNu - eps_p).astype(int)
-        n_max = (summary.numax.values / DeltaNu) - eps_p
-        max_n = np.floor(psd_bgr.frequency.max() / DeltaNu - eps_p).astype(int)
+            # Estimate minimum and maximum radial orders
+            min_n = np.floor(psd_bgr.frequency.min() / DeltaNu - eps_p).astype(int)
+            n_max = (summary.numax.values / DeltaNu) - eps_p
+            max_n = np.floor(psd_bgr.frequency.max() / DeltaNu - eps_p).astype(int)
 
-        ridge_n = np.arange(min_n-1, max_n+3, 1)
+            ridge_n = np.arange(min_n-1, max_n+3, 1)
 
-        l0_ridge_freq = (ridge_n + eps_p + alpha/2 * (ridge_n - n_max)**2) * DeltaNu
-        l2_ridge_freq = (ridge_n + eps_p + alpha/2 * (ridge_n - n_max)**2) * DeltaNu - d02
+            l0_ridge_freq = (ridge_n + eps_p + alpha/2 * (ridge_n - n_max)**2) * DeltaNu
+            l2_ridge_freq = (ridge_n + eps_p + alpha/2 * (ridge_n - n_max)**2) * DeltaNu - d02
 
-        ridge = (ridge_n*DeltaNu) % DeltaNu
-        ridge[np.abs(ridge - DeltaNu) < 1e-6] = 0.0
-        l0_ridge = (l0_ridge_freq - eps_p*DeltaNu + echelle_offset*DeltaNu) % DeltaNu
-        l2_ridge = (l2_ridge_freq - eps_p*DeltaNu + echelle_offset*DeltaNu) % DeltaNu
+            ridge = (ridge_n*DeltaNu) % DeltaNu
+            ridge[np.abs(ridge - DeltaNu) < 1e-6] = 0.0
+            l0_ridge = (l0_ridge_freq - eps_p*DeltaNu + echelle_offset*DeltaNu) % DeltaNu
+            l2_ridge = (l2_ridge_freq - eps_p*DeltaNu + echelle_offset*DeltaNu) % DeltaNu
 
-        #l0_ridge = (eps_p*DeltaNu) % DeltaNu + (alpha/2 * (ridge_n - n_max)**2 * DeltaNu) % DeltaNu + echelle_offset# + 0.3
-        #l2_ridge = (eps_p*DeltaNu) % DeltaNu + (alpha/2 * (ridge_n - n_max)**2 * DeltaNu) % DeltaNu - d02 % DeltaNu  + echelle_offset# + 0.3
+            #l0_ridge = (eps_p*DeltaNu) % DeltaNu + (alpha/2 * (ridge_n - n_max)**2 * DeltaNu) % DeltaNu + echelle_offset# + 0.3
+            #l2_ridge = (eps_p*DeltaNu) % DeltaNu + (alpha/2 * (ridge_n - n_max)**2 * DeltaNu) % DeltaNu - d02 % DeltaNu  + echelle_offset# + 0.3
 
-        #'ridge', ridge
+            #'ridge', ridge
 
-        ridge_source = ColumnDataSource(data = {
-            "red_freq": [l0_ridge, l2_ridge],
-            "frequency": [l0_ridge_freq, l2_ridge_freq],
-            "l": ["l=0", "l=2"],
-            "line_color": ["red", "green"]
-            })
+            ridge_source = ColumnDataSource(data = {
+                "red_freq": [l0_ridge, l2_ridge],
+                "frequency": [l0_ridge_freq, l2_ridge_freq],
+                "l": ["l=0", "l=2"],
+                "line_color": ["red", "green"]
+                })
 
-        p.multi_line(xs="red_freq", ys="frequency",
+            p.multi_line(xs="red_freq", ys="frequency",
                line_width=2,
                line_color="line_color",
                line_dash=[5,5], alpha=0.4, source=ridge_source)
-        #p.line(x="l2_ridge", y="l2_ridge_freq", line_width=2, color="green", line_dash=[5,5], alpha=0.4)
+            #p.line(x="l2_ridge", y="l2_ridge_freq", line_width=2, color="green", line_dash=[5,5], alpha=0.4)
 
 
 
@@ -483,25 +564,25 @@ def visualise_echelle(psd_bgr, peaks, summary, session):
     #         l3_y[i] = app_helpers.find_nearest(yn_tmp, l3_y[i])
 
     # Symbol size in echelle defined by mode amplitude, defaults to on
-    if st.sidebar.checkbox("Set symbol size by mode amplitude", value=True):
+        if st.sidebar.checkbox("Set symbol size by mode amplitude", value=True):
 
-        const = st.sidebar.number_input("Symbol size multiplier.", value=10.0, step=0.5)
+            const = st.sidebar.number_input("Symbol size multiplier.", value=10.0, step=0.5)
 
-        l0_size = const*peaks.loc[(peaks.l == 0) & (peaks.AIC.values >= AIC_cut), 'amplitude']
-        l2_size = const*peaks.loc[(peaks.l == 2) & (peaks.AIC.values >= AIC_cut), 'amplitude']
-        l1_size = const*peaks.loc[((peaks.l == 1) | np.isnan(peaks.l.values)) & (peaks.AIC.values >= AIC_cut), 'amplitude']
-        l3_size = const*peaks.loc[(peaks.l == 3) & (peaks.AIC.values >= AIC_cut), 'amplitude']
+            l0_size = const*peaks.loc[(peaks.l == 0) & (peaks.AIC.values >= AIC_cut), 'amplitude']
+            l2_size = const*peaks.loc[(peaks.l == 2) & (peaks.AIC.values >= AIC_cut), 'amplitude']
+            l1_size = const*peaks.loc[((peaks.l == 1) | np.isnan(peaks.l.values)) & (peaks.AIC.values >= AIC_cut), 'amplitude']
+            l3_size = const*peaks.loc[(peaks.l == 3) & (peaks.AIC.values >= AIC_cut), 'amplitude']
 
-    else:
+        else:
     
-        const = 10.0
+            const = 10.0
         
-        l0_size = const*np.ones(len(l0_x))
-        l2_size = const*np.ones(len(l2_x))
-        l1_size = const*np.ones(len(l1_x))
-        l3_size = const*np.ones(len(l3_x))
+            l0_size = const*np.ones(len(l0_x))
+            l2_size = const*np.ones(len(l2_x))
+            l1_size = const*np.ones(len(l1_x))
+            l3_size = const*np.ones(len(l3_x))
         
-    source = ColumnDataSource(data = {
+        source = ColumnDataSource(data = {
             "red_freq": np.r_[l0_x, l2_x, l1_x, l3_x],
             "frequency": np.r_[l0_y, l2_y, l1_y, l3_y],
             "l": np.r_[np.array(["l=0"]*len(l0_x)),
@@ -509,79 +590,89 @@ def visualise_echelle(psd_bgr, peaks, summary, session):
                        np.array(["l=1"]*len(l1_x)),
                        np.array(["l=3"]*len(l3_x))],
             "size": np.r_[l0_size, l2_size, l1_size, l3_size]
-    })
+        })
 
 
-    p.scatter(x="red_freq", y="frequency", size="size", source=source,
+        p.scatter(x="red_freq", y="frequency", size="size", source=source,
               alpha = 0.5,
               legend = "l",
               marker=factor_mark("l", MARKERS, MODE_DEGREE),
               color=factor_cmap("l", COLOURS, MODE_DEGREE))
 
-    p.add_tools(HoverTool(
+        p.add_tools(HoverTool(
                 tooltips=[
                     ( 'frequency',   '$data_y μHz'            ),
                     ( 'mode ID', '@l'),
                 ],
             ))
 
-    p.legend.title = "Mode degree"
-    p.legend.click_policy="hide"
+        p.legend.title = "Mode degree"
+        p.legend.click_policy="hide"
 
-    st.bokeh_chart(p)
+        st.bokeh_chart(p)
+        
+        if st.checkbox('Show MLE fit parameters'):
+            st.write('MLE parameters')
+            st.write(peaks)
+    else:
+        st.write("no mode identifications were obtained and henceforth no echelle diagram can be plotted")
+        
+def visualise_stretched_echelle(KIC, psd_bgr, summary, session):
 
-def visualise_stretched_echelle(psd_bgr, peaks, summary, session):
-
-    #st.write(psd_bgr)
+    dir = Path().cwd().parent / "resultspipeline"
+    KIC = KIC.lstrip('KIC ').zfill(9)
+    final_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')
+    if final_peaks_MLE_file.is_file():
+        peaks = pd.read_csv(final_peaks_MLE_file)
     
-    from libs.sloscillations.sloscillations import frequencies, mixed_modes_utils
-    from src.lib.rotation import rotation_utils
+        from libs.sloscillations.sloscillations import frequencies, mixed_modes_utils
+        from src.lib.rotation import rotation_utils
 
-    orig_DPi1 = summary['DeltaPi1'].item()
-    orig_numax = summary['numax'].item()
-    orig_eps_p = summary['eps_p'].item()
-    orig_alpha = summary['alpha'].item()
-    #'', summary.columns
-    orig_DeltaNu = summary['DeltaNu'].item()
-    orig_coupling = summary['coupling'].item()
-    orig_eps_g = summary['eps_g'].item()
+        orig_DPi1 = summary['DeltaPi1'].item()
+        orig_numax = summary['numax'].item()
+        orig_eps_p = summary['eps_p'].item()
+        orig_alpha = summary['alpha'].item()
+        #'', summary.columns
+        orig_DeltaNu = summary['DeltaNu'].item()
+        orig_coupling = summary['coupling'].item()
+        orig_eps_g = summary['eps_g'].item()
 
-    orig_d01 = 0.0
-    orig_splitting = 0.0
+        orig_d01 = 0.0
+        orig_splitting = 0.0
 
-    # Set up sliders
-    reset = st.sidebar.button('Reset parameters')
-    if reset:
-        session.run_id += 1
-    save = st.sidebar.button('Save parameters')
-    if save:
-        st.write('Doesn\'t do anything at the moment, but will do soon!')
+        # Set up sliders
+        reset = st.sidebar.button('Reset parameters')
+        if reset:
+            session.run_id += 1
+        save = st.sidebar.button('Save parameters')
+        if save:
+            st.write('Doesn\'t do anything at the moment, but will do soon!')
 
 
-    AIC_cut = st.sidebar.slider('AIC cut', min_value=-10.0, max_value=20., value=2.0, key=session.run_id)
-    DeltaNu = st.sidebar.slider('Δν (μHz)', min_value=orig_DeltaNu*0.9, max_value=orig_DeltaNu*1.1, value=orig_DeltaNu, key=session.run_id)
-    DPi1 = st.sidebar.number_input('ΔΠ₁ (s)', min_value=orig_DPi1*0.5, max_value=orig_DPi1*1.1, value=orig_DPi1, key=session.run_id)
-    coupling = st.sidebar.slider('q', min_value=0.0, max_value=0.8, value=orig_coupling, key=session.run_id)
-    eps_g = st.sidebar.slider('ε_g', min_value=-1.0, max_value=1.0, value=float(orig_eps_g), key=session.run_id)
-    d01 = st.sidebar.slider('δν₀₁ (μHz)', min_value=-orig_DeltaNu/3, max_value=orig_DeltaNu/3, value=orig_d01, key=session.run_id)
-    splitting = st.sidebar.slider('δν_rot (μHz)', min_value=0., max_value=1.2, value=orig_splitting, key=session.run_id)
+        AIC_cut = st.sidebar.slider('AIC cut', min_value=-10.0, max_value=20., value=2.0, key=session.run_id)
+        DeltaNu = st.sidebar.slider('Δν (μHz)', min_value=orig_DeltaNu*0.9, max_value=orig_DeltaNu*1.1, value=orig_DeltaNu, key=session.run_id)
+        DPi1 = st.sidebar.number_input('ΔΠ₁ (s)', min_value=orig_DPi1*0.5, max_value=orig_DPi1*1.1, value=orig_DPi1, key=session.run_id)
+        coupling = st.sidebar.slider('q', min_value=0.0, max_value=0.8, value=orig_coupling, key=session.run_id)
+        eps_g = st.sidebar.slider('ε_g', min_value=-1.0, max_value=1.0, value=float(orig_eps_g), key=session.run_id)
+        d01 = st.sidebar.slider('δν₀₁ (μHz)', min_value=-orig_DeltaNu/3, max_value=orig_DeltaNu/3, value=orig_d01, key=session.run_id)
+        splitting = st.sidebar.slider('δν_rot (μHz)', min_value=0., max_value=1.2, value=orig_splitting, key=session.run_id)
 
-    peaks['x'] = ((peaks['frequency'] % DeltaNu - summary['eps_p'].values) / summary['DeltaNu'].values) % 1
-    #st.write(peaks.loc[peaks['l'] == 0, ])
-    #st.write([(np.minimum(np.min(peaks.loc[peaks['l'] == 0, 'x']), np.min(peaks.loc[peaks['l'] == 2, 'x'])) - 0.05) % 1,
-    #           (np.maximum(np.max(peaks.loc[peaks['l'] == 0, 'x']), np.max(peaks.loc[peaks['l'] == 2, 'x'])) + 0.05) % 1]
-    #)
+        peaks['x'] = ((peaks['frequency'] % DeltaNu - summary['eps_p'].values) / summary['DeltaNu'].values) % 1
+        #st.write(peaks.loc[peaks['l'] == 0, ])
+        #st.write([(np.minimum(np.min(peaks.loc[peaks['l'] == 0, 'x']), np.min(peaks.loc[peaks['l'] == 2, 'x'])) - 0.05) % 1,
+        #           (np.maximum(np.max(peaks.loc[peaks['l'] == 0, 'x']), np.max(peaks.loc[peaks['l'] == 2, 'x'])) + 0.05) % 1]
+        #)
 
-    l1_peaks = rotation_utils.prepare_l1_peaks(peaks, summary, AIC_cut)
+        l1_peaks = rotation_utils.prepare_l1_peaks(peaks, summary, AIC_cut)
 
-    # Create frequencies instance
-    freqs = frequencies.Frequencies(frequency=psd_bgr.frequency.values,
+        # Create frequencies instance
+        freqs = frequencies.Frequencies(frequency=psd_bgr.frequency.values,
                             numax=orig_numax,
                             delta_nu=DeltaNu,
                             epsilon_p=orig_eps_p,
                             alpha=orig_alpha)
 
-    params = {'calc_l0': True, # Compute radial mode properties
+        params = {'calc_l0': True, # Compute radial mode properties
             'calc_l2': True, # Compute l=2 mode properties
             'calc_l3': False, # Don't need to calculate l=3 theoretical freqs
             'calc_nom_l1': True, # Compute nominal l=1 p-mode properties
@@ -596,139 +687,145 @@ def visualise_stretched_echelle(psd_bgr, peaks, summary, session):
             'l': 1, # Mixed modes are dipole mixed modes
             }
 
-    # Make computation - in our case this is for the computation of zeta
-    freqs(params)
-    freqs.generate_tau_values()
+        # Make computation - in our case this is for the computation of zeta
+        freqs(params)
+        freqs.generate_tau_values()
 
-    new_peaks_tau = mixed_modes_utils.peaks_stretched_period(l1_peaks.frequency.values,
+        new_peaks_tau = mixed_modes_utils.peaks_stretched_period(l1_peaks.frequency.values,
                                                                 psd_bgr.frequency.values,
                                                                 freqs.tau)
-    new_peaks_zeta = mixed_modes_utils.peaks_stretched_period(l1_peaks.frequency.values,
+        new_peaks_zeta = mixed_modes_utils.peaks_stretched_period(l1_peaks.frequency.values,
                                                                 psd_bgr.frequency.values,
                                                                 freqs.zeta)
-    #st.write(freqs.l1_mixed_freqs_p1, freqs.l1_mixed_freqs_n1)
-    # Plot stretched echelle
-    model_freqs = np.c_[freqs.l1_mixed_freqs, freqs.l1_mixed_freqs_p1, freqs.l1_mixed_freqs_n1]
-    model_tau = np.c_[freqs.l1_mixed_tau, freqs.l1_mixed_tau_p1, freqs.l1_mixed_tau_n1]
-    real_tau = new_peaks_tau
-    real_freqs = l1_peaks.frequency.values
-    heights = l1_peaks.amplitude*10
-    y_real = (real_tau - DPi1*(1/2 + (-eps_g)))  % DPi1 - DPi1/2
-    # The shift is already accounted for in the calculation of the theoretical frequencies, so don't add it in here
-    y_theo = (model_tau[:,0] - DPi1/2) % DPi1  - DPi1/2
-    y_theo_p1 = (model_tau[:,1] - DPi1/2) % DPi1  - DPi1/2
-    y_theo_n1 = (model_tau[:,2] - DPi1/2) % DPi1  - DPi1/2
+        #st.write(freqs.l1_mixed_freqs_p1, freqs.l1_mixed_freqs_n1)
+        # Plot stretched echelle
+        model_freqs = np.c_[freqs.l1_mixed_freqs, freqs.l1_mixed_freqs_p1, freqs.l1_mixed_freqs_n1]
+        model_tau = np.c_[freqs.l1_mixed_tau, freqs.l1_mixed_tau_p1, freqs.l1_mixed_tau_n1]
+        real_tau = new_peaks_tau
+        real_freqs = l1_peaks.frequency.values
+        heights = l1_peaks.amplitude*10
+        y_real = (real_tau - DPi1*(1/2 + (-eps_g)))  % DPi1 - DPi1/2
+        # The shift is already accounted for in the calculation of the theoretical frequencies, so don't add it in here
+        y_theo = (model_tau[:,0] - DPi1/2) % DPi1  - DPi1/2
+        y_theo_p1 = (model_tau[:,1] - DPi1/2) % DPi1  - DPi1/2
+        y_theo_n1 = (model_tau[:,2] - DPi1/2) % DPi1  - DPi1/2
 
 
-    # plt.scatter(y_real, real_freqs, s=heights)
-    # plt.scatter(y_theo, model_freqs[:,0], marker='x')
-    # plt.scatter(y_theo_p1, model_freqs[:,1], marker='x')
-    # plt.scatter(y_theo_n1, model_freqs[:,2], marker='x')
+        # plt.scatter(y_real, real_freqs, s=heights)
+        # plt.scatter(y_theo, model_freqs[:,0], marker='x')
+        # plt.scatter(y_theo_p1, model_freqs[:,1], marker='x')
+        # plt.scatter(y_theo_n1, model_freqs[:,2], marker='x')
 
-    psd_bgr = psd_bgr.loc[np.abs(psd_bgr['frequency'].values - summary['numax'].values) < 3*summary['sigmaEnv'].values, ]
+        psd_bgr = psd_bgr.loc[np.abs(psd_bgr['frequency'].values - summary['numax'].values) < 3*summary['sigmaEnv'].values, ]
 
-    p = figure(
-        title="",
-        x_axis_label="Stretched Period modulo period spacing (s)",
-        y_axis_label="Frequency (μHz)",
-        match_aspect=True,
-        x_range=(-DPi1/2, DPi1/2),
-        y_range=(psd_bgr.frequency.min(),
+        p = figure(
+            title="",
+            x_axis_label="Stretched Period modulo period spacing (s)",
+            y_axis_label="Frequency (μHz)",
+            match_aspect=True,
+            x_range=(-DPi1/2, DPi1/2),
+            y_range=(psd_bgr.frequency.min(),
                     psd_bgr.frequency.max()),
-        plot_height=400,
-        plot_width=600)
+            plot_height=400,
+            plot_width=600)
 
 
-    p.triangle(y_real, real_freqs, size=10*l1_peaks.amplitude,
+        p.triangle(y_real, real_freqs, size=10*l1_peaks.amplitude,
                 color='blue', alpha=0.5)
 
-    p.circle(y_theo,
+        p.circle(y_theo,
                 model_freqs[:,0],
                 #angle=np.pi, size=10,
                 #alpha=0.5,
                 color="red", legend_label=r'l=1, m=0')
 
-    if splitting > 0.0:
+        if splitting > 0.0:
 
-        p.circle(y_theo_n1,
+            p.circle(y_theo_n1,
                     model_freqs[:,2],
                     #angle=-np.pi/2, size=10, alpha=0.5,
                     color="cyan",
                     legend_label=r'l=1, m=-1')
-        p.circle(y_theo_p1,
+            p.circle(y_theo_p1,
                     model_freqs[:,1],
                     #angle=np.pi/2, size=10, alpha=0.5,
                     color="purple", legend_label=r'l=1, m=+1')
 
-    p.legend.click_policy = 'hide'
-    st.bokeh_chart(p)
+        p.legend.click_policy = 'hide'
+        st.bokeh_chart(p)
+    else:
+        st.write("no mixed peaks identified so no (stretched) period echelle diagram can be shown.")
+    
+def visualise_reggae(KIC, psd_bgr, summary, session):
 
-def visualise_reggae(psd_bgr, peaks, summary, session):
+    dir = Path().cwd().parent / "resultspipeline"
+    KIC = KIC.lstrip('KIC ').zfill(9)
+    final_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')
+    if final_peaks_MLE_file.is_file():
+        peaks = pd.read_csv(final_peaks_MLE_file)
+    
+        from libs.sloscillations.sloscillations import frequencies, mixed_modes_utils
+        from src.lib.rotation import rotation_utils
 
-    #st.write(psd_bgr)
+        orig_numax = summary['numax'].item()
+        orig_DeltaNu = summary['DeltaNu'].item()
+        orig_eps_p = summary['eps_p'].item()
+        orig_alpha = summary['alpha'].item()
+        orig_d02 = summary['dNu02'].item()
 
-    from libs.sloscillations.sloscillations import frequencies, mixed_modes_utils
-    from src.lib.rotation import rotation_utils
+        orig_d01 = 0.0
+        #'', summary.columns
+        orig_DPi1 = summary['DeltaPi1'].item()
+        orig_coupling = summary['coupling'].item()
+        orig_eps_g = summary['eps_g'].item()
+        orig_splitting = 0.000
 
-    orig_numax = summary['numax'].item()
-    orig_DeltaNu = summary['DeltaNu'].item()
-    orig_eps_p = summary['eps_p'].item()
-    orig_alpha = summary['alpha'].item()
-    orig_d02 = summary['dNu02'].item()
+        # Set up sliders
+        reset = st.sidebar.button('Reset parameters')
+        if reset:
+            session.run_id += 1
+        save = st.sidebar.button('Save parameters')
+        if save:
+            st.write('Doesn\'t do anything at the moment, but will do soon!')
 
-    orig_d01 = 0.0
-    #'', summary.columns
-    orig_DPi1 = summary['DeltaPi1'].item()
-    orig_coupling = summary['coupling'].item()
-    orig_eps_g = summary['eps_g'].item()
-    orig_splitting = 0.0
+        AIC_cut = st.sidebar.slider('AIC cut', min_value=-100.0, max_value=100., value=2.)
 
-    # Set up sliders
-    reset = st.sidebar.button('Reset parameters')
-    if reset:
-        session.run_id += 1
-    save = st.sidebar.button('Save parameters')
-    if save:
-        st.write('Doesn\'t do anything at the moment, but will do soon!')
+        overlay_modes = st.sidebar.checkbox("Overlay theoretical mixed mode frequencies as lines")
 
-    AIC_cut = st.sidebar.slider('AIC cut', min_value=-100.0, max_value=100., value=2.)
-
-    overlay_modes = st.sidebar.checkbox("Overlay theoretical mixed mode frequencies as lines")
-
-    mixed_mode_config = st.sidebar.selectbox('Mixed mode configuration',
+        mixed_mode_config = st.sidebar.selectbox('Mixed mode configuration',
                                                ['Triplet', 'Doublet', 'Singlet']
                                             )
-    nmax = orig_numax / orig_DeltaNu - orig_eps_p
+        nmax = orig_numax / orig_DeltaNu - orig_eps_p
 
-    n_current = st.sidebar.number_input("n", min_value = 0, max_value=int(nmax) + 10,
+        n_current = st.sidebar.number_input("n", min_value = 0, max_value=int(nmax) + 10,
                                         value=int(nmax), key=session.run_id)
 
-    DeltaNu = st.sidebar.slider('Δν (μHz)', min_value=orig_DeltaNu*0.9, max_value=orig_DeltaNu*1.1, value=orig_DeltaNu, key=session.run_id)
-    eps_p = st.sidebar.slider('ε_p', min_value=0.0, max_value=2.0, value = orig_eps_p, key = session.run_id)
-    alpha = st.sidebar.slider('α', min_value=0.0, max_value=0.15, value=orig_alpha, key=session.run_id)
-    d02 = st.sidebar.slider('δν₀₂ (μHz)', min_value=0.0, max_value=orig_DeltaNu*0.5, value=orig_d02, key=session.run_id)
-    #d01 = st.sidebar.slider('δν₀₁ (μHz)', min_value=-orig_DeltaNu/3, max_value=orig_DeltaNu/3, value=orig_d01, key=session.run_id)
-    d01 = st.sidebar.number_input('δν₀₁ (μHz)', min_value=-orig_DeltaNu/3, max_value=orig_DeltaNu/3, value=orig_d01, key=session.run_id)
+        DeltaNu = st.sidebar.slider('Δν (μHz)', min_value=orig_DeltaNu*0.9, max_value=orig_DeltaNu*1.1, value=orig_DeltaNu, key=session.run_id)
+        eps_p = st.sidebar.slider('ε_p', min_value=0.0, max_value=2.0, value = orig_eps_p, key = session.run_id)
+        alpha = st.sidebar.slider('α', min_value=0.0, max_value=0.15, value=orig_alpha, key=session.run_id)
+        d02 = st.sidebar.slider('δν₀₂ (μHz)', min_value=0.0, max_value=orig_DeltaNu*0.5, value=orig_d02, key=session.run_id)
+        #d01 = st.sidebar.slider('δν₀₁ (μHz)', min_value=-orig_DeltaNu/3, max_value=orig_DeltaNu/3, value=orig_d01, key=session.run_id)
+        d01 = st.sidebar.number_input('δν₀₁ (μHz)', min_value=-orig_DeltaNu/3, max_value=orig_DeltaNu/3, value=orig_d01, key=session.run_id)
 
 
-    #DPi1 = st.sidebar.slider('ΔΠ₁ (s)', min_value=orig_DPi1*0.9, max_value=orig_DPi1*1.1, value=orig_DPi1, key=session.run_id)
-    DPi1 = st.sidebar.number_input('ΔΠ₁ (s)', min_value=0.0, max_value=400.0, value=orig_DPi1, key=session.run_id)
-    #coupling = st.sidebar.slider('q', min_value=0.0, max_value=0.8, value=orig_coupling, key=session.run_id)
-    coupling = st.sidebar.number_input('q', min_value=0.0, max_value=1.0, value=orig_coupling, key=session.run_id)
-    #eps_g = st.sidebar.slider('ε', min_value=-1.0, max_value=1.0, value=float(orig_eps_g), key=session.run_id)
-    eps_g = st.sidebar.number_input('ε_g', min_value=-1.0, max_value=1.0, value=float(orig_eps_g), key=session.run_id)
-    # splitting = st.sidebar.slider('δνₛ (μHz)', min_value=0., max_value=500.0/1e3, value=orig_splitting, key=session.run_id)
-    splitting = st.sidebar.number_input('δν_rot (μHz)', min_value=0., max_value=1.0, value=orig_splitting, key=session.run_id)
+        #DPi1 = st.sidebar.slider('ΔΠ₁ (s)', min_value=orig_DPi1*0.9, max_value=orig_DPi1*1.1, value=orig_DPi1, key=session.run_id)
+        DPi1 = st.sidebar.number_input('ΔΠ₁ (s)', min_value=0.0, max_value=400.0, value=orig_DPi1, key=session.run_id)
+        #coupling = st.sidebar.slider('q', min_value=0.0, max_value=0.8, value=orig_coupling, key=session.run_id)
+        coupling = st.sidebar.number_input('q', min_value=0.0, max_value=1.0, value=orig_coupling, key=session.run_id)
+        #eps_g = st.sidebar.slider('ε', min_value=-1.0, max_value=1.0, value=float(orig_eps_g), key=session.run_id)
+        eps_g = st.sidebar.number_input('ε_g', min_value=-1.0, max_value=1.0, value=float(orig_eps_g), key=session.run_id)
+        # splitting = st.sidebar.slider('δνₛ (μHz)', min_value=0., max_value=500.0/1e3, value=orig_splitting, key=session.run_id)
+        splitting = st.sidebar.number_input('δν_rot (μHz)', min_value=0.00, max_value=1.00, value=orig_splitting, key=session.run_id)
 
-    # Create frequencies instance
-    freqs = frequencies.Frequencies(frequency=psd_bgr.frequency.values,
+        # Create frequencies instance
+        freqs = frequencies.Frequencies(frequency=psd_bgr.frequency.values,
                             numax=orig_numax,
                             delta_nu=DeltaNu,
                             epsilon_p=eps_p,
                             alpha=alpha,
                             radial_order_range = [-4, 4])
 
-    params = {'calc_l0': True, # Compute radial mode properties
+        params = {'calc_l0': True, # Compute radial mode properties
             'calc_l2': True, # Compute l=2 mode properties
             'calc_l3': False, # Don't need to calculate l=3 theoretical freqs
             'calc_nom_l1': True, # Compute nominal l=1 p-mode properties
@@ -744,123 +841,122 @@ def visualise_reggae(psd_bgr, peaks, summary, session):
             'l': 1, # Mixed modes are dipole mixed modes
             }
 
-    # Make computation - in our case this is for the computation of zeta
-    freqs(params)
+        # Make computation - in our case this is for the computation of zeta
+        freqs(params)
 
-    freqs.generate_tau_values()
+        freqs.generate_tau_values()
 
-    #new_peaks_tau = mixed_modes_utils.peaks_stretched_period(l1_peaks.frequency.values,
-    #                                                            psd_bgr.frequency.values,
-    #                                                            freqs.tau)
-    #new_peaks_zeta = mixed_modes_utils.peaks_stretched_period(l1_peaks.frequency.values,
-    #                                                            psd_bgr.frequency.values,
-    #                                                            freqs.zeta)
+        #new_peaks_tau = mixed_modes_utils.peaks_stretched_period(l1_peaks.frequency.values,
+        #                                                            psd_bgr.frequency.values,
+        #                                                            freqs.tau)
+        #new_peaks_zeta = mixed_modes_utils.peaks_stretched_period(l1_peaks.frequency.values,
+        #                                                            psd_bgr.frequency.values,
+        #                                                            freqs.zeta)
 
-    n_current = int(n_current - freqs.n.min())
-    #n_current = (freqs.n[np.argmin(np.abs(nmax - freqs.n))] - freqs.n.min()).astype(int)
+        n_current = int(n_current - freqs.n.min())
+        #n_current = (freqs.n[np.argmin(np.abs(nmax - freqs.n))] - freqs.n.min()).astype(int)
 
-    #st.write(nmax, freqs.n, n_start)
-    lower_lim = freqs.l0_freqs[n_current] - freqs.d02 * 1.5
-    upper_lim = freqs.l0_freqs[n_current+1] - freqs.d02 * 0.5
-    cond = (psd_bgr.frequency >= lower_lim) & (psd_bgr.frequency <= upper_lim)
+        #st.write(nmax, freqs.n, n_start)
+        lower_lim = freqs.l0_freqs[n_current] - freqs.d02 * 1.5
+        upper_lim = freqs.l0_freqs[n_current+1] - freqs.d02 * 0.5
+        cond = (psd_bgr.frequency >= lower_lim) & (psd_bgr.frequency <= upper_lim)
 
-    p = figure(
-        title="",
-        y_axis_label="Signal-to-Noise Spectrum",
-        x_axis_label="Frequency (μHz)",
-        match_aspect=True,
-        x_range=(lower_lim,
+        p = figure(
+            title="",
+            y_axis_label="Signal-to-Noise Spectrum",
+            x_axis_label="Frequency (μHz)",
+            match_aspect=True,
+            x_range=(lower_lim,
                  upper_lim),
-        y_range=(0.0,
+            y_range=(0.0,
                     psd_bgr.power[cond].max()),
-        plot_height=500,
-        plot_width=800)
+            plot_height=500,
+            plot_width=800)
 
+        p.line(psd_bgr.frequency, psd_bgr.power, color="black")
+        model = app_helpers.construct_peaksmodel(psd_bgr, peaks.loc[peaks.AIC.values > AIC_cut, ])
+        p.line(psd_bgr.frequency, model, color="orange", line_width=3)
 
-
-    p.line(psd_bgr.frequency, psd_bgr.power, color="black")
-    model = app_helpers.construct_peaksmodel(psd_bgr, peaks.loc[peaks.AIC.values > AIC_cut, ])
-    p.line(psd_bgr.frequency, model, color="orange", line_width=3)
-
-    if st.sidebar.checkbox("Mode identification"):
-        p.circle(peaks.loc[(peaks.l == 0) & (peaks.AIC.values > AIC_cut), 'frequency'], len(peaks.loc[(peaks.l == 0) & (peaks.AIC.values > AIC_cut), 'frequency'])*[psd_bgr.power.max()/2],
+        if st.sidebar.checkbox("Mode identification"):
+            p.circle(peaks.loc[(peaks.l == 0) & (peaks.AIC.values > AIC_cut), 'frequency'], len(peaks.loc[(peaks.l == 0) & (peaks.AIC.values > AIC_cut), 'frequency'])*[psd_bgr.power.max()/2],
                 size=10, color="red", alpha=0.5, legend_label='l=0')
-        p.square(peaks.loc[(peaks.l == 2) & (peaks.AIC.values > AIC_cut), 'frequency'],
+            p.square(peaks.loc[(peaks.l == 2) & (peaks.AIC.values > AIC_cut), 'frequency'],
                 len(peaks.loc[(peaks.l == 2) & (peaks.AIC.values > AIC_cut), 'frequency'])*[psd_bgr.power.max()/2],
                 size=10, color="green", alpha=0.5, legend_label='l=2')
-        p.hex(peaks.loc[(peaks.l == 3) & (peaks.AIC.values > AIC_cut), 'frequency'],
+            p.hex(peaks.loc[(peaks.l == 3) & (peaks.AIC.values > AIC_cut), 'frequency'],
                 len(peaks.loc[(peaks.l == 3) & (peaks.AIC.values > AIC_cut), 'frequency'])*[psd_bgr.power.max()/2],
                 size=10, color="orange", alpha=0.5, legend_label='l=3')
 
 
-    l0_freqs = freqs.l0_freqs[n_current:n_current+2]
-    l2_freqs = freqs.l2_freqs[n_current:n_current+2]
-    l1_freqs = freqs.l1_nom_freqs[n_current:n_current+2]
+        l0_freqs = freqs.l0_freqs[n_current:n_current+2]
+        l2_freqs = freqs.l2_freqs[n_current:n_current+2]
+        l1_freqs = freqs.l1_nom_freqs[n_current:n_current+2]
 
-    for i in range(len(l0_freqs)):
-        p.line([l0_freqs[i]]*2, [0, 300], line_color='red', alpha=0.5,
+        for i in range(len(l0_freqs)):
+            p.line([l0_freqs[i]]*2, [0, 300], line_color='red', alpha=0.5,
                 line_width=3, legend_label=r'l=0')
-        p.line([l2_freqs[i]]*2, [0, 300], line_color='green', alpha=0.5,
+            p.line([l2_freqs[i]]*2, [0, 300], line_color='green', alpha=0.5,
                 line_width=3, legend_label=r'l=2')
-        p.line([l1_freqs[i]]*2, [0, 300], line_color='blue',
+            p.line([l1_freqs[i]]*2, [0, 300], line_color='blue',
                 line_dash="dashed", alpha=0.5,
                 line_width=3, legend_label=r'nominal dipole mode')
 
-    idx = (freqs.l1_np == int(n_current + (freqs.n.min())))
+        idx = (freqs.l1_np == int(n_current + (freqs.n.min())))
 
-    l1_mixed_freqs_m0 = freqs.l1_mixed_freqs[idx]
-    #st.write(l1_mixed_freqs_m0)
-    height = np.percentile(psd_bgr.power[cond], [99.5])
-    #'', len(l1_mixed_freqs_m0)
-    #st.write([height]*len(l1_mixed_freqs_m0))
+        l1_mixed_freqs_m0 = freqs.l1_mixed_freqs[idx]
+        #st.write(l1_mixed_freqs_m0)
+        height = np.percentile(psd_bgr.power[cond], [99.5])
+        #'', len(l1_mixed_freqs_m0)
+        #st.write([height]*len(l1_mixed_freqs_m0))
 
-    if (mixed_mode_config == "Triplet") or (mixed_mode_config == "Singlet"):
-        p.triangle(l1_mixed_freqs_m0, np.ones(len(l1_mixed_freqs_m0))*height,
+        if (mixed_mode_config == "Triplet") or (mixed_mode_config == "Singlet"):
+            p.triangle(l1_mixed_freqs_m0, np.ones(len(l1_mixed_freqs_m0))*height,
                 size=10, color='blue', angle=-np.pi)
 
-    # for i in range(len(l1_mixed_freqs_m0)):
-    #     vline_l1_mixed = Span(location=l1_mixed_freqs_m0[i],
-    #                           line_color='blue',
-    #                           dimension='height',
-    #                           line_width=2,
-    #                           line_dash="dashed")
-    #     p.renderers.extend([vline_l1_mixed])
+        # for i in range(len(l1_mixed_freqs_m0)):
+        #     vline_l1_mixed = Span(location=l1_mixed_freqs_m0[i],
+        #                           line_color='blue',
+        #                           dimension='height',
+        #                           line_width=2,
+        #                           line_dash="dashed")
+        #     p.renderers.extend([vline_l1_mixed])
 
 
-    if (splitting > 0.0) and ((mixed_mode_config == "Triplet") or (mixed_mode_config == "Doublet")):
-        l1_mixed_freqs_mp1 = freqs.l1_mixed_freqs_p1[idx]
-        l1_mixed_freqs_mn1 = freqs.l1_mixed_freqs_n1[idx]
-        p.triangle(l1_mixed_freqs_mn1, np.ones(len(l1_mixed_freqs_mn1))*height * 0.9,
+        if (splitting > 0.0) and ((mixed_mode_config == "Triplet") or (mixed_mode_config == "Doublet")):
+            l1_mixed_freqs_mp1 = freqs.l1_mixed_freqs_p1[idx]
+            l1_mixed_freqs_mn1 = freqs.l1_mixed_freqs_n1[idx]
+            p.triangle(l1_mixed_freqs_mn1, np.ones(len(l1_mixed_freqs_mn1))*height * 0.9,
                    size=10, color='cyan', angle=-np.pi/2)
-        p.triangle(l1_mixed_freqs_mp1, np.ones(len(l1_mixed_freqs_mn1))*height * 0.9,
+            p.triangle(l1_mixed_freqs_mp1, np.ones(len(l1_mixed_freqs_mn1))*height * 0.9,
                    size=10, color='purple', angle=np.pi/2)
 
-        if mixed_mode_config == "Triplet":
-            for i in range(len(l1_mixed_freqs_mn1)):
-                lines = p.line([l1_mixed_freqs_mn1[i], l1_mixed_freqs_m0[i]],
+            if mixed_mode_config == "Triplet":
+                for i in range(len(l1_mixed_freqs_mn1)):
+                    lines = p.line([l1_mixed_freqs_mn1[i], l1_mixed_freqs_m0[i]],
                             [height * 0.9, height], color='black',
                             line_dash="2 2", alpha=0.5)
-                lines.level = "underlay"
-                lines = p.line([l1_mixed_freqs_m0[i], l1_mixed_freqs_mp1[i]],
+                    lines.level = "underlay"
+                    lines = p.line([l1_mixed_freqs_m0[i], l1_mixed_freqs_mp1[i]],
                             [height * 0.9, height][::-1], color='black',
                             line_dash="2 2", alpha=0.5)
-                lines.level = "underlay"
+                    lines.level = "underlay"
 
-    if overlay_modes & ((mixed_mode_config == "Triplet") or (mixed_mode_config == "Singlet")):
-        for i in range(len(l1_mixed_freqs_m0)):
-            p.line([l1_mixed_freqs_m0[i], l1_mixed_freqs_m0[i]],
+        if overlay_modes & ((mixed_mode_config == "Triplet") or (mixed_mode_config == "Singlet")):
+            for i in range(len(l1_mixed_freqs_m0)):
+                p.line([l1_mixed_freqs_m0[i], l1_mixed_freqs_m0[i]],
                            [0, height], color='blue', alpha=0.5)
 
-    if overlay_modes & (splitting > 0.0) & ((mixed_mode_config == "Triplet") or (mixed_mode_config == "Doublet")):
-        for i in range(len(l1_mixed_freqs_mn1)):
-            p.line([l1_mixed_freqs_mn1[i], l1_mixed_freqs_mn1[i]],
+        if overlay_modes & (splitting > 0.0) & ((mixed_mode_config == "Triplet") or (mixed_mode_config == "Doublet")):
+            for i in range(len(l1_mixed_freqs_mn1)):
+                p.line([l1_mixed_freqs_mn1[i], l1_mixed_freqs_mn1[i]],
                         [0, 0.9*height], color='cyan', alpha=0.5)
-            p.line([l1_mixed_freqs_mp1[i], l1_mixed_freqs_mp1[i]],
+                p.line([l1_mixed_freqs_mp1[i], l1_mixed_freqs_mp1[i]],
                         [0, 0.9*height], color='purple', alpha=0.5)
 
-    p.legend.click_policy = 'hide'
-    st.bokeh_chart(p)
-
+        p.legend.click_policy = 'hide'
+        st.bokeh_chart(p)
+    else:
+        st.write("Not enough modes identified and therefore mode matching cannot be done")
 
 def main():
 
@@ -903,42 +999,40 @@ def main():
             st.header("MLE Fit Explorer")
             st.sidebar.header("MLE Fit Settings")
             psd_bgr = load_psd(selected_KIC, background_removed=True)
-            peaksMLE_final = load_peaks(selected_KIC)
-            peaksMLE_odd = load_peaks(selected_KIC,peakFind = False, resolved = False, final=False)
-            peaksMLE_even = load_peaks(selected_KIC,peakFind = False, resolved = True, final=False)
-            peakFind_mixed = load_peaks(selected_KIC, peakFind=True, resolved = False)
-            peakFind_even = load_peaks(selected_KIC, peakFind=True, resolved = True)
-            visualise_pds_bgr(psd_bgr, peaksMLE_final, peaksMLE_odd, peaksMLE_even,summary, peakFind_mixed,peakFind_even)
-            if st.checkbox('Show MLE fit parameters'):
-                st.write('MLE parameters')
-                st.write(peaksMLE_final)
-                st.write("peakFind parameters")
-                st.write(peakFind_mixed)
-                st.write(peakFind_even)
+            #peaksMLE_final = load_peaks(selected_KIC)
+            #peaksMLE_odd = load_peaks(selected_KIC,peakFind = False, resolved = False, final=False)
+            #peaksMLE_even = load_peaks(selected_KIC,peakFind = False, resolved = True, final=False)
+            #peakFind_mixed = load_peaks(selected_KIC, peakFind=True, resolved = False)
+            #peakFind_even = load_peaks(selected_KIC, peakFind=True, resolved = True)
+            visualise_pds_bgr(selected_KIC,psd_bgr, summary)
+           # if st.checkbox('Show MLE fit parameters'):
+           #     st.write('MLE parameters')
+           #     st.write(peaksMLE_final)
+           #     st.write("peakFind parameters")
+           #     st.write(peakFind_mixed)
+           #     st.write(peakFind_even)
 
         elif page == "Frequency Echelle":
             st.header("Frequency Echelle Explorer")
             st.sidebar.header("Echelle Parameters")
             psd_bgr = load_psd(selected_KIC, background_removed=True)
-            peaksMLE = load_peaks(selected_KIC)
-            visualise_echelle(psd_bgr, peaksMLE, summary, session)
-            if st.checkbox('Show MLE fit parameters'):
-                st.write('MLE parameters')
-                st.write(peaksMLE)
+            #peaksMLE = load_peaks(selected_KIC)
+            visualise_echelle(selected_KIC, psd_bgr, summary, session)
 
         elif page == "Stretched Period Echelle":
             st.header("Stretched Period Echelle Explorer")
             st.sidebar.header("Echelle Parameters")
             psd_bgr = load_psd(selected_KIC, background_removed=True)
-            peaksMLE = load_peaks(selected_KIC)
-            visualise_stretched_echelle(psd_bgr, peaksMLE, summary, session)
+            #peaksMLE = load_peaks(selected_KIC)
+            visualise_stretched_echelle(selected_KIC, psd_bgr, summary, session)
 
         elif page == "Mode matching":
+            st.header("Mode match Explorer")
             #st.header("Reggae!")
             st.sidebar.header("Asteroseismic Parameters")
             psd_bgr = load_psd(selected_KIC, background_removed=True)
-            peaksMLE = load_peaks(selected_KIC)
-            visualise_reggae(psd_bgr, peaksMLE, summary, session)
+            #peaksMLE = load_peaks(selected_KIC)
+            visualise_reggae(selected_KIC, psd_bgr, summary, session)
 
 if __name__=="__main__":
     main()
