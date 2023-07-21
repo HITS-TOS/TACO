@@ -170,7 +170,7 @@ numax_estimate_r <- function(pds, data, filter_width) {
             } else {
                 data$numax0 <- min(data$numax_var,data$numax_Morlet)
             }
-            data$numax0_sd <- 0.0
+            data$numax0_sd <- NA
             data$numax0_flag <- TRUE
             flag <- 1
         }

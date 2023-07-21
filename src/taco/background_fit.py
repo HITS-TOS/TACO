@@ -83,10 +83,14 @@ def background_fit(pds, ofac_pds, data, output = '', output_directory = '', **kw
 
     # Fetch background model
     bkg_model = getattr(lib.background.KeplerLCBgFit, settings.bkg_model)
-
-    if (data['numax0_sd'][0] < data['numax0'][0]/3.0):
-        data['numax0_sd'][0] = data['numax0'][0]/2.0
-    
+    #print(data['numax0'][0])
+    #print(data['numax0_sd'][0])
+    if (data['numax0_sd'][0] < data['numax0'][0]/10.0):
+        data['numax0_sd'][0] = data['numax0'][0]/5.0
+        
+    if (data['numax0_sd'][0] > data['numax0'][0]/4.0):
+        data['numax0_sd'][0] = data['numax0'][0]/4.0
+    #print(data['numax0_sd'][0])
     bg_fit = bkg_model(pds, data['numax0'][0], data['numax0_sd'][0], data['nuNyq'][0], logfile = Path(output_directory,settings.logfile))
     minESS = mESS.minESS(bg_fit.ndim, alpha=0.05, eps=0.1)
     i = 0

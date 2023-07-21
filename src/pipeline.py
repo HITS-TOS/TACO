@@ -143,7 +143,7 @@ def pipeline(argv):
     
                     # 6) MLE
                     if (len(peaks.frequency)) >= 1:
-                        print('6) MLE fit peaks')
+                        print('6) MLE fit resolved peaks')
                         peaks_mle, flag_mle_resolved, summary = taco.peaks_mle(pds_bgr, peaks, summary,
                             **settings['pipeline'][6]['peaks_mle'])
                         summary.to_csv(Path(argv.output_directory, input_name, "summary.csv"), index = False)

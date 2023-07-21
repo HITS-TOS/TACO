@@ -420,7 +420,8 @@ def peak_bag_period_spacing(pds, peaks, data,
     data['coupling'] = q_best
     data['eps_g'] = 0
     data['DeltaPi1_sig'] = sig_best
-
+    
+    
     # Update aritifical frequencies to compute zeta and tau for all frequencies
     params = {'calc_l0': True,
             'calc_l2': True,

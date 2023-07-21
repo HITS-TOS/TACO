@@ -59,7 +59,7 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
 
         # Filter now by AIC - this is done to enable line above (so can use peaks)
         # rather than having to filter to find right peaks
-        peaks.mle <- peaks.mle %>% filter(AIC > minAIC)
+        peaks.mle <- peaks.mle #%>% filter(AIC > minAIC)
 
         DeltaNu <- data$DeltaNu
         eps_p <- data$eps_p
@@ -115,8 +115,8 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
                                       pds = pds_l02_removed,
                                       maxLWD = maxlwd,
                                       naverages = navg) %>%
-                arrange(frequency) %>%
-                filter(AIC > minAIC)
+                arrange(frequency) #%>%
+                #filter(AIC > minAIC)
 
             # Add n,l & m columns so consistent with l=0,2 peaks file
             peaks.mle[, c("n", "l")] <- NaN
@@ -157,8 +157,8 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
             ## Do the calculations
             peaks.mle <-
                 peaks_MLE_sd(peaks = peaks, pds = pds, maxLWD = maxlwd, naverages = navg) %>%
-                arrange(frequency) %>%
-                filter(AIC > minAIC)
+                arrange(frequency) #%>%
+                #filter(AIC > minAIC)
 
                 if (max(peaks.mle$linewidth) >= 0.95 * maxlwd) {
                     print("modes larger than 0.95*maxlwd, redoing the fit")
@@ -203,10 +203,10 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
                         peaks.mle <- peaks.mle2
                     }
 
-                    peaks.mle <- peaks.mle %>% filter(AIC > minAIC)
+                    peaks.mle <- peaks.mle #%>% filter(AIC > minAIC)
                 }
             data <- data %>%
-                mutate(npeaks = nrow(peaks.mle %>% filter(AIC > minAIC)))
+                mutate(npeaks = nrow(peaks.mle)) # %>% filter(AIC > minAIC)))
         }
     }
     return(list(peaks.mle, flag, data))
