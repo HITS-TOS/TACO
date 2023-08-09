@@ -72,7 +72,7 @@ def pipeline(argv):
             writer.writerow(['ID', 'flag_numax', 'flag_mle_resolved','flag_02','flag_mle_mixed','flag_mle_final','flag_dP'])
         fstar.close()
         
-    data = pd.read_csv('stars.csv')
+    data = pd.read_csv('stars.csv', dtype='string')
     stars_done = data['ID'].tolist()
     # Loop over input directories
     for input_file in input_files:

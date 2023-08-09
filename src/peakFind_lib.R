@@ -530,10 +530,14 @@ peak_AIC_diff <- function(pds, peak, other_peaks, naverages=1) {
   #print(paste("PASTE: ", sum(is.na(peak$linewidth))))
   #print(paste("PEAKS: ", sum(is.na(other_peaks$linewidth))))
   #stop()stop()
+  #print(peak)
   m0 <- model_AIC(log_likelihood(pds, fit_model(pds, other_peaks), naverages=naverages),
                   k=3*nrow(other_peaks) - sum(is.na(other_peaks$linewidth)), n=nrow(pds))
   m1 <- model_AIC(log_likelihood(pds, fit_model(pds, all_peaks), naverages=naverages),
                   k=3*nrow(all_peaks) - sum(is.na(all_peaks$linewidth)), n=nrow(pds))
+  #print(m0)
+  #print(m1)
+  #print(m0-m1)
   return(m0-m1)
 }
 
@@ -1292,9 +1296,9 @@ peaks_with_MLE_sd2 <- function(peaks, pds, maxLWD, naverages=1) {
 
 peaks_MLE_sd <- function(peaks, pds, maxLWD = 0.5, naverages=1) {
   deltanu <- diff(pds$frequency[1:2])
-  ## Optimise all the peaks simultaneously 
+  ## Optimise all the peaks simultaneously
+  #print(peaks)
   mle.fit <- peaks_MLE2(peaks, pds, maxLWD, other_peaks = NULL, naverages=naverages)
-
   ## Get the error estimates one at a time
   print("Getting error estimates")
   peaks <- peaks_with_MLE_sd(peaks = mle.fit$peaks, pds = pds, maxLWD = maxLWD, naverages=naverages)

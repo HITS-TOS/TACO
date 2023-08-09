@@ -85,103 +85,122 @@ def background_fit(pds, ofac_pds, data, output = '', output_directory = '', **kw
     bkg_model = getattr(lib.background.KeplerLCBgFit, settings.bkg_model)
     #print(data['numax0'][0])
     #print(data['numax0_sd'][0])
-    if (data['numax0_sd'][0] < data['numax0'][0]/10.0):
-        data['numax0_sd'][0] = data['numax0'][0]/5.0
+    j = 1
+    done_q = False
+    
+    while (j < 3 and not done_q):
+        if (data['numax0_sd'][0] < data['numax0'][0]/10.0):
+            data['numax0_sd'][0] = data['numax0'][0]/5.0
         
-    if (data['numax0_sd'][0] > data['numax0'][0]/4.0):
-        data['numax0_sd'][0] = data['numax0'][0]/4.0
-    #print(data['numax0_sd'][0])
-    bg_fit = bkg_model(pds, data['numax0'][0], data['numax0_sd'][0], data['nuNyq'][0], logfile = Path(output_directory,settings.logfile))
-    minESS = mESS.minESS(bg_fit.ndim, alpha=0.05, eps=0.1)
-    i = 0
-    done_p = False
+        if (data['numax0_sd'][0] > data['numax0'][0]/4.0):
+            data['numax0_sd'][0] = data['numax0'][0]/4.0
+                    
+        if (j > 1):
+            data['numax0'][0] = np.nanmean([data['numax_var'][0],data['numax_Morlet'][0],data['numax_CWTMexHat'][0]])
+            data['numax0_sd'][0] = max([data['numax_var'][0],data['numax_Morlet'][0],data['numax_CWTMexHat'][0]]) - min([data['numax_var'][0],data['numax_Morlet'][0],data['numax_CWTMexHat'][0]])
+        
+        #print(data['numax0_sd'][0])
+        bg_fit = bkg_model(pds, data['numax0'][0], data['numax0_sd'][0], data['nuNyq'][0], logfile = Path(output_directory,settings.logfile))
+        minESS = mESS.minESS(bg_fit.ndim, alpha=0.05, eps=0.1)
+        i = 0
+        done_p = False
 
-    print("Starting initial MCMC with binned PDS. Number of bins:", settings.bins)
-    bg_fit.MCMC(bg_fit.bg_params, output_directory, **settings.get_mcmc_settings())  # MCMC with binned PDS
-    print("Finished initial MCMC with binned PDS")
+        print("Starting initial MCMC with binned PDS. Number of bins:", settings.bins)
+        bg_fit.MCMC(bg_fit.bg_params, output_directory, **settings.get_mcmc_settings())  # MCMC with binned PDS
+        print("Finished initial MCMC with binned PDS")
 
-    chain_i = np.argmax(bg_fit.MCMC_sampler.get_log_prob()[-1,:])
-    theta0 = bg_fit.MCMC_sampler.get_chain()[-1,chain_i,:]
+        chain_i = np.argmax(bg_fit.MCMC_sampler.get_log_prob()[-1,:])
+        theta0 = bg_fit.MCMC_sampler.get_chain()[-1,chain_i,:]
 
-    while (i < 5 and not done_p):
-        if (bg_fit.MCMCp["mixed_p"]
-            and bg_fit.MCMCp["converged_p"]
-            and bg_fit.MCMCp["mESS"] >= minESS):
-            done_p = True
-            print("MCMC with binned PDS done.")
+        while (i < 5 and not done_p):
+            if (bg_fit.MCMCp["mixed_p"]
+                and bg_fit.MCMCp["converged_p"]
+                and bg_fit.MCMCp["mESS"] >= minESS):
+                done_p = True
+                print("MCMC with binned PDS done.")
+            else:
+                chain_i = np.argmax(bg_fit.MCMC_sampler.get_log_prob()[-1,:])
+                theta0 = bg_fit.MCMC_sampler.get_chain()[-1,chain_i,:]
+                #Pn, A1, b1, A2, b2, A3, b3, Pg, numax, sigmaEnv = theta0
+                iguess = bg_fit.theta_to_dict(theta0)
+                #iguess = {"Pn":Pn, "A1":A1, "b1":b1, "A2":A2, "b2":b2, "A3":A3, "b3":b3,
+                #          "Pg":Pg, "numax":numax, "sigmaEnv":sigmaEnv}
+                print("Attempting again (%s/5) the MCMC with binned PDS. Number of bins: %s" %
+                    (i, settings.bins))
+                bg_fit.MCMC(iguess, output_directory, **settings.get_mcmc_settings())
+                i = i + 1
+
+        if not done_p:
+            #print("Giving up")
+            # flag_file = os.path.join(os.path.dirname(settings.pds), "BACKGROUND_FIT_FLAG")
+            # open(flag_file, "a").close()
+            #return None, None, None
+            j=j+1
         else:
-            chain_i = np.argmax(bg_fit.MCMC_sampler.get_log_prob()[-1,:])
-            theta0 = bg_fit.MCMC_sampler.get_chain()[-1,chain_i,:]
-            #Pn, A1, b1, A2, b2, A3, b3, Pg, numax, sigmaEnv = theta0
-            iguess = bg_fit.theta_to_dict(theta0)
-            #iguess = {"Pn":Pn, "A1":A1, "b1":b1, "A2":A2, "b2":b2, "A3":A3, "b3":b3,
-            #          "Pg":Pg, "numax":numax, "sigmaEnv":sigmaEnv}
-            print("Attempting again (%s/5) the MCMC with binned PDS. Number of bins: %s" %
-                  (i, settings.bins))
-            bg_fit.MCMC(iguess, output_directory, **settings.get_mcmc_settings())
-            i = i + 1
+            # Create background_subtracted spectra
 
-    if not done_p:
-        print("Giving up")
-        # flag_file = os.path.join(os.path.dirname(settings.pds), "BACKGROUND_FIT_FLAG")
-        # open(flag_file, "a").close()
-        return None, None, None
-    else:
-        # Create background_subtracted spectra
+            if settings.save_posteriors:
+                # Read in chains
+                # reader = emcee.backends.HDFBackend(settings.posterior, read_only=True)
+                reader = emcee.backends.HDFBackend(Path(output_directory, settings.posterior), read_only=True)
+                #print(reader.get_autocorr_time())
+                # Flattened chains and log-probability
+                flatchain = reader.get_chain(discard=settings.nwarmup, flat=True)
+                lnprob = reader.get_log_prob(discard=settings.nwarmup, flat=True)
+            else:
+                # Flattened chains and log-probability
+                #tau = bg_fit.MCMC_sampler.get_autocorr_time()
+                #print(f"Autocorrelation time: {tau}")
+                #print(settings.nwarmup)
+                flatchain = bg_fit.MCMC_sampler.get_chain(discard=settings.nwarmup, flat=True)
+                lnprob = bg_fit.MCMC_sampler.get_log_prob(discard=settings.nwarmup, flat=True)
 
-        if settings.save_posteriors:
-            # Read in chains
-            # reader = emcee.backends.HDFBackend(settings.posterior, read_only=True)
-            reader = emcee.backends.HDFBackend(Path(output_directory, settings.posterior), read_only=True)
-            #print(reader.get_autocorr_time())
-            # Flattened chains and log-probability
-            flatchain = reader.get_chain(discard=settings.nwarmup, flat=True)
-            lnprob = reader.get_log_prob(discard=settings.nwarmup, flat=True)
-        else:
-            # Flattened chains and log-probability
-            #tau = bg_fit.MCMC_sampler.get_autocorr_time()
-            #print(f"Autocorrelation time: {tau}")
-            #print(settings.nwarmup)
-            flatchain = bg_fit.MCMC_sampler.get_chain(discard=settings.nwarmup, flat=True)
-            lnprob = bg_fit.MCMC_sampler.get_log_prob(discard=settings.nwarmup, flat=True)
+            posteriors = np.c_[flatchain, lnprob]
 
-        posteriors = np.c_[flatchain, lnprob]
+            # Summary of posterior distribution
+            names = bg_fit.bg_param_names()
+            names.append("lnprob")
+            df = pd.DataFrame(data=posteriors, columns=names)
 
-        # Summary of posterior distribution
-        names = bg_fit.bg_param_names()
-        names.append("lnprob")
-        df = pd.DataFrame(data=posteriors, columns=names)
+            bkg_summary = df.describe(percentiles=[0.16, 0.50, 0.84]).T
+            bkg_summary = bkg_summary.drop(['count', 'min', 'max'], axis=1)
 
-        bkg_summary = df.describe(percentiles=[0.16, 0.50, 0.84]).T
-        bkg_summary = bkg_summary.drop(['count', 'min', 'max'], axis=1)
-
-        bkg_summary.reset_index(level=0, inplace=True)
-        bkg_summary.rename(columns={'index': 'parameter', 'std': 'sd',
+            bkg_summary.reset_index(level=0, inplace=True)
+            bkg_summary.rename(columns={'index': 'parameter', 'std': 'sd',
                                     '16%': 'Q16', '50%': 'Q50', '84%': 'Q84'},
                            inplace=True)
 
-        # Remove the background
-        bg_parameters = bkg_summary['Q50']
+            # Remove the background
+            bg_parameters = bkg_summary['Q50']
 
-        numax_index = bg_fit.bg_param_names().index("numax")
+            numax_index = bg_fit.bg_param_names().index("numax")
 
-        # Go to -1 because of logprob added at end
-        model = bg_fit.bgModel(theta=bg_parameters[:-1], nu=pds.frequency, no_osc=True)
-        full_model = bg_fit.bgModel(bg_parameters[:-1], pds.frequency)
-        ofac_model = bg_fit.bgModel(bg_parameters[:-1], ofac_pds.frequency, no_osc=True)
+            # Go to -1 because of logprob added at end
+            model = bg_fit.bgModel(theta=bg_parameters[:-1], nu=pds.frequency, no_osc=True)
+            full_model = bg_fit.bgModel(bg_parameters[:-1], pds.frequency)
+            ofac_model = bg_fit.bgModel(bg_parameters[:-1], ofac_pds.frequency, no_osc=True)
 
-        pds_bgr = pds.assign(power = pds['power'] / model)
-        ofac_pds_bgr = ofac_pds.assign(power = ofac_pds['power'] / ofac_model)
+            pds_bgr = pds.assign(power = pds['power'] / model)
+            ofac_pds_bgr = ofac_pds.assign(power = ofac_pds['power'] / ofac_model)
 
-        idx_closest_numax = np.where(abs(pds['frequency'].values - bg_parameters[numax_index]) == np.min(np.abs(pds['frequency'].values - bg_parameters[numax_index])))[0]
+            idx_closest_numax = np.where(abs(pds['frequency'].values - bg_parameters[numax_index]) == np.min(np.abs(pds['frequency'].values - bg_parameters[numax_index])))[0]
 
-        data['Hmax'] = full_model[idx_closest_numax].values
-        data['Bmax'] = model[idx_closest_numax].values
-        data['HBR'] = data['Hmax'] / data['Bmax']
+            data['Hmax'] = full_model[idx_closest_numax].values
+            data['Bmax'] = model[idx_closest_numax].values
+            data['HBR'] = data['Hmax'] / data['Bmax']
+            
+            if (data['HBR'][0] > 1.05):
+                done_q = True
 
-        for idx, row in bkg_summary.iterrows():
-            data[row['parameter']] = row['Q50']
+                for idx, row in bkg_summary.iterrows():
+                    data[row['parameter']] = row['Q50']
 
-        bkg_summary.to_csv(Path(output_directory,settings.output_quantiles), index = False)
+                bkg_summary.to_csv(Path(output_directory,settings.output_quantiles), index = False)
+            else:
+                j=j+1
+                
+    if (not done_p and not done_q):
+        print("Giving up")
+        return None, None, None
 
     return(pds_bgr, ofac_pds_bgr, data)
