@@ -37,6 +37,7 @@ peak_find_r <- function(pds, ofac_pds, data, peaks, snr, prob,
                    frequency < data$numax + 3 * data$sigmaEnv)
 
         if (nrow(peaks) != 0) {
+            print(paste("there are multiple peaks"))
             l02_peaks <- peaks %>%
                 filter(l == 0 | l == 2 | l == 3)
 
@@ -45,7 +46,7 @@ peak_find_r <- function(pds, ofac_pds, data, peaks, snr, prob,
         } else {
             pds_l02_removed <- new_pds
         }
-        
+       
         # If max linewidth argument not set
         if (is.null(maxlwd)) {
             # Since this is for finding mixed modes we add in constraint that linewidth must be less than Gamma0
@@ -62,7 +63,6 @@ peak_find_r <- function(pds, ofac_pds, data, peaks, snr, prob,
             print(paste("Maximum peak linewidth (HWHM) set, using value ", maxlwd, "uHz"))
         }
         # 23/12/19 Because we are fitting in terms of HWHM the minimum linewidth should be bw/2 not bw!
-
         peaks <- peak_find(pds_l02_removed, min.snr = snr, p = prob,
                            linewidth.range = c(deltanu / 2, maxlwd),
                            find.resolved.only = FALSE, naverages = navg)
@@ -70,7 +70,7 @@ peak_find_r <- function(pds, ofac_pds, data, peaks, snr, prob,
         ## Choose only the significant ones
         peaks <- peaks %>%
             arrange(frequency) %>%
-            filter(AIC > minAIC)
+            filter(AIC > minAIC-5)
 
     } else {
         # Only find resolved peaks
@@ -111,7 +111,7 @@ peak_find_r <- function(pds, ofac_pds, data, peaks, snr, prob,
             ## Choose only the significant ones
             peaks <- peaks %>%
                      arrange(frequency) %>%
-                     filter(AIC > minAIC)
+                     filter(AIC > minAIC-5)
         }
     }
     return(peaks)

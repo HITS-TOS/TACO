@@ -281,39 +281,56 @@ tag_central_l02 <- function(peaks, pds, DeltaNu, d02, numax,
 
     central_l0_expected <-
         numax + deltanu * pds.ccf$lag[which.max(pds.ccf$acf)]
-    print(central_l0_expected)
+    print(paste0("expected frequency for central l=0 mode from CCF ", central_l0_expected))
+    #print(peaks)
+    print(median(peaks$amplitude,na.rm = TRUE))
+    print(mean(peaks$amplitude,na.rm = TRUE))
+    print(mad(peaks$amplitude,na.rm = TRUE))
     #print(mean(peaks$amplitude,na.rm = TRUE))
     #print(30.0*mad(peaks$amplitude,na.rm = TRUE))
     continue_c <- TRUE
     count <- 0
     while(continue_c){
-        central_l0 <-
+       central_l0 <-
             peaks %>%
-            filter(!(is.na(linewidth)) & ((amplitude/mean(amplitude,na.rm = TRUE)) > 1.1) & ((amplitude/(mean(amplitude,na.rm = TRUE)+ 30.0*mad(amplitude,na.rm = TRUE))) < 1.)) %>%
+            filter(!(is.na(linewidth)) & ((amplitude/median(amplitude,na.rm = TRUE)) > 1.) & ((amplitude/(median(amplitude,na.rm = TRUE)+ 30.0*mad(amplitude,na.rm = TRUE))) < 1.)) %>%
             mutate(l0_dist = abs(frequency - central_l0_expected)) %>%
             arrange(l0_dist) %>%
             slice(1) %>%
             select(-l0_dist) %>%
             mutate(l = 0)
+       print(nrow(central_l0))
+       if (nrow(central_l0) == 0){
+           central_l0 <-
+                peaks %>%
+                filter(!(is.na(linewidth))) %>%
+                mutate(l0_dist = abs(frequency - central_l0_expected)) %>%
+                arrange(l0_dist) %>%
+                slice(1) %>%
+                select(-l0_dist) %>%
+                mutate(l = 0)
+       }
     # 31/05/2021 moved the assignment of the order up and included the correct one for both of the l=0 and l=2 mode (SH)
     # 10/08/2020 Changed from round to floor!!!!!
          n_order <- floor(central_l0$frequency/DeltaNu - eps_p_from_Dnu(DeltaNu))
     #n_order <- round(central_l0$frequency/DeltaNu - eps_p_from_Dnu(DeltaNu))
-        print(central_l0)
-        central_l0 <-
-            peaks %>%
-            filter(!(is.na(linewidth)), !is.na(linewidth_sd), linewidth > 0.6*deltanu,((amplitude/mean(amplitude, na.rm = TRUE)) > 1.1),((amplitude/(mean(amplitude,na.rm = TRUE)+ 30.0*mad(amplitude,na.rm = TRUE))) < 1.))  %>%
-            mutate(l0_dist = abs(frequency - central_l0_expected)) %>%
-            arrange(l0_dist) %>%
-            slice(1) %>%
-            select(-l0_dist) %>%
-            mutate(l = 0) %>%
+    #    central_l0 <-
+    #        peaks %>%
+    #        filter(!(is.na(linewidth)), !is.na(linewidth_sd), linewidth > 0.6*deltanu,((amplitude/median(amplitude, na.rm = TRUE)) > 1.),((amplitude/(median(amplitude,na.rm = TRUE)+ 30.0*mad(amplitude,na.rm = TRUE))) < 1.))  %>%
+    #        mutate(l0_dist = abs(frequency - central_l0_expected)) %>%
+    #        arrange(l0_dist) %>%
+    #        slice(1) %>%
+    #        select(-l0_dist) %>%
+    #        mutate(l = 0) %>%
+    #        mutate(n = n_order)
+       central_l0 <-
+            central_l0 %>%
             mutate(n = n_order)
-        print(central_l0)
+        #print(central_l0)
         #print(central_l0$frequency - 1.7*d02)
         #print(central_l0$frequency - 0.5*d02)
         
-        central_l2 <-
+       central_l2 <-
             peaks %>%
             filter(!is.na(linewidth), !is.na(linewidth_sd), linewidth > 0.3*deltanu,
                 frequency > central_l0$frequency - 1.7*d02,

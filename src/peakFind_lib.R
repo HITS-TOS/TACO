@@ -316,7 +316,11 @@ which_all_peaks_under <- function(peaks, p) {
   w <- GAMMA_PROP * Lor_HWHM(s)
   f <- p$frequency
   peaks <- peaks[peaks$frequency  > f - w & peaks$frequency  < f + w & peaks$scale < s,]
-  peaks <- peaks[!duplicated(peaks$branch),]
+  #peaks_branch <- peaks[duplicated(peaks$branch),]
+  #if (nrow(peaks_branch) > 1){
+  #    peaks <- rbind(peaks,peaks_branch)
+  #}
+  #peaks <- peaks[!duplicated(peaks$branch),]
   return(peaks[, "idx"])
 }
 
@@ -476,13 +480,19 @@ best_fit_along_peak <- function(pds, peaks, p, use.AIC = TRUE, naverages=1) {
   ## model for that region.
   pw <- GAMMA_PROP * Lor_HWHM(p$scale)
   deltanu <- diff(pds$frequency[1:2])
+  #print("p")
+  #print(p)
+  #print("pw")
+  #print(pw)
   pds.local <- pds[pds$frequency > p$frequency - pw & pds$frequency < p$frequency + pw,]
   peaks_under_p <- peaks[which_peaks_under(peaks, p),]
+  #print("peaks_under_p")
+  #print(nrow(peaks_under_p))
   p <- optimise_peaks(pds.local, p, naverages=naverages)
   if (nrow(peaks_under_p) == 0) {
     return(p)
   } else {
-
+    #print("peaks_under_p > 0")
     # Andres' original
     alt_peaks <- do.call(rbind,
                          Map(function(peak_idx) {
@@ -490,8 +500,11 @@ best_fit_along_peak <- function(pds, peaks, p, use.AIC = TRUE, naverages=1) {
                            return(best_fit_along_peak(pds, peaks, peak, use.AIC = use.AIC, naverages=naverages))
                          }, 1:nrow(peaks_under_p))) %>%
       peaks_with_amplitude(deltanu)
+    #print(alt_peaks)
     alt_peaks <- optimise_peaks(pds.local, alt_peaks, naverages=naverages)
+    #print(alt_peaks)
     rel.log.likelihood <- relative_log_likelihood(pds.local, p, alt_peaks, use.AIC = use.AIC, naverages=naverages)
+    #print(rel.log.likelihood)
     if (rel.log.likelihood < 0) {
       return(p)
     } else {
@@ -508,6 +521,7 @@ all_branches_below_peak <- function(peaks, p) {
   return(unique(branches))
 }
 
+#original only one peak per branch used, this however can exclude some maxima per branch
 find_best_peaks <- function(pds, peaks, use.AIC = TRUE, naverages=1) {
   n_branches <- length(unique(peaks$branch))
   branches_searched <- c()
@@ -521,23 +535,35 @@ find_best_peaks <- function(pds, peaks, use.AIC = TRUE, naverages=1) {
     branches_searched <- union(branches_searched,
                                all_branches_below_peak(peaks, current_peak))
     remaining_peaks <- peaks[!(peaks$branch %in% branches_searched),]
+
   }
   return(best_peaks)
 }
 
+#new attempt: too many peaks
+#find_best_peaks <- function(pds, peaks, use.AIC = TRUE, naverages=1) {
+#  best_peaks <- peaks[NULL,]
+#  remaining_peaks <- peaks
+  
+#  while (nrow(remaining_peaks) > 0) {
+#    current_peak <- tail(remaining_peaks[order(remaining_peaks$scale),], n=1)
+#    new_peaks  <- best_fit_along_peak(pds, peaks, current_peak, use.AIC = use.AIC, naverages=naverages)
+#    best_peaks <- rbind(best_peaks, new_peaks)
+#    remaining_peaks <- remaining_peaks[!(remaining_peaks$frequency %in% current_peak),]
+#    if (nrow(new_peaks) > 1){
+#        remaining_peaks <- remaining_peaks[!(remaining_peaks$frequency %in% current_peak),]
+#    }#
+
+#  }
+#  return(best_peaks)
+#}
+
 peak_AIC_diff <- function(pds, peak, other_peaks, naverages=1) {
   all_peaks <- rbind(peak, other_peaks)
-  #print(paste("PASTE: ", sum(is.na(peak$linewidth))))
-  #print(paste("PEAKS: ", sum(is.na(other_peaks$linewidth))))
-  #stop()stop()
-  #print(peak)
   m0 <- model_AIC(log_likelihood(pds, fit_model(pds, other_peaks), naverages=naverages),
                   k=3*nrow(other_peaks) - sum(is.na(other_peaks$linewidth)), n=nrow(pds))
   m1 <- model_AIC(log_likelihood(pds, fit_model(pds, all_peaks), naverages=naverages),
                   k=3*nrow(all_peaks) - sum(is.na(all_peaks$linewidth)), n=nrow(pds))
-  #print(m0)
-  #print(m1)
-  #print(m0-m1)
   return(m0-m1)
 }
 
@@ -549,6 +575,31 @@ peaks_with_AIC <- function(peaks, pds, naverages=1) {
                                 data.frame(AIC = peak_AIC_diff(pds, peaks[i,], peaks[-i,], naverages=naverages))))
                  },1:nrow(peaks)))
   return(as_tibble(res))
+}
+
+peaks_with_low_AIC <- function(peaks, pds, minAIC= 2, naverages=1) {
+  peaks['AIC1'] <- NA
+  #peaks_low <- peaks %>% filter(AIC < minAIC)
+  #peaks_low <- peaks_low %>% arrange(desc(AIC))
+  peaks_high <- peaks %>% filter(AIC >= minAIC)
+  peaks_resolved <- peaks %>% filter(linewidth > 0) %>%
+                           arrange(desc(AIC))
+  peaks_unresolved <- peaks %>% filter(is.na(linewidth)) %>%
+                             arrange(desc(AIC))
+  peaks <- bind_rows(peaks_resolved,peaks_unresolved)
+  #res <- do.call(rbind,
+  #               Map(function (i) {
+  for(i in 1:nrow(peaks)){
+    if (peaks[i,9] < minAIC){
+        AIC1 = peak_AIC_diff(pds, peaks[i,], peaks_high, naverages=naverages)
+        peaks[i,12] <- AIC1
+        if (AIC1 >= minAIC){
+            peaks_high <- rbind(peaks[i,],peaks_high)
+            peaks_high <- peaks_high %>% arrange(frequency)
+        }
+    }
+ }
+ return(as_tibble(peaks))
 }
 
 
@@ -921,6 +972,7 @@ peak_find <- function(pds, min.snr = 3, p=0.0001, linewidth.range = NULL, use.AI
     #            }, 1:nrow(peaks)))
 
     # AIC calculated AGAIN! WHY?!?!?!?!
+    
     peaks <-
         peaks %>%
         arrange(frequency) %>%

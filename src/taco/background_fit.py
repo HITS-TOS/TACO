@@ -97,7 +97,7 @@ def background_fit(pds, ofac_pds, data, output = '', output_directory = '', **kw
                     
         if (j > 1):
             data['numax0'][0] = np.nanmean([data['numax_var'][0],data['numax_Morlet'][0],data['numax_CWTMexHat'][0]])
-            data['numax0_sd'][0] = max([data['numax_var'][0],data['numax_Morlet'][0],data['numax_CWTMexHat'][0]]) - min([data['numax_var'][0],data['numax_Morlet'][0],data['numax_CWTMexHat'][0]])
+            data['numax0_sd'][0] = max([data['numax_var'][0],data['numax_Morlet'][0],data['numax_CWTMexHat'][0]]) - np.nanmin([data['numax_var'][0],data['numax_Morlet'][0],data['numax_CWTMexHat'][0]])
         
         #print(data['numax0_sd'][0])
         bg_fit = bkg_model(pds, data['numax0'][0], data['numax0_sd'][0], data['nuNyq'][0], logfile = Path(output_directory,settings.logfile))

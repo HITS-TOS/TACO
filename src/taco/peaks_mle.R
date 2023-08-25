@@ -29,7 +29,6 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
     deltanu <- diff(pds$frequency[1:2])
 
     if (finalfit == TRUE) {
-
         if (nrow(peaks) == 0) {
             peaks.mle <- tibble(frequency = double(),
                                 amplitude = double(),
@@ -43,15 +42,26 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
             flag <- 1
             return(list(peaks.mle, flag, data))
         }
-
         peaks <- bind_rows(peaks,mixed_peaks)
-        peaks <- peaks %>% arrange(frequency)
-
+        #peaks <- peaks %>% arrange(frequency)
+        #peaks_low <- peaks %>% filter(AIC < minAIC)
+        #peaks_high <- peaks %>% filter(AIC >= minAIC)
+        
+        #if (nrow(peaks_low) != 0){
+        peaks <- peaks %>% peaks_with_low_AIC(pds, minAIC = minAIC, naverages=1)
+        #}
+        # check what combination of frequencies provides the best fit, ie which low AIC modes should still be included.
+        #peaks_mle <- peaks_with_low_AIC(peaks = peaks,
+        #                                pds = pds,
+        #                                maxLWD = maxlwd,
+        #                                naverages = navg)
+        
         #peaks.mle <- peaks_MLE_final_sd(peaks = peaks,
         #                                pds = pds,
         #                                final_fit_factor = 0.3,
         #                                naverages = navg) %>%
         #    arrange(frequency)
+        peaks <- peaks %>% arrange(frequency)
         peaks.mle <- peaks
         # 31/01/2020 Add n and l ID back in as no frequencies will have been removed
         #peaks.mle$n <- peaks$n
@@ -59,7 +69,7 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
 
         # Filter now by AIC - this is done to enable line above (so can use peaks)
         # rather than having to filter to find right peaks
-        peaks.mle <- peaks.mle #%>% filter(AIC > minAIC)
+        #peaks.mle <- peaks.mle #%>% filter(AIC > minAIC)
 
         DeltaNu <- data$DeltaNu
         eps_p <- data$eps_p
@@ -110,7 +120,7 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
                 maxlwd <- 1.5 * as.numeric(maxlwd)
                 print(paste("Maximum peak linewidth (HWHM) set, using value ", maxlwd, "uHz"))
             }
-
+            
             peaks.mle <- peaks_MLE_sd(peaks = rest_peaks,
                                       pds = pds_l02_removed,
                                       maxLWD = maxlwd,
@@ -138,13 +148,13 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
                 flag <- 1
                 return(list(peaks.mle, flag, data))
             }
-
+            
             # 22/12/19 Add in maxlwd default so consistent with peakfind
             if (is.null(maxlwd)) {
                 deltanu_est <- DeltaNu_from_numax(data$numax)
                 # Set to be < d02 from scaling relation (~0.125 dnu)
                 # Divide by 2 because HWHM defined here and want FWHM to be less than ~d02
-                maxlwd <- 0.125 * deltanu_est / 2
+                maxlwd <- 0.125 * deltanu_est / 1
                 print(paste("Maximum peak linewidth (HWHM) not set, therefore taking estimated value ", maxlwd, "uHz"))
                 if (maxlwd < deltanu / 2) {
                     maxlwd <- deltanu / 2 + 0.1 * deltanu / 2
