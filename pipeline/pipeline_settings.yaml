@@ -53,6 +53,17 @@ pipeline:
     - peak_bag_period_spacing:
         maxiters: 10
         niters: 5
-        dpi_only: False
+        dpi_only: True
         ncores: 1
         plot: False
+    - filenames:
+        summary: summary.csv
+        pds: pds.csv
+        oversampled_pds: oversampled_pds.csv
+        background_pds: pds_bgr.csv
+        background_oversampled: oversampled_pds_bgr.csv
+        resolved_modes: peaks.csv
+        mle_resolved_modes: peaks_mle.csv
+        mixed_modes: mixed_peaks.csv
+        mle_mixed_modes: mixed_peaks_mle.csv
+        final_modes: final_peaks_mle.csv
