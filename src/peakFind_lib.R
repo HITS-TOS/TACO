@@ -530,6 +530,12 @@ find_best_peaks <- function(pds, peaks, use.AIC = TRUE, naverages=1) {
 
   while (length(branches_searched) < n_branches) {
     current_peak <- tail(remaining_peaks[order(remaining_peaks$scale),], n=1)
+    current_branch <- peaks %>%
+                      filter(peaks$branch == current_peak$branch)
+    if (nrow(current_branch) > 1){
+      current_peak <- rbind(colMeans(current_branch),current_branch)
+      current_peak <- current_peak %>% slice(1)
+    }
     new_peaks  <- best_fit_along_peak(pds, peaks, current_peak, use.AIC = use.AIC, naverages=naverages)
     best_peaks <- rbind(best_peaks, new_peaks)
     branches_searched <- union(branches_searched,
@@ -539,24 +545,6 @@ find_best_peaks <- function(pds, peaks, use.AIC = TRUE, naverages=1) {
   }
   return(best_peaks)
 }
-
-#new attempt: too many peaks
-#find_best_peaks <- function(pds, peaks, use.AIC = TRUE, naverages=1) {
-#  best_peaks <- peaks[NULL,]
-#  remaining_peaks <- peaks
-  
-#  while (nrow(remaining_peaks) > 0) {
-#    current_peak <- tail(remaining_peaks[order(remaining_peaks$scale),], n=1)
-#    new_peaks  <- best_fit_along_peak(pds, peaks, current_peak, use.AIC = use.AIC, naverages=naverages)
-#    best_peaks <- rbind(best_peaks, new_peaks)
-#    remaining_peaks <- remaining_peaks[!(remaining_peaks$frequency %in% current_peak),]
-#    if (nrow(new_peaks) > 1){
-#        remaining_peaks <- remaining_peaks[!(remaining_peaks$frequency %in% current_peak),]
-#    }#
-
-#  }
-#  return(best_peaks)
-#}
 
 peak_AIC_diff <- function(pds, peak, other_peaks, naverages=1) {
   all_peaks <- rbind(peak, other_peaks)
@@ -649,7 +637,7 @@ lorentzian_peaks <- function(pds, min.snr = 3, linewidth.range = NULL,
 
     #print(log2(scale.range))
   }
-  pds.Peaks   <- cwtPeaks(pds.CWTTree, min.snr = min.snr, scale.range = scale.range)
+  pds.Peaks   <- cwtPeaks(pds.CWTTree, min.snr = min.snr, scale.range = 0.8*scale.range)
   #print(pds.Peaks)
   #stop()
   # Uncomment to save out CWT!

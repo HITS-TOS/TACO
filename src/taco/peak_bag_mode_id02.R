@@ -160,7 +160,8 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
     
     # Expected alpha from Δν
     n_max <- data$numax / Dnu - eps_p_from_Dnu(Dnu)
-    alpha <- 1.5 * alpha_obs_from_n_max(n_max) # overestimating alpha a bit to avoid issues at extreme frequencies
+#    alpha <- 1.5 * alpha_obs_from_n_max(n_max) # overestimating alpha a bit to avoid issues at extreme frequencies
+    alpha <- alpha_obs_from_DeltaNu(Dnu)
     print(paste0("Expected alpha from nmax ", alpha))
 
     ## Mode identification for l=0,2 modes

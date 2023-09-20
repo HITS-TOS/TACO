@@ -104,10 +104,16 @@ def background_fit(pds, ofac_pds, data, output = '', output_directory = '', **kw
         minESS = mESS.minESS(bg_fit.ndim, alpha=0.05, eps=0.1)
         i = 0
         done_p = False
-
-        print("Starting initial MCMC with binned PDS. Number of bins:", settings.bins)
-        bg_fit.MCMC(bg_fit.bg_params, output_directory, **settings.get_mcmc_settings())  # MCMC with binned PDS
-        print("Finished initial MCMC with binned PDS")
+        flag = 0
+        
+        try:
+            print("Starting initial MCMC with binned PDS. Number of bins:", settings.bins)
+            bg_fit.MCMC(bg_fit.bg_params, output_directory, **settings.get_mcmc_settings())  # MCMC with binned PDS
+            print("Finished initial MCMC with binned PDS")
+        except (ValueError, RuntimeError, TypeError, NameError):
+            print("Background fit did not converge")
+            flag = 1
+            return None, None, None, flag
 
         chain_i = np.argmax(bg_fit.MCMC_sampler.get_log_prob()[-1,:])
         theta0 = bg_fit.MCMC_sampler.get_chain()[-1,chain_i,:]
@@ -201,6 +207,7 @@ def background_fit(pds, ofac_pds, data, output = '', output_directory = '', **kw
                 
     if (not done_p and not done_q):
         print("Giving up")
-        return None, None, None
+        flag = 1
+        return None, None, None, flag
 
-    return(pds_bgr, ofac_pds_bgr, data)
+    return pds_bgr, ofac_pds_bgr, data, flag

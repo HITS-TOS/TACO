@@ -38,4 +38,4 @@ def numax_estimate(pds, data, filter_width = 0.2):
             
             flag = ro.conversion.rpy2py(result[1])
             data = ro.conversion.rpy2py(result[0])
-            return data, flag
+            return data, int(flag[0])

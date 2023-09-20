@@ -40,11 +40,20 @@ def main(argv):
     minESS = mESS.minESS(bgFit.ndim, alpha=0.05, eps=0.1)
     i=0
     done_p = False
+    flag = 0
+    print("flag")
+    print(flag)
+    
+    try:
+        print("Starting initial MCMC with binned PDS. Number of bins: %s" % kw["bins"])
+        bgFit.MCMC(bgFit.bg_params, **kw)  # MCMC with binned PDS
+        print("Finished initial MCMC with binned PDS")
+    except (ValueError, RuntimeError, TypeError, NameError):
+        print("Background fit did not converge")
+        flag = 1
+        return
 
-    print("Starting initial MCMC with binned PDS. Number of bins: %s" % kw["bins"])
-    bgFit.MCMC(bgFit.bg_params, **kw)  # MCMC with binned PDS
-    print("Finished initial MCMC with binned PDS")
-
+    print(flag)
     chain_i = np.argmax(bgFit.MCMC_sampler.lnprobability[:,-1])
     theta0 = bgFit.MCMC_sampler.chain[chain_i,-1,:]
 
@@ -77,12 +86,14 @@ def main(argv):
         print("Giving up")
         flag_file = os.path.join(os.path.dirname(argv.pds), "BACKGROUND_FIT_FLAG")
         open(flag_file, "a").close()
-        return
+        flag = 1
+        #summary = pd.read_csv(argv.summary)
+        #ofac_pds = pd.read_csv(argv.ofac_pds)
     else:
         # Create background_subtracted spectra
-        summary = pd.read_csv(argv.summary)
+        #summary = pd.read_csv(argv.summary)
         # Read in pds and oversampled pds
-        ofac_pds = pd.read_csv(argv.ofac_pds)
+        #ofac_pds = pd.read_csv(argv.ofac_pds)
 
         if argv.save_posteriors:
             # Read in chains
@@ -143,7 +154,9 @@ def main(argv):
         summary.to_csv(argv.summary, index=False)
         bkg_summary.to_csv(argv.quantiles, index=False)
         pds_bgr.to_csv(argv.pds_bgr, index=False)
-        ofac_pds_bgr.to_csv(argv.ofac_bgr, index=False)        
+        ofac_pds_bgr.to_csv(argv.ofac_bgr, index=False)
+        
+
 
 ## ======================
 ## Command-line arguments

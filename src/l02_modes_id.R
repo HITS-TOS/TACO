@@ -147,6 +147,15 @@ alpha_obs_from_n_max <- function(n_max) {
     }
 }
 
+#' alpha parameter from DeltaNu for red giants.
+# parameters determined based on early TACO results
+alpha_obs_from_DeltaNu <- function(DeltaNu) {
+    A <- 0.036
+    B <- -0.54
+    return(A*DeltaNu^B)
+}
+
+
 #' Calculate the heights of the l=0/2 pair as a function of numax
 l02_amplitudes <- function(l0_freqs, l2_freqs, numax, HBR, sigmaEnv, DeltaNu) {
     # Set to total relative visibility for Kepler - for TESS this should be 
