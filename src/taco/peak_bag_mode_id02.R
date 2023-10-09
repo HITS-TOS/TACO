@@ -210,7 +210,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
     # Fit through frequencies to estimate delta nu, epsilon and alpha
     res <- DeltaNu_l0_fit(
                 peaks = peaks %>%
-            filter(l == 0) %>%
+                filter(l == 0) %>%
                     drop_na() %>% # in case have nan in frequency_sd
                     arrange(frequency),
                     numax = data$numax,
@@ -385,8 +385,17 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                  "+/-",format(round(alpha_sd, 4), nsmall = 4),
                  ", d02: ", format(round(d02, 4))))
 
-    ## Estimate central Δν from a linear fit through the 3 l=0 peaks closest to numax
-    central_res <- DeltaNu_l0_fit(
+    #checking if the central l=0 peaks are roughly Dnu apart. If that is the case, we fit for the central values, otherwise set them to 0
+    peaks_check <- peaks %>%
+                filter(l == 0) %>%
+                mutate(absdiff = abs(frequency - data$numax)) %>%
+                arrange(absdiff) %>%
+                slice(1:3) %>%
+                arrange(frequency)
+    dif <- ((peaks_check$frequency-peaks_check$frequency[1])/Dnu) %% 1.0
+    if(dif[2] > 0.8 & dif[2] < 0.2 & dif[3] > 0.8 & dif[3] < 0.2){
+        ## Estimate central Δν from a linear fit through the 3 l=0 peaks closest to numax
+        central_res <- DeltaNu_l0_fit(
                     peaks = peaks %>%
                         filter(l == 0) %>%
                         mutate(absdiff = abs(frequency - data$numax)) %>%
@@ -397,20 +406,28 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                         DeltaNu0 = Dnu,
                         alpha0 = alpha)
 
-    # Extract Delta Nu and eps_p values
-    central_Dnu <- central_res$DeltaNu
-    central_Dnu_sd <- central_res$DeltaNu_sd
-    central_eps_p <- central_res$eps_p
-    # For consistency with epsilon from Kallinger et al. (2012)
-    if (central_eps_p < 0) {
-        print("Central epsilon p is negative! There may be a problem with the mode ID.")
-    } else if ((central_eps_p > 0) && (central_eps_p < 0.5) && (Dnu > 3)) {
+        # Extract Delta Nu and eps_p values
+        central_Dnu <- central_res$DeltaNu
+        central_Dnu_sd <- central_res$DeltaNu_sd
+        central_eps_p <- central_res$eps_p
+        # For consistency with epsilon from Kallinger et al. (2012)
+        if (central_eps_p < 0) {
+            print("Central epsilon p is negative! There may be a problem with the mode ID.")
+        } else if ((central_eps_p > 0) && (central_eps_p < 0.5) && (Dnu > 3)) {
         central_eps_p <- central_eps_p + 1
         peaks$n <- peaks$n + 1
+        }
+        central_eps_p_sd <- central_res$eps_p_sd
+        central_alpha <- central_res$alpha
+        central_alpha_sd <- central_res$alpha_sd
+    } else {
+        central_Dnu <- 0.0
+        central_Dnu_sd <- 0.0
+        central_eps_p <- 0.0
+        central_eps_p_sd <- 0.0
+        central_alpha <- 0.0
+        central_alpha_sd <- 0.0
     }
-    central_eps_p_sd <- central_res$eps_p_sd
-    central_alpha <- central_res$alpha
-    central_alpha_sd <- central_res$alpha_sd
 
     print(paste0("Central dnu: ", format(round(central_Dnu, 3), nsmall = 3),
                  "+/- ", format(round(central_Dnu_sd, 3), nsmall = 3),
