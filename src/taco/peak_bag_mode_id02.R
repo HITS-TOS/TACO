@@ -421,12 +421,9 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
         central_alpha <- central_res$alpha
         central_alpha_sd <- central_res$alpha_sd
     } else {
-        central_Dnu <- 0.0
-        central_Dnu_sd <- 0.0
-        central_eps_p <- 0.0
-        central_eps_p_sd <- 0.0
-        central_alpha <- 0.0
-        central_alpha_sd <- 0.0
+        flag <- 6
+        print("Delta nu and diffence in central radial frequencies not in line")
+        return(list(peaks, flag, data))
     }
 
     print(paste0("Central dnu: ", format(round(central_Dnu, 3), nsmall = 3),
