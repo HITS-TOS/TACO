@@ -108,9 +108,11 @@ def pipeline(argv):
             if not argv.start_function:
                 Path(argv.output_directory, input_name).mkdir(exist_ok = True)
                 ts_raw = pd.read_csv(input_file, comment = '#', header = None, delim_whitespace = True)
+            
             with open(path_to_file, mode = 'a') as fstar:
                 writer = csv.writer(fstar, delimiter = ',')
                 #set all flags to -1
+                flag_cv = -1
                 flag_numax = -1
                 flag_bgr = -1
                 flag_mle_resolved = -1
@@ -144,29 +146,50 @@ def pipeline(argv):
                     # Set Nyquist frequency
                     summary["nuNyq"] = pds["frequency"].iloc[-1]
 
-                    # 3) Estimate numax
-                    print('3) Estimate numax')
-                    summary, flag_numax = taco.numax_estimate(pds, summary,
-                        **settings['pipeline'][3]['numax_estimate'])
-                   
+                    # 3) Find number of power excess with Coefficient of Variation (Bell+2019)
+                    print('\n3) Estimate number of power excess with CV method')
+                    results_cv, pds = taco.cv_method(pds)
+                    flag_cv = results_cv['flag_cv'][0]
+                    
+                    results_cv.to_csv(Path(argv.output_directory, input_name, "cv_analysis.csv"), index = False)
+
+                    # Add interpolation flag and cv_flag to summary file:
+                    summary['interp_pds'] = results_cv['interp_spikes_flag'][0]
+                    summary['n_osc'] = flag_cv
                     summary.to_csv(Path(argv.output_directory, input_name, summaryfile), index = False)
+
+                    # Only check stars if number of possible power-excess is less than 2:
+                    if flag_cv < 2:
+                        # 4) Estimate numax
+                        print('4) Estimate numax')
+                        summary, flag_numax = taco.numax_estimate(pds, summary,
+                            **settings['pipeline'][3]['numax_estimate'])
+                    
+                        summary.to_csv(Path(argv.output_directory, input_name, summaryfile), index = False)
+                    
+                    else:
+                        print('Found more than one power excess. Stopping analysis!')
+                    
+                   
                 else:
                     pathsummary = Path(argv.output_directory, input_name, summaryfile)
                     pathpds = Path(argv.output_directory, input_name, pdsfile)
                     pathoverpds = Path(argv.output_directory, input_name, oversampled_pdsfile)
+
                     if not pathsummary.is_file() or not pathpds.is_file() or not pathoverpds.is_file():
                         print('Necessary files not available, star not analysed')
                         flag_numax = 2
                     else:
                         summary = pd.read_csv(Path(argv.output_directory, input_name, summaryfile), delimiter = ',')
                         flag_numax = summary['numax0_flag'][0]
+                        flag_cv = summary['n_osc'][0]
                         pds = pd.read_csv(Path(argv.output_directory, input_name, pdsfile), delimiter = ',')
                         oversampled_pds = pd.read_csv(Path(argv.output_directory, input_name, oversampled_pdsfile), delimiter = ',')
                 
-                if  flag_numax <= 1:
+                if  flag_cv < 2 and flag_numax <= 1:
                     if not argv.start_function or argv.start_function == "background":
-                        # 4) Background fit
-                        print('4) Fit background')
+                        # 5) Background fit
+                        print('5) Fit background')
                         pds_bgr, oversampled_pds_bgr, summary, flag_bgr = taco.background_fit(
                             pds, oversampled_pds, summary,
                             **settings['pipeline'][4]['background_fit'],
@@ -181,23 +204,23 @@ def pipeline(argv):
                 
                     if flag_bgr <= 0:
                         if not argv.start_function or argv.start_function == "background" or argv.start_function == "resolved_modes":
-                            # 5) Find peaks
-                            print('5) Find resolved peaks')
+                            # 6) Find peaks
+                            print('6) Find resolved peaks')
                             peaks = taco.peak_find(pds_bgr, oversampled_pds_bgr, summary,
                                 **settings['pipeline'][5]['peak_find'])
                             peaks.to_csv(Path(argv.output_directory, input_name, resolved_modesfile), index = False)
     
-                            # 6) MLE
+                            # 7) MLE
                             if (len(peaks.frequency)) >= 1:
-                                print('6) MLE fit resolved peaks')
+                                print('7) MLE fit resolved peaks')
                                 peaks_mle, flag_mle_resolved, summary = taco.peaks_mle(pds_bgr, peaks, summary,
                                     **settings['pipeline'][6]['peaks_mle'])
                                 summary.to_csv(Path(argv.output_directory, input_name, summaryfile), index = False)
                                 peaks_mle.to_csv(Path(argv.output_directory, input_name, mle_resolved_modesfile), index = False)
             
-                                # 7) Bag mode id02
+                                # 8) Bag mode id02
                                 if (((len(peaks_mle.frequency)) >= 3) and (flag_mle_resolved == 0.0)):
-                                    print('7) Identify 0,2 modes')
+                                    print('8) Identify 0,2 modes')
                                     peaks_mle, flag_02, summary = taco.peak_bag_mode_id02(pds_bgr, peaks_mle, summary)
                                     summary.to_csv(Path(argv.output_directory, input_name, summaryfile), index = False)
                                     peaks_mle.to_csv(Path(argv.output_directory, input_name, mle_resolved_modesfile), index = False)
@@ -213,18 +236,18 @@ def pipeline(argv):
                             else:
                                 flag_mle_resolved = 1
         
-                        # 8) Find mixed peaks
+                        # 9) Find mixed peaks
                         if flag_02 == 0.0:
                             if not argv.start_function or argv.start_function == "background" or argv.start_function == "resolved_modes" or argv.start_function == "unresolved_modes":
-                                print('8) Find mixed peaks')
+                                print('9) Find mixed peaks')
                                 mixed_peaks = taco.peak_find(
                                     pds_bgr, oversampled_pds_bgr, summary, peaks = peaks_mle, removel02 = True,
                                     **settings['pipeline'][7]['peak_find'])
                                 summary.to_csv(Path(argv.output_directory, input_name, summaryfile), index = False)
                                 mixed_peaks.to_csv(Path(argv.output_directory, input_name, mixed_modesfile), index = False)
 
-                                # 9) MLE with mixed peaks
-                                print('9) MLE fit mixed peaks')
+                                # 10) MLE with mixed peaks
+                                print('10) MLE fit mixed peaks')
                                 mixed_peaks, flag_mle_mixed, summary = taco.peaks_mle(
                                     pds_bgr, peaks_mle, summary, mixed_peaks = mixed_peaks, removel02 = True,
                                     **settings['pipeline'][8]['peaks_mle'])
@@ -237,19 +260,19 @@ def pipeline(argv):
                                 else:
                                     flag_mle_mixed = 1
                             
-                            # 10) Final fit
+                            # 11) Final fit
                             if (flag_mle_mixed == 0):
                                 if not argv.start_function or argv.start_function == "background" or argv.start_function == "resolved_modes" or argv.start_function == "unresolved_modes" or argv.start_function == "final_fit":
-                                    print('10) Final fit all peaks')
+                                    print('11) Final fit all peaks')
                                     all_peaks, flag_mle_final, summary = taco.peaks_mle(pds_bgr, peaks_mle, summary,
                                         mixed_peaks = mixed_peaks, finalfit = True,
                                         **settings['pipeline'][9]['peaks_mle'])
                                     summary.to_csv(Path(argv.output_directory, input_name, summaryfile), index = False)
                                     all_peaks.to_csv(Path(argv.output_directory, input_name, final_modesfile), index = False)
 
-                                    # 11) Bag_period_spacing
+                                    # 12) Bag_period_spacing
                                     if (flag_mle_final == 0):
-                                        print('11) Find period spacing')
+                                        print('12) Find period spacing')
                                         pds_bgr, all_peaks, flag_dP, summary = taco.peak_bag_period_spacing(pds_bgr, all_peaks, summary,
                                             **settings['pipeline'][10]['peak_bag_period_spacing'])
                                         summary.to_csv(Path(argv.output_directory, input_name, summaryfile), index = False)
