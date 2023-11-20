@@ -37,19 +37,24 @@ pipeline:
         prob: 0.0001
         minAIC: 2
         navg: 1
+        maxlwd: 
     - peaks_mle:
         minAIC: 2
+        maxlwd:
     - peak_find:
         snr: 1.1
         prob: 0.0001
         minAIC: 2
         navg: 1
+        maxlwd:
     - peaks_mle:
         minAIC: 2
         navg: 1
+        maxlwd:
     - peaks_mle:
         minAIC: 2
         navg: 1
+        maxlwd:
     - peak_bag_period_spacing:
         maxiters: 10
         niters: 5
@@ -60,8 +65,8 @@ pipeline:
         summary: summary.csv
         pds: pds.csv
         oversampled_pds: oversampled_pds.csv
-        background_pds: pds_bgr.csv
-        background_oversampled: oversampled_pds_bgr.csv
+        background_corrected_pds: pds_bgr.csv
+        background_corrected_oversampled_pds: oversampled_pds_bgr.csv
         resolved_modes: peaks.csv
         mle_resolved_modes: peaks_mle.csv
         mixed_modes: mixed_peaks.csv

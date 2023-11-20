@@ -18,7 +18,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
     MAX.ERROR <- 0.05 # Discard taggings where the square difference
                       # between expected and predicted frequencies
                       # is greater than MAX.ERROR*Δν
-    search.range <- c(0.75, 1.25) # Look for the next l=0,2 modes
+    search.range <- c(0.9, 1.1) # Look for the next l=0,2 modes
                                   # using this range away from Δν
 
     peaks <- peaks %>%
@@ -280,12 +280,11 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
     # 31/01/2020 Tag l=3 as wide modes around where expected
     peaks$x <- (peaks$frequency / Dnu - eps_p) %% 1
     # l=3 occur at l=0 + deltanu/2 - 0.280 according to Mosser et al. (2010)
-    l3 <- peaks %>% filter((x > 0.15) && (x < 0.26))
+    l3 <- peaks %>% filter((x > 0.12) && (x < 0.26))
     l3['n'] <- floor((l3$frequency / Dnu) - eps_p)
 
-    print("Tagging any possible l=3 modes...")
     if (nrow(l3) > 0) {
-
+        print("Tagging any possible l=3 modes...")
         tmp_l0 <- peaks %>% filter(l == 0)
 
         for (i in unique(l3$n)) {
@@ -393,7 +392,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                 slice(1:3) %>%
                 arrange(frequency)
     dif <- ((peaks_check$frequency-peaks_check$frequency[1])/Dnu) %% 1.0
-    if(dif[2] > 0.8 & dif[2] < 0.2 & dif[3] > 0.8 & dif[3] < 0.2){
+    if((dif[2] > 0.8 || dif[2] < 0.2) & (dif[3] > 0.8 || dif[3] < 0.2)){
         ## Estimate central Δν from a linear fit through the 3 l=0 peaks closest to numax
         central_res <- DeltaNu_l0_fit(
                     peaks = peaks %>%

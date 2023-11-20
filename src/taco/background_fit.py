@@ -205,6 +205,14 @@ def background_fit(pds, ofac_pds, data, output = '', output_directory = '', **kw
             else:
                 j=j+1
                 
+    if (not done_q):
+        print("too low amplitude of power excess")
+        flag = 2
+        for idx, row in bkg_summary.iterrows():
+            data[row['parameter']] = row['Q50']
+
+        bkg_summary.to_csv(Path(output_directory,settings.output_quantiles), index = False)
+        
     if (not done_p and not done_q):
         print("Giving up")
         flag = 1

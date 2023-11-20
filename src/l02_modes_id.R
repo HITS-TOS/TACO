@@ -292,9 +292,9 @@ tag_central_l02 <- function(peaks, pds, DeltaNu, d02, numax,
         numax + deltanu * pds.ccf$lag[which.max(pds.ccf$acf)]
     print(paste0("expected frequency for central l=0 mode from CCF ", central_l0_expected))
     #print(peaks)
-    print(median(peaks$amplitude,na.rm = TRUE))
-    print(mean(peaks$amplitude,na.rm = TRUE))
-    print(mad(peaks$amplitude,na.rm = TRUE))
+    #print(median(peaks$amplitude,na.rm = TRUE))
+    #print(mean(peaks$amplitude,na.rm = TRUE))
+    #print(mad(peaks$amplitude,na.rm = TRUE))
     #print(mean(peaks$amplitude,na.rm = TRUE))
     #print(30.0*mad(peaks$amplitude,na.rm = TRUE))
     continue_c <- TRUE
@@ -383,7 +383,6 @@ tag_central_l02 <- function(peaks, pds, DeltaNu, d02, numax,
 
 #' @param sign Whether or not we are searching above or below numax.
 tag_l02_pair <- function(peaks, pds, DeltaNu, d02, alpha, search.range, current_radial_order, central_radial_order, sign) {
-   
     # Bin width
     deltanu <- abs(diff(pds$frequency[1:2]))
     
@@ -440,12 +439,19 @@ tag_l02_pair <- function(peaks, pds, DeltaNu, d02, alpha, search.range, current_
     #print("predicted l=0")
     #print(predictedl0)
     
+    #closest_peak_info <- peaks %>%
+    #                        filter(!is.na(linewidth), !is.na(linewidth_sd), linewidth > 0.3*deltanu, # This line might be a bit suspect as will fail when get to shorter datasets! Maybe better to take widest peak e.g.
+    #                            if(sign > 0) frequency > current_l0$frequency + search.range[1]*(DeltaNu * (1.0 + (alpha) * (current_radial_order + 1 - central_radial_order)))
+    #                            else frequency > current_l0$frequency - search.range[2]*(DeltaNu * (1.0 + (alpha) * (current_radial_order - 1 - central_radial_order))),
+    #                            if(sign > 0) frequency < current_l0$frequency + search.range[2]*(DeltaNu * (1.0 + (alpha) * (current_radial_order + 1 - central_radial_order)))
+    #                            else frequency < current_l0$frequency - search.range[1]*(DeltaNu * (1.0 + (alpha) * (current_radial_order - 1 - central_radial_order))))
+                                
     closest_peak_info <- peaks %>%
                             filter(!is.na(linewidth), !is.na(linewidth_sd), linewidth > 0.3*deltanu, # This line might be a bit suspect as will fail when get to shorter datasets! Maybe better to take widest peak e.g.
-                                if(sign > 0) frequency > current_l0$frequency + search.range[1]*(DeltaNu * (1.0 + (alpha) * (current_radial_order + 1 - central_radial_order)))
-                                else frequency > current_l0$frequency - search.range[2]*(DeltaNu * (1.0 + (alpha) * (current_radial_order - 1 - central_radial_order))),
-                                if(sign > 0) frequency < current_l0$frequency + search.range[2]*(DeltaNu * (1.0 + (alpha) * (current_radial_order + 1 - central_radial_order)))
-                                else frequency < current_l0$frequency - search.range[1]*(DeltaNu * (1.0 + (alpha) * (current_radial_order - 1 - central_radial_order))))
+                                if(sign > 0) frequency > current_l0$frequency + search.range[1]*(DeltaNu * (1.0 + (0.0) * (current_radial_order + 1 - central_radial_order)))
+                                else frequency > current_l0$frequency - search.range[2]*(DeltaNu * (1.0 + (0.03) * (current_radial_order - 1 - central_radial_order))),
+                                if(sign > 0) frequency < current_l0$frequency + search.range[2]*(DeltaNu * (1.0 + (0.03) * (current_radial_order + 1 - central_radial_order)))
+                                else frequency < current_l0$frequency - search.range[1]*(DeltaNu * (1.0 + (0.0) * (current_radial_order - 1 - central_radial_order))))
                                 
    if(nrow(closest_peak_info) < 1) {
        closest_peak <- closest_peak_info
@@ -854,6 +860,7 @@ DeltaNu_l0_fit <- function(peaks, numax, DeltaNu0,alpha0,
         filter(l==0)
     if(nrow(l0_peaks) == 0)
         stop(paste("'peaks' does not have l=0 modes"))
+   
     res <-
         optim(
             # I use theta = (DeltaNu, epsilonp, alpha)

@@ -79,7 +79,7 @@ peak_find_r <- function(pds, ofac_pds, data, peaks, snr, prob,
             deltanu_est <- DeltaNu_from_numax(data$numax)
             # Set to be < d02 from scaling relation (~0.125 dnu)
             # Divide by 2 because HWHM defined here and want FWHM to be less than ~d02 # nolint
-            maxlwd <- 0.125 * deltanu_est / 2
+            maxlwd <- 0.1 * deltanu_est / 1
             if (maxlwd < deltanu / 2) {
                 print("Maximum peak linewidth (HWHM) is less than frequency resolution! Increasing upper bound slightly")
                 maxlwd <- deltanu / 2 + 0.1 * deltanu / 2

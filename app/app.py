@@ -35,22 +35,27 @@ from pathlib import Path
 
 import itertools
 
-def find_stars():
-    dir = Path().cwd().parent / "resultspipeline"
+def find_directory():
+    dir = Path().cwd().parent
+    dirs = [str(item).split('/')[-1] for item in Path(dir).rglob('results*')]
+    return dirs
+
+def find_stars(selected_dir):
+    dir = Path().cwd().parent / selected_dir
     dirs = dir.rglob('*/summary.csv')
     KICs = ['KIC '+str(i).split('/')[-2].lstrip('0') for i in dirs]
     return KICs
 
 #@st.cache
-def load_summary(KIC):
-    dir = Path().cwd().parent / "resultspipeline"
+def load_summary(selected_dir,KIC):
+    dir = Path().cwd().parent / selected_dir
     KIC = KIC.lstrip('KIC ').zfill(9)
     summary = pd.read_csv(str(dir)+'/'+str(KIC)+'/summary.csv')
     return summary
 
 #@st.cache
-def load_psd(KIC, background_removed=True):
-    dir = Path().cwd().parent / "resultspipeline"
+def load_psd(selected_dir, KIC, background_removed=True):
+    dir = Path().cwd().parent / selected_dir
     KIC = KIC.lstrip('KIC ').zfill(9)
     #print(KIC)
     if background_removed == True:
@@ -60,8 +65,8 @@ def load_psd(KIC, background_removed=True):
         #st.write(psd)
     return psd
 
-def load_ts(KIC, filtered=True):
-    dir = Path().cwd().parent / "resultspipeline"
+def load_ts(selected_dir, KIC, filtered=True):
+    dir = Path().cwd().parent / selected_dir
     KIC = KIC.lstrip('KIC ').zfill(9)
    # print(KIC)
     if filtered == True:
@@ -79,8 +84,8 @@ def load_ts(KIC, filtered=True):
     return ts
 
 #@st.cache
-def load_peaks(KIC, peakFind=False, resolved=False, final=True):
-    dir = Path().cwd().parent / "resultspipeline"
+def load_peaks(selected_dir, KIC, peakFind=False, resolved=False, final=True):
+    dir = Path().cwd().parent / selected_dir
     KIC = KIC.lstrip('KIC ').zfill(9)
     if peakFind == False:
         if resolved == False:
@@ -166,9 +171,9 @@ def visualise_psd(psd, summary):
 
     p = figure(
         title="",
-        x_axis_label="Frequency (μHz)",
+        x_axis_label="frequency [μHz]",
         x_axis_type=x_axis_type,
-        y_axis_label=r"PSD (ppm^{2}/μHz)",
+        y_axis_label= f"power density [ppm\u00b2/μHz]",
         y_axis_type=y_axis_type,
         match_aspect=True,
         x_range=(1, psd.frequency.max()),
@@ -197,16 +202,16 @@ def visualise_psd(psd, summary):
         for (i, colour) in zip(range(len(comps)), colours):
             if comp_names[i].startswith("gran"):
                 if gran_comp == 0:
-                    label = "1st Granulation Component"
+                    label = "1st background component"
                 elif gran_comp == 1:
-                    label = "2nd Granulation Component"
+                    label = "2nd background component"
                 else:
-                    label = f"{i+1}th Granulation Component"
+                    label = f"{i+1}th background component"
                 p.line(psd.frequency, comps[i], line_dash='dashed', color=colour, line_width=3, legend_label=label)
                 gran_comp += 1
             if comp_names[i].startswith("gauss"):
                 if (gauss_comp == 0) & (n_gauss == 1):
-                    label = "Oscillations"
+                    label = "oscillations"
                 elif (gauss_comp == 0) & (n_gauss > 1):
                      label = "1st set of Oscillations"
                 elif gauss_comp == 1:
@@ -219,9 +224,9 @@ def visualise_psd(psd, summary):
         #p.line(psd.frequency, comp3, color="magenta", line_dash='dashed', line_width=3, legend_label=r'3rd Granulation Component')
         #p.line(psd.frequency, gauss, color="yellow", line_dash='dashed', line_width=3, legend_label=r'Oscillations')
         # White noise is always the last in the components list
-        p.line(psd.frequency, comps[-1], color="blue", line_dash='dashed', line_width=3, legend_label=r'White Noise')
-        p.line(psd.frequency, bg_fit_no_osc, color="red", line_dash='dashed', line_width=3, legend_label=r'Full model (no oscillations)')
-        p.line(psd.frequency, bg_fit, color="red", line_width=3, legend_label=r'Full model')
+        p.line(psd.frequency, comps[-1], color="blue", line_dash='dashed', line_width=3, legend_label=r'white noise')
+        p.line(psd.frequency, bg_fit_no_osc, color="red", line_dash='dashed', line_width=3, legend_label=r'full background model (no oscillations)')
+        p.line(psd.frequency, bg_fit, color="red", line_width=3, legend_label=r'full model')
     else:
         st.write("No background parameters available to show a fit")
         
@@ -242,7 +247,7 @@ def visualise_psd(psd, summary):
         p.legend.location = 'bottom_left'
     st.bokeh_chart(p)
 
-def visualise_pds_bgr(KIC,psd_bgr, summary):
+def visualise_pds_bgr(selected_dir,KIC,psd_bgr, summary):
     #if st.sidebar.checkbox('Show background-removed power spectrum'):
     psd_bgr = psd_bgr.loc[np.abs(psd_bgr['frequency'].values - summary['numax'].values) < 3*summary['sigmaEnv'].values, ]
 
@@ -306,30 +311,19 @@ def visualise_pds_bgr(KIC,psd_bgr, summary):
             # Have to add background of 1 as not included when individual models created
         #    p.line(psd_bgr.frequency, model_l02+1, color="green", line_width=3, legend_label="l=0/2 (Even)")
         #    p.line(psd_bgr.frequency, model_l1+1, color="red", line_width=3, legend_label="l=1/3 (Odd)")
-    dir = Path().cwd().parent / "resultspipeline"
+    dir = Path().cwd().parent / selected_dir
     KIC = KIC.lstrip('KIC ').zfill(9)
-    final_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')
-    if final_peaks_MLE_file.is_file():
-        peaks = pd.read_csv(final_peaks_MLE_file)
-        if st.sidebar.checkbox("Mode identification"):
-            p.circle(peaks.loc[(peaks.l == 0) & (peaks.AIC.values > AIC_cut), 'frequency'], len(peaks.loc[(peaks.l == 0) & (peaks.AIC.values > AIC_cut), 'frequency'])*[psd_bgr.power.max()/2],
-                size=10, color="red", alpha=0.5, legend_label='l=0')
-            p.square(peaks.loc[(peaks.l == 2) & (peaks.AIC.values > AIC_cut), 'frequency'],
-                len(peaks.loc[(peaks.l == 2) & (peaks.AIC.values > AIC_cut), 'frequency'])*[psd_bgr.power.max()/2],
-                size=10, color="green", alpha=0.5, legend_label='l=2')
-            p.hex(peaks.loc[(peaks.l == 3) & (peaks.AIC.values > AIC_cut), 'frequency'],
-                len(peaks.loc[(peaks.l == 3) & (peaks.AIC.values > AIC_cut), 'frequency'])*[psd_bgr.power.max()/2],
-                size=10, color="orange", alpha=0.5, legend_label='l=3')
-        
-        overplot_fit = False
-        if st.sidebar.checkbox("Overplot final MLE fit"):
-            peaks = pd.read_csv(final_peaks_MLE_file)
+     
+    peaks_file = Path(str(dir)+'/'+str(KIC)+'/peaks.csv')
+    if peaks_file.is_file():
+        overplot_even_peaks = False
+        if st.sidebar.checkbox("Overplot resolved mode peaks"):
+            peaks = pd.read_csv(peaks_file)
             model = app_helpers.construct_peaksmodel(psd_bgr, peaks.loc[peaks.AIC.values > AIC_cut, ])
-            p.line(psd_bgr.frequency, model, color="orange", line_width=3, legend_label=r'final MLE fit')
+            p.line(psd_bgr.frequency, model, color="blue", line_width=3, legend_label=r'resolved peaks')
             #peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')
     else:
-        st.write("no final MLE fit parameters were obtained")
-        st.write("no mode identifications were obtained")
+        st.write("no resolved mode peaks were obtained")
      
     peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/peaks_MLE.csv')
     if peaks_MLE_file.is_file():
@@ -342,17 +336,18 @@ def visualise_pds_bgr(KIC,psd_bgr, summary):
     else:
         st.write("no even mode MLE fit parameters were obtained")
         
-    peaks_file = Path(str(dir)+'/'+str(KIC)+'/peaks.csv')
-    if peaks_file.is_file():
-        overplot_even_peaks = False
-        if st.sidebar.checkbox("Overplot resolved mode peaks"):
-            peaks = pd.read_csv(peaks_file)
+    
+    mixed_peaks_file = Path(str(dir)+'/'+str(KIC)+'/mixed_peaks.csv')
+    if mixed_peaks_file.is_file():
+        overplot_odd_peaks = False
+        if st.sidebar.checkbox("Overplot odd mode peaks"):
+            peaks = pd.read_csv(mixed_peaks_file)
             model = app_helpers.construct_peaksmodel(psd_bgr, peaks.loc[peaks.AIC.values > AIC_cut, ])
-            p.line(psd_bgr.frequency, model, color="blue", line_width=3, legend_label=r'resolved peaks')
+            p.line(psd_bgr.frequency, model, color="purple", line_width=3, legend_label=r'odd mode peaks')
             #peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')
     else:
-        st.write("no resolved mode peaks were obtained")
-     
+        st.write("no odd mode peaks were obtained")
+    
     mixed_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/mixed_peaks_MLE.csv')
     if mixed_peaks_MLE_file.is_file():
         overplot_odd_fit = False
@@ -364,16 +359,31 @@ def visualise_pds_bgr(KIC,psd_bgr, summary):
     else:
         st.write("no final odd mode MLE fit parameters were obtained")
         
-    mixed_peaks_file = Path(str(dir)+'/'+str(KIC)+'/mixed_peaks.csv')
-    if mixed_peaks_file.is_file():
-        overplot_odd_peaks = False
-        if st.sidebar.checkbox("Overplot odd mode peaks"):
-            peaks = pd.read_csv(mixed_peaks_file)
-            model = app_helpers.construct_peaksmodel(psd_bgr, peaks.loc[peaks.AIC.values > AIC_cut, ])
-            p.line(psd_bgr.frequency, model, color="purple", line_width=3, legend_label=r'odd mode peaks')
+
+        
+    final_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')
+    if final_peaks_MLE_file.is_file():
+        peaks = pd.read_csv(final_peaks_MLE_file)
+        if st.sidebar.checkbox("Mode identification"):
+            p.circle(peaks.loc[(peaks.l == 0) & ((peaks.AIC.values > AIC_cut) | (peaks.AIC1.values > AIC_cut)), 'frequency'],
+                len(peaks.loc[(peaks.l == 0) & ((peaks.AIC.values > AIC_cut) | (peaks.AIC1.values > AIC_cut)), 'frequency'])*[psd_bgr.power.max()/2],
+                size=10, color="red", alpha=0.5, legend_label='l=0')
+            p.square(peaks.loc[(peaks.l == 2) & ((peaks.AIC.values > AIC_cut) | (peaks.AIC1.values > AIC_cut)), 'frequency'],
+                len(peaks.loc[(peaks.l == 2) & ((peaks.AIC.values > AIC_cut) | (peaks.AIC1.values > AIC_cut)), 'frequency'])*[psd_bgr.power.max()/2],
+                size=10, color="green", alpha=0.5, legend_label='l=2')
+            p.hex(peaks.loc[(peaks.l == 3) & ((peaks.AIC.values > AIC_cut) | (peaks.AIC1.values > AIC_cut)), 'frequency'],
+                len(peaks.loc[(peaks.l == 3) & ((peaks.AIC.values > AIC_cut) | (peaks.AIC1.values > AIC_cut)), 'frequency'])*[psd_bgr.power.max()/2],
+                size=10, color="orange", alpha=0.5, legend_label='l=3')
+        
+        overplot_fit = False
+        if st.sidebar.checkbox("Overplot final MLE fit"):
+            peaks = pd.read_csv(final_peaks_MLE_file)
+            model = app_helpers.construct_peaksmodel(psd_bgr, peaks.loc[(peaks.AIC.values > AIC_cut) | (peaks.AIC1.values > AIC_cut), ])
+            p.line(psd_bgr.frequency, model, color="orange", line_width=3, legend_label=r'final MLE fit')
             #peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')
     else:
-        st.write("no odd mode peaks were obtained")
+        st.write("no final MLE fit parameters were obtained")
+        st.write("no mode identifications were obtained")
             
          # Colour by rotation splitting as well
    #     if st.sidebar.checkbox("Include rotational splitting"):
@@ -428,9 +438,9 @@ def visualise_pds_bgr(KIC,psd_bgr, summary):
 
 
 
-def visualise_echelle(KIC, psd_bgr, summary, session):
+def visualise_echelle(selected_dir, KIC, psd_bgr, summary, session):
 
-    dir = Path().cwd().parent / "resultspipeline"
+    dir = Path().cwd().parent / selected_dir
     KIC = KIC.lstrip('KIC ').zfill(9)
     final_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')
     if final_peaks_MLE_file.is_file():
@@ -495,18 +505,18 @@ def visualise_echelle(KIC, psd_bgr, summary, session):
 
         # l=0 x and y values
         #'eps_p mod Dnu', eps_p*DeltaNu % DeltaNu
-        l0_x = ((peaks.loc[(peaks.l == 0) & (peaks.AIC.values >= AIC_cut), 'frequency'] - eps_p*DeltaNu + echelle_offset*DeltaNu) % DeltaNu).values
-        l0_y = peaks.loc[(peaks.l == 0) & (peaks.AIC.values >= AIC_cut), 'frequency'].values
+        l0_x = ((peaks.loc[(peaks.l == 0) & ((peaks.AIC.values >= AIC_cut) | (peaks.AIC1.values >= AIC_cut)), 'frequency'] - eps_p*DeltaNu + echelle_offset*DeltaNu) % DeltaNu).values
+        l0_y = peaks.loc[(peaks.l == 0) & ((peaks.AIC.values >= AIC_cut) | (peaks.AIC1.values >= AIC_cut)), 'frequency'].values
         # l=2 x and y values
-        l2_x = ((peaks.loc[(peaks.l == 2) & (peaks.AIC.values >= AIC_cut), 'frequency'] - eps_p*DeltaNu + echelle_offset*DeltaNu) % DeltaNu).values
-        l2_y = peaks.loc[(peaks.l == 2) & (peaks.AIC.values >= AIC_cut), 'frequency'].values
+        l2_x = ((peaks.loc[(peaks.l == 2) & ((peaks.AIC.values >= AIC_cut) | (peaks.AIC1.values >= AIC_cut)), 'frequency'] - eps_p*DeltaNu + echelle_offset*DeltaNu) % DeltaNu).values
+        l2_y = peaks.loc[(peaks.l == 2) & ((peaks.AIC.values >= AIC_cut) | (peaks.AIC1.values >= AIC_cut)), 'frequency'].values
         # l=1/3 x and y values
         #'', np.isnan(peaks.l.values)
-        l1_x = ((peaks.loc[((peaks.l == 1) | np.isnan(peaks.l.values)) & (peaks.AIC.values >= AIC_cut), 'frequency'] - eps_p*DeltaNu + echelle_offset*DeltaNu) % DeltaNu).values
-        l1_y = peaks.loc[((peaks.l == 1) | np.isnan(peaks.l.values)) & (peaks.AIC.values >= AIC_cut), 'frequency'].values
+        l1_x = ((peaks.loc[((peaks.l == 1) | np.isnan(peaks.l.values)) & ((peaks.AIC.values >= AIC_cut) | (peaks.AIC1.values >= AIC_cut)), 'frequency'] - eps_p*DeltaNu + echelle_offset*DeltaNu) % DeltaNu).values
+        l1_y = peaks.loc[((peaks.l == 1) | np.isnan(peaks.l.values)) & ((peaks.AIC.values >= AIC_cut) | (peaks.AIC1.values >= AIC_cut)), 'frequency'].values
         # l=3 x and y values
-        l3_x = ((peaks.loc[(peaks.l == 3) & (peaks.AIC.values >= AIC_cut), 'frequency'] - eps_p*DeltaNu + echelle_offset*DeltaNu) % DeltaNu).values
-        l3_y = peaks.loc[(peaks.l == 3) & (peaks.AIC.values >= AIC_cut), 'frequency'].values
+        l3_x = ((peaks.loc[(peaks.l == 3) & ((peaks.AIC.values >= AIC_cut) | (peaks.AIC1.values >= AIC_cut)), 'frequency'] - eps_p*DeltaNu + echelle_offset*DeltaNu) % DeltaNu).values
+        l3_y = peaks.loc[(peaks.l == 3) & ((peaks.AIC.values >= AIC_cut) | (peaks.AIC1.values >= AIC_cut)), 'frequency'].values
 
         if st.sidebar.checkbox("Overplot theoretical frequencies"):
 
@@ -568,10 +578,10 @@ def visualise_echelle(KIC, psd_bgr, summary, session):
 
             const = st.sidebar.number_input("Symbol size multiplier.", value=10.0, step=0.5)
 
-            l0_size = const*peaks.loc[(peaks.l == 0) & (peaks.AIC.values >= AIC_cut), 'amplitude']
-            l2_size = const*peaks.loc[(peaks.l == 2) & (peaks.AIC.values >= AIC_cut), 'amplitude']
-            l1_size = const*peaks.loc[((peaks.l == 1) | np.isnan(peaks.l.values)) & (peaks.AIC.values >= AIC_cut), 'amplitude']
-            l3_size = const*peaks.loc[(peaks.l == 3) & (peaks.AIC.values >= AIC_cut), 'amplitude']
+            l0_size = const*peaks.loc[(peaks.l == 0) & ((peaks.AIC.values >= AIC_cut) | (peaks.AIC1.values >= AIC_cut)), 'amplitude']
+            l2_size = const*peaks.loc[(peaks.l == 2) & ((peaks.AIC.values >= AIC_cut) | (peaks.AIC1.values >= AIC_cut)), 'amplitude']
+            l1_size = const*peaks.loc[((peaks.l == 1) | np.isnan(peaks.l.values)) & ((peaks.AIC.values >= AIC_cut) | (peaks.AIC1.values >= AIC_cut)), 'amplitude']
+            l3_size = const*peaks.loc[(peaks.l == 3) & ((peaks.AIC.values >= AIC_cut) | (peaks.AIC1.values >= AIC_cut)), 'amplitude']
 
         else:
     
@@ -595,7 +605,7 @@ def visualise_echelle(KIC, psd_bgr, summary, session):
 
         p.scatter(x="red_freq", y="frequency", size="size", source=source,
               alpha = 0.5,
-              legend = "l",
+              legend_group = "l",
               marker=factor_mark("l", MARKERS, MODE_DEGREE),
               color=factor_cmap("l", COLOURS, MODE_DEGREE))
 
@@ -617,9 +627,9 @@ def visualise_echelle(KIC, psd_bgr, summary, session):
     else:
         st.write("no mode identifications were obtained and henceforth no echelle diagram can be plotted")
         
-def visualise_stretched_echelle(KIC, psd_bgr, summary, session):
+def visualise_stretched_echelle(selected_dir, KIC, psd_bgr, summary, session):
 
-    dir = Path().cwd().parent / "resultspipeline"
+    dir = Path().cwd().parent / selected_dir
     KIC = KIC.lstrip('KIC ').zfill(9)
     final_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')
     if final_peaks_MLE_file.is_file():
@@ -635,8 +645,12 @@ def visualise_stretched_echelle(KIC, psd_bgr, summary, session):
         #'', summary.columns
         orig_DeltaNu = summary['DeltaNu'].item()
         orig_coupling = summary['coupling'].item()
+        if np.isnan(orig_coupling):
+         orig_coupling = 0.15
         orig_eps_g = summary['eps_g'].item()
-
+        if np.isnan(orig_eps_g):
+         orig_eps_g = 0.0
+         
         orig_d01 = 0.0
         orig_splitting = 0.0
 
@@ -756,9 +770,9 @@ def visualise_stretched_echelle(KIC, psd_bgr, summary, session):
     else:
         st.write("no mixed peaks identified so no (stretched) period echelle diagram can be shown.")
     
-def visualise_reggae(KIC, psd_bgr, summary, session):
+def visualise_reggae(selected_dir, KIC, psd_bgr, summary, session):
 
-    dir = Path().cwd().parent / "resultspipeline"
+    dir = Path().cwd().parent / selected_dir
     KIC = KIC.lstrip('KIC ').zfill(9)
     final_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')
     if final_peaks_MLE_file.is_file():
@@ -777,7 +791,11 @@ def visualise_reggae(KIC, psd_bgr, summary, session):
         #'', summary.columns
         orig_DPi1 = summary['DeltaPi1'].item()
         orig_coupling = summary['coupling'].item()
+        if np.isnan(orig_coupling):
+         orig_coupling = 0.15
         orig_eps_g = summary['eps_g'].item()
+        if np.isnan(orig_eps_g):
+         orig_eps_g = 0.0
         orig_splitting = 0.000
 
         # Set up sliders
@@ -874,17 +892,17 @@ def visualise_reggae(KIC, psd_bgr, summary, session):
             plot_width=800)
 
         p.line(psd_bgr.frequency, psd_bgr.power, color="black")
-        model = app_helpers.construct_peaksmodel(psd_bgr, peaks.loc[peaks.AIC.values > AIC_cut, ])
+        model = app_helpers.construct_peaksmodel(psd_bgr, peaks.loc[(peaks.AIC.values > AIC_cut) | (peaks.AIC1.values > AIC_cut), ])
         p.line(psd_bgr.frequency, model, color="orange", line_width=3)
 
         if st.sidebar.checkbox("Mode identification"):
-            p.circle(peaks.loc[(peaks.l == 0) & (peaks.AIC.values > AIC_cut), 'frequency'], len(peaks.loc[(peaks.l == 0) & (peaks.AIC.values > AIC_cut), 'frequency'])*[psd_bgr.power.max()/2],
+            p.circle(peaks.loc[(peaks.l == 0) & ((peaks.AIC.values >= AIC_cut) | (peaks.AIC1.values >= AIC_cut)), 'frequency'], len(peaks.loc[(peaks.l == 0) & ((peaks.AIC.values >= AIC_cut) | (peaks.AIC1.values >= AIC_cut)), 'frequency'])*[psd_bgr.power.max()/2],
                 size=10, color="red", alpha=0.5, legend_label='l=0')
-            p.square(peaks.loc[(peaks.l == 2) & (peaks.AIC.values > AIC_cut), 'frequency'],
-                len(peaks.loc[(peaks.l == 2) & (peaks.AIC.values > AIC_cut), 'frequency'])*[psd_bgr.power.max()/2],
+            p.square(peaks.loc[(peaks.l == 2) & ((peaks.AIC.values >= AIC_cut) | (peaks.AIC1.values >= AIC_cut)), 'frequency'],
+                len(peaks.loc[(peaks.l == 2) & ((peaks.AIC.values >= AIC_cut) | (peaks.AIC1.values >= AIC_cut)), 'frequency'])*[psd_bgr.power.max()/2],
                 size=10, color="green", alpha=0.5, legend_label='l=2')
-            p.hex(peaks.loc[(peaks.l == 3) & (peaks.AIC.values > AIC_cut), 'frequency'],
-                len(peaks.loc[(peaks.l == 3) & (peaks.AIC.values > AIC_cut), 'frequency'])*[psd_bgr.power.max()/2],
+            p.hex(peaks.loc[(peaks.l == 3) & ((peaks.AIC.values >= AIC_cut) | (peaks.AIC1.values >= AIC_cut)), 'frequency'],
+                len(peaks.loc[(peaks.l == 3) & ((peaks.AIC.values >= AIC_cut) | (peaks.AIC1.values >= AIC_cut)), 'frequency'])*[psd_bgr.power.max()/2],
                 size=10, color="orange", alpha=0.5, legend_label='l=3')
 
 
@@ -959,80 +977,87 @@ def visualise_reggae(KIC, psd_bgr, summary, session):
         st.write("Not enough modes identified and therefore mode matching cannot be done")
 
 def main():
-
-    #st.title("TACO Explorer App")
+    
+    st.title("TACO Explorer App")
 
     #st.markdown("Explore the stars you have analysed to your hearts content!!!")
 
     session = SessionState.get(run_id=0)
     # File uploader
     #if uploaded_file is not None:
-    KICs = find_stars()
-    st.sidebar.header("Please select a star to analyse")
-    selected_KIC = st.sidebar.selectbox(
+    dirs = find_directory()
+    st.sidebar.header("Please select a directory")
+    selected_dir = st.sidebar.selectbox(
+                    "",
+                    ["", *dirs]
+    )
+    if selected_dir != "":
+        KICs = find_stars(selected_dir)
+        st.sidebar.header("Please select a star to analyse")
+        selected_KIC = st.sidebar.selectbox(
                     "",
                     ["", *KICs]
-    )
-    if selected_KIC != "":
+        )
+        if selected_KIC != "":
 
-        #'You selected ', selected_KIC
-        st.sidebar.header("Choose a page")
-        page = st.sidebar.selectbox("",
+            #'You selected ', selected_KIC
+            st.sidebar.header("Choose a page")
+            page = st.sidebar.selectbox("",
                                     ["", "Timeseries", "Background Fit",
                                      "MLE Fit", "Frequency Echelle",
                                      "Stretched Period Echelle",
                                      "Mode matching"])
-        summary = load_summary(selected_KIC)
-        if page == "Timeseries":
-            st.header("Timeseries Data")
-            filtered_ts = load_ts(selected_KIC, filtered=True)
-            unfiltered_ts = load_ts(selected_KIC, filtered=False)
-            visualise_timeseries(filtered_ts, unfiltered_ts, summary)
+            summary = load_summary(selected_dir, selected_KIC)
+            if page == "Timeseries":
+                st.header("Timeseries Data")
+                filtered_ts = load_ts(selected_dir, selected_KIC, filtered=True)
+                unfiltered_ts = load_ts(selected_dir, selected_KIC, filtered=False)
+                visualise_timeseries(filtered_ts, unfiltered_ts, summary)
 
-        elif page == "Background Fit":
-            st.header("Background Fit Explorer")
+            elif page == "Background Fit":
+                st.header("Background Fit Explorer")
 
-            psd = load_psd(selected_KIC, background_removed=False)
-            visualise_psd(psd, summary)
+                psd = load_psd(selected_dir, selected_KIC, background_removed=False)
+                visualise_psd(psd, summary)
 
-        elif page == "MLE Fit":
-            st.header("MLE Fit Explorer")
-            st.sidebar.header("MLE Fit Settings")
-            psd_bgr = load_psd(selected_KIC, background_removed=True)
-            #peaksMLE_final = load_peaks(selected_KIC)
-            #peaksMLE_odd = load_peaks(selected_KIC,peakFind = False, resolved = False, final=False)
-            #peaksMLE_even = load_peaks(selected_KIC,peakFind = False, resolved = True, final=False)
-            #peakFind_mixed = load_peaks(selected_KIC, peakFind=True, resolved = False)
-            #peakFind_even = load_peaks(selected_KIC, peakFind=True, resolved = True)
-            visualise_pds_bgr(selected_KIC,psd_bgr, summary)
-           # if st.checkbox('Show MLE fit parameters'):
-           #     st.write('MLE parameters')
-           #     st.write(peaksMLE_final)
-           #     st.write("peakFind parameters")
-           #     st.write(peakFind_mixed)
-           #     st.write(peakFind_even)
+            elif page == "MLE Fit":
+                st.header("MLE Fit Explorer")
+                st.sidebar.header("MLE Fit Settings")
+                psd_bgr = load_psd(selected_dir, selected_KIC, background_removed=True)
+                #peaksMLE_final = load_peaks(selected_KIC)
+                #peaksMLE_odd = load_peaks(selected_KIC,peakFind = False, resolved = False, final=False)
+                #peaksMLE_even = load_peaks(selected_KIC,peakFind = False, resolved = True, final=False)
+                #peakFind_mixed = load_peaks(selected_KIC, peakFind=True, resolved = False)
+                #peakFind_even = load_peaks(selected_KIC, peakFind=True, resolved = True)
+                visualise_pds_bgr(selected_dir, selected_KIC, psd_bgr, summary)
+                # if st.checkbox('Show MLE fit parameters'):
+                #     st.write('MLE parameters')
+                #     st.write(peaksMLE_final)
+                #     st.write("peakFind parameters")
+                #     st.write(peakFind_mixed)
+                #     st.write(peakFind_even)
 
-        elif page == "Frequency Echelle":
-            st.header("Frequency Echelle Explorer")
-            st.sidebar.header("Echelle Parameters")
-            psd_bgr = load_psd(selected_KIC, background_removed=True)
-            #peaksMLE = load_peaks(selected_KIC)
-            visualise_echelle(selected_KIC, psd_bgr, summary, session)
+            elif page == "Frequency Echelle":
+                st.header("Frequency Echelle Explorer")
+                st.sidebar.header("Echelle Parameters")
+                psd_bgr = load_psd(selected_dir, selected_KIC, background_removed=True)
+                #peaksMLE = load_peaks(selected_KIC)
+                visualise_echelle(selected_dir, selected_KIC, psd_bgr, summary, session)
 
-        elif page == "Stretched Period Echelle":
-            st.header("Stretched Period Echelle Explorer")
-            st.sidebar.header("Echelle Parameters")
-            psd_bgr = load_psd(selected_KIC, background_removed=True)
-            #peaksMLE = load_peaks(selected_KIC)
-            visualise_stretched_echelle(selected_KIC, psd_bgr, summary, session)
+            elif page == "Stretched Period Echelle":
+                st.header("Stretched Period Echelle Explorer")
+                st.sidebar.header("Echelle Parameters")
+                psd_bgr = load_psd(selected_dir, selected_KIC, background_removed=True)
+                #peaksMLE = load_peaks(selected_KIC)
+                visualise_stretched_echelle(selected_dir, selected_KIC, psd_bgr, summary, session)
 
-        elif page == "Mode matching":
-            st.header("Mode match Explorer")
-            #st.header("Reggae!")
-            st.sidebar.header("Asteroseismic Parameters")
-            psd_bgr = load_psd(selected_KIC, background_removed=True)
-            #peaksMLE = load_peaks(selected_KIC)
-            visualise_reggae(selected_KIC, psd_bgr, summary, session)
+            elif page == "Mode matching":
+                st.header("Mode match Explorer")
+                #st.header("Reggae!")
+                st.sidebar.header("Asteroseismic Parameters")
+                psd_bgr = load_psd(selected_dir, selected_KIC, background_removed=True)
+                #peaksMLE = load_peaks(selected_KIC)
+                visualise_reggae(selected_dir, selected_KIC, psd_bgr, summary, session)
 
 if __name__=="__main__":
     main()

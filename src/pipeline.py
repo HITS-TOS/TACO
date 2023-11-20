@@ -67,11 +67,11 @@ def pipeline(argv):
     oversampled_pdsfile = settings['pipeline'][11]['filenames']['oversampled_pds']
     background_corrected_pdsfile = settings['pipeline'][11]['filenames']['background_corrected_pds']
     background_corrected_oversampled_pdsfile = settings['pipeline'][11]['filenames']['background_corrected_oversampled_pds']
-    resolved_modesfile=pdsfile = settings['pipeline'][11]['filenames']['resolved_modes']
-    mle_resolved_modesfile=pdsfile = settings['pipeline'][11]['filenames']['mle_resolved_modes']
-    mixed_modesfile=pdsfile = settings['pipeline'][11]['filenames']['mixed_modes']
-    mle_mixed_modesfile=pdsfile = settings['pipeline'][11]['filenames']['mle_mixed_modes']
-    final_modesfile=pdsfile = settings['pipeline'][11]['filenames']['final_modes']
+    resolved_modesfile= settings['pipeline'][11]['filenames']['resolved_modes']
+    mle_resolved_modesfile= settings['pipeline'][11]['filenames']['mle_resolved_modes']
+    mixed_modesfile= settings['pipeline'][11]['filenames']['mixed_modes']
+    mle_mixed_modesfile= settings['pipeline'][11]['filenames']['mle_mixed_modes']
+    final_modesfile= settings['pipeline'][11]['filenames']['final_modes']
     
     # open a csv files to log the stars that have been processed + their flags
     
@@ -171,7 +171,7 @@ def pipeline(argv):
                             pds, oversampled_pds, summary,
                             **settings['pipeline'][4]['background_fit'],
                             output_directory = Path(argv.output_directory, input_name))
-                        if flag_bgr == 0:
+                        if flag_bgr != 1:
                             summary.to_csv(Path(argv.output_directory, input_name, summaryfile), index = False)
                             pds_bgr.to_csv(Path(argv.output_directory, input_name, background_corrected_pdsfile), index = False)
                             oversampled_pds_bgr.to_csv(Path(argv.output_directory, input_name, background_corrected_oversampled_pdsfile), index = False)
