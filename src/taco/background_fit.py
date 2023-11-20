@@ -113,7 +113,7 @@ def background_fit(pds, ofac_pds, data, output = '', output_directory = '', **kw
         except (ValueError, RuntimeError, TypeError, NameError):
             print("Background fit did not converge")
             flag = 1
-            return None, None, None, flag
+            return None, None, data, flag
 
         chain_i = np.argmax(bg_fit.MCMC_sampler.get_log_prob()[-1,:])
         theta0 = bg_fit.MCMC_sampler.get_chain()[-1,chain_i,:]
