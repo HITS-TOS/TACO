@@ -34,11 +34,13 @@ from scipy.interpolate import interp1d
 from pathlib import Path
 
 import itertools
+import yaml
 
 def find_directory():
     dir = Path().cwd().parent
     dirs = [str(item).split('/')[-1] for item in Path(dir).rglob('results*')]
     return dirs
+    
 
 def find_stars(selected_dir):
     dir = Path().cwd().parent / selected_dir
@@ -89,17 +91,17 @@ def load_peaks(selected_dir, KIC, peakFind=False, resolved=False, final=True):
     KIC = KIC.lstrip('KIC ').zfill(9)
     if peakFind == False:
         if resolved == False:
-            mixed_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/mixed_peaks_MLE.csv')
+            mixed_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/mixed_peaks_mle.csv')
             if mixed_peaks_MLE_file.is_file():
                 peaks = pd.read_csv(mixed_peaks_MLE_file)
             #peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/mixed_peaks_MLE.csv')
         else:
-            peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/peaks_MLE.csv')
+            peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/peaks_mle.csv')
             if peaks_MLE_file.is_file():
                 peaks = pd.read_csv(peaks_MLE_file)
             #peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/peaks_MLE.csv')
         if final == True:
-            final_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')
+            final_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/final_peaks_mle.csv')
             if final_peaks_MLE_file.is_file():
                 peaks = pd.read_csv(final_peaks_MLE_file)
             #peaks = pd.read_csv(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')

@@ -22,7 +22,7 @@ git submodule update --init --recursive
 Note: As long as the repository is private a [personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token) is needed for the authentication.
 
 
-## Tests
+## Tests (mostly not functioning, ignore)
 
 Tests are implemented using pytest and can be executed with
 
@@ -31,7 +31,7 @@ python3 -m pytest
 ```
 
 
-## Jupyterlab
+## Jupyterlab (functional, but not recommended)
 
 The Jupyterlab docker container provides a comfortable way to perform TACO modules and can by started with
 
@@ -52,6 +52,9 @@ conda env create
 conda activate taco
 ```
 
+## Install TACO with conda
+
+Download and install the packages as per the requirements.txt file.
 
 ## Running high-throughput pipeline
 

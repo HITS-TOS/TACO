@@ -1,13 +1,20 @@
-argparse
-emcee
-lightkurve
-loguru
 nbformat
-numba
-numpy
-pandas
 plotly
 pyyaml
-rpy2==3.3.*
-scipy
-sklearn
+# - argparse # native in python > 2.7
+  - codetiming
+  - emcee
+  - lightkurve
+  - loguru
+  - numba
+  - numpy
+  - pandas
+  - r-argparser
+  - r-ifultools
+  - r-lomb
+  - r-modelr
+  - r-numderiv
+  - r-tidyverse
+  - rpy2==3.3.*
+  - scikit-learn
+  - scipy
