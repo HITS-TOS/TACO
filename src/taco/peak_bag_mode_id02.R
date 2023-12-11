@@ -280,7 +280,9 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
     # 31/01/2020 Tag l=3 as wide modes around where expected
     peaks$x <- (peaks$frequency / Dnu - eps_p) %% 1
     # l=3 occur at l=0 + deltanu/2 - 0.280 according to Mosser et al. (2010)
-    l3 <- peaks %>% filter((x > 0.12) && (x < 0.26))
+    #l3 <- peaks %>% filter((x > 0.12) && (x < 0.26))
+    l3 <- peaks %>% filter((x > 0.12)) %>%
+                    filter((x < 0.26))
     l3['n'] <- floor((l3$frequency / Dnu) - eps_p)
 
     if (nrow(l3) > 0) {
