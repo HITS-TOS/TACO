@@ -13,6 +13,8 @@ site.addsitedir('../')
 from bokeh.models.layouts import Column
 from numpy.lib.function_base import angle
 import streamlit as st
+st.write(st.__version__)
+
 import SessionState
 
 from bokeh.models import ColumnDataSource, Whisker, HoverTool, Span
@@ -24,7 +26,7 @@ import numpy as np
 import pathlib
 import matplotlib.pyplot as plt
 
-from bokeh.plotting import figure
+from bokeh.plotting import figure, show
 import app_helpers
 
 from bokeh.palettes import Greys256, Colorblind7
@@ -34,7 +36,6 @@ from scipy.interpolate import interp1d
 from pathlib import Path
 
 import itertools
-import yaml
 
 def find_directory():
     dir = Path().cwd().parent
@@ -131,10 +132,10 @@ def visualise_timeseries(filtered_ts, unfiltered_ts, summary):
         #y_range=(psd.power.min()*0.5, psd.power.max()*1.1)
     )
     p.line(unfiltered_ts.time, unfiltered_ts.flux, color='black', legend_label=r'Unfiltered timeseries')
-
+    
     if st.sidebar.checkbox("Show filtered timeseries"):
         p.line(filtered_ts.time, filtered_ts.flux, color='red', legend_label=r'Filtered timeseries')
-        
+    
     p.legend.click_policy="hide"
     st.bokeh_chart(p)
 
@@ -327,7 +328,7 @@ def visualise_pds_bgr(selected_dir,KIC,psd_bgr, summary):
     else:
         st.write("no resolved mode peaks were obtained")
      
-    peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/peaks_MLE.csv')
+    peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/peaks_mle.csv')
     if peaks_MLE_file.is_file():
         overplot_even_fit = False
         if st.sidebar.checkbox("Overplot even mode MLE fit"):
@@ -350,7 +351,7 @@ def visualise_pds_bgr(selected_dir,KIC,psd_bgr, summary):
     else:
         st.write("no odd mode peaks were obtained")
     
-    mixed_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/mixed_peaks_MLE.csv')
+    mixed_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/mixed_peaks_mle.csv')
     if mixed_peaks_MLE_file.is_file():
         overplot_odd_fit = False
         if st.sidebar.checkbox("Overplot odd mode MLE fit"):
@@ -363,7 +364,7 @@ def visualise_pds_bgr(selected_dir,KIC,psd_bgr, summary):
         
 
         
-    final_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')
+    final_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/final_peaks_mle.csv')
     if final_peaks_MLE_file.is_file():
         peaks = pd.read_csv(final_peaks_MLE_file)
         if st.sidebar.checkbox("Mode identification"):
@@ -444,7 +445,7 @@ def visualise_echelle(selected_dir, KIC, psd_bgr, summary, session):
 
     dir = Path().cwd().parent / selected_dir
     KIC = KIC.lstrip('KIC ').zfill(9)
-    final_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')
+    final_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/final_peaks_mle.csv')
     if final_peaks_MLE_file.is_file():
         peaks = pd.read_csv(final_peaks_MLE_file)
         
@@ -633,7 +634,7 @@ def visualise_stretched_echelle(selected_dir, KIC, psd_bgr, summary, session):
 
     dir = Path().cwd().parent / selected_dir
     KIC = KIC.lstrip('KIC ').zfill(9)
-    final_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')
+    final_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/final_peaks_mle.csv')
     if final_peaks_MLE_file.is_file():
         peaks = pd.read_csv(final_peaks_MLE_file)
     
@@ -776,7 +777,7 @@ def visualise_reggae(selected_dir, KIC, psd_bgr, summary, session):
 
     dir = Path().cwd().parent / selected_dir
     KIC = KIC.lstrip('KIC ').zfill(9)
-    final_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/final_peaks_MLE.csv')
+    final_peaks_MLE_file = Path(str(dir)+'/'+str(KIC)+'/final_peaks_mle.csv')
     if final_peaks_MLE_file.is_file():
         peaks = pd.read_csv(final_peaks_MLE_file)
     
@@ -981,7 +982,6 @@ def visualise_reggae(selected_dir, KIC, psd_bgr, summary, session):
 def main():
     
     st.title("TACO Explorer App")
-
     #st.markdown("Explore the stars you have analysed to your hearts content!!!")
 
     session = SessionState.get(run_id=0)
