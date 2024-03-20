@@ -32,7 +32,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                frequency < data$numax + 3 * data$sigmaEnv)
 
     deltanu <- pds$frequency[2] - pds$frequency[1]
-    
+
     flag <- 0
 
     ## Check to see if there are any peaks in file, if not then stop
@@ -66,7 +66,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                 modeIDFlag = 1)
         flag <- 1
         print("No peaks detected so not proceeding with mode ID")
-        return(list(peaks, flag, data))
+        return(list(peaks=peaks, flag=flag, data=data))
     } else if (nrow(peaks) < 7) {
         peaks$l <- NA
         data <- data %>%
@@ -87,7 +87,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                 modeIDFlag = 1)
         flag <- 2
         print("Not enough peaks detected so not proceeding with mode ID")
-        return(list(peaks, flag, data))
+        return(list(peaks=peaks, flag=flag, data=data))
     }
 
     if (data$numax < 5) {
@@ -109,7 +109,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                 modeIDFlag = 2)
         flag <- 3
         print("Numax < 10 uHz and is too low for the automated mode identification to be reliable.")
-        return(list(peaks, flag, data))
+        return(list(peaks=peaks, flag=flag, data=data))
     }
 
     if (data$numax > 0.9*data$nuNyq ) {
@@ -131,9 +131,9 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                 modeIDFlag = 2)
         flag <- 4
         print("Numax > 0.9 * Nyquist frequency. This is too high for the automated mode identification to be reliable.")
-        return(list(peaks, flag, data))
+        return(list(peaks=peaks, flag=flag, data=data))
     }
-    
+
     ## Expected Δν from ν_max
     Dnu <- DeltaNu_from_numax(data$numax)
 
@@ -157,7 +157,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                 type = "period", plot = FALSE, ofac = 10)
     d02 <- psxps$peak.at[1]
     print(paste0("Initial d02 from PSxPS ", d02))
-    
+
     # Expected alpha from Δν
     n_max <- data$numax / Dnu - eps_p_from_Dnu(Dnu)
 #    alpha <- 1.5 * alpha_obs_from_n_max(n_max) # overestimating alpha a bit to avoid issues at extreme frequencies
@@ -204,7 +204,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                         modeIDFlag = 3)
         flag <- 5
         print("Not enough radial modes found to go any further. Mode ID not performed and Δν not estimated")
-        return(list(peaks, flag, data))
+        return(list(peaks=peaks, flag=flag, data=data))
     }
 
     # Fit through frequencies to estimate delta nu, epsilon and alpha
@@ -238,9 +238,9 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
     }
     # Extract uncertainties
     eps_p_sd <- res$eps_p_sd
-   
+
     # fit for d02, while keeping delta nu, epsilon and alpha fixed
-    
+
     if (nrow(peaks.l2) > 0){
         res2 <- DeltaNu_l2_fit(
                     peaks = peaks %>%
@@ -265,7 +265,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
     ## Make the tagging again with the new Δν
     peaks.l0 <- peaks %>% filter(l == 0)
     peaks.l2 <- peaks %>% filter(l == 2)
-   
+
     if (nrow(peaks.l2) > 0){
         ## Get the central small frequency separation (δν_02) if possible
         d02_est <- central_d02(peaks = peaks, numax = data$numax)
@@ -377,7 +377,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
         d02 <- res2$d02
         d02_sd <- res2$d02_sd
     }
-    
+
     print(paste0("Final dnu: ", format(round(Dnu, 3), nsmall = 3),
                  "+/- ", format(round(Dnu_sd, 3), nsmall = 3),
                  " uHz, and eps: ", format(round(eps_p, 3), nsmall = 3),
@@ -424,7 +424,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
     } else {
         flag <- 6
         print("Delta nu and diffence in central radial frequencies not in line")
-        return(list(peaks, flag, data))
+        return(list(peaks=peaks, flag=flag, data=data))
     }
 
     print(paste0("Central dnu: ", format(round(central_Dnu, 3), nsmall = 3),
@@ -467,7 +467,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
         peaks %>%
         filter(l == 0 | l == 2 | l == 3)
         #filter(l != "NA")
-            
-    return(list(peaks, flag, data))
+
+    return(list(peaks=peaks, flag=flag, data=data))
 
 }

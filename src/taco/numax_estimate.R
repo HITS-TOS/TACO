@@ -140,8 +140,8 @@ numax_estimate_r <- function(pds, data, filter_width) {
         #    #27.10.2021 after a visual check with Nathalie; numax_CWTMexHat seems much better!!!
         #   data$numax0 <- data$numax_CWTMexHat
         #}
-       
-       
+
+
        if (abs(1 - min(data$numax_CWTMexHat,data$numax_Morlet)/max(data$numax_CWTMexHat,data$numax_Morlet)) < 0.5 &
            abs(1 - min(data$numax_var,data$numax_Morlet)/max(data$numax_var,data$numax_Morlet)) < 0.5 &
            abs(1 - min(data$numax_CWTMexHat,data$numax_var)/max(data$numax_CWTMexHat,data$numax_var)) < 0.5){
@@ -176,6 +176,6 @@ numax_estimate_r <- function(pds, data, filter_width) {
         }
     }
 
-    return(list(data,flag))
+    return(list(data=data,flag=flag))
 
 }

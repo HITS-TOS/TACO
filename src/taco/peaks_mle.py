@@ -62,7 +62,7 @@ def peaks_mle(pds, peaks, data, mixed_peaks = None, maxlwd = None,
                  navg = navg,
                  finalfit = finalfit)
 
-            peaks = ro.conversion.rpy2py(result[0])
-            flag = ro.conversion.rpy2py(result[1])
-            data = ro.conversion.rpy2py(result[2])
+            peaks = ro.conversion.rpy2py(result['peaks.mle'])
+            flag = ro.conversion.rpy2py(result['flag'])
+            data = ro.conversion.rpy2py(result['data'])
             return peaks, int(flag[0]), data

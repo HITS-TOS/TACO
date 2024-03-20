@@ -71,6 +71,6 @@ filter_r <- function(lc, data, width, remove_gaps) {
                         median(diff(filtered$time)) /
                         diff(range(filtered$time))
 
-    return(list(filtered, data))
+    return(list(filtered=filtered, data=data))
 
 }
