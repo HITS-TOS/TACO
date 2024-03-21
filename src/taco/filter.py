@@ -35,8 +35,8 @@ def filter(ts, data = pd.DataFrame.from_dict({"KIC": [float("nan")], "raw_data":
 
             result = filter.filter_r(r_ts, r_data, width, remove_gaps)
 
-            ts_filtered = ro.conversion.rpy2py(result[0])
-            data = ro.conversion.rpy2py(result[1])
+            ts_filtered = ro.conversion.rpy2py(result['filtered'])
+            data = ro.conversion.rpy2py(result['data'])
 
             if output:
                 ts_filtered.to_csv(Path(output_directory, output), index = False)
