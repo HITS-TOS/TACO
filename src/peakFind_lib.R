@@ -291,13 +291,10 @@ cwtPeaks <- function(CWTTree, min.snr = 3,
   peaks <- do.call(rbind, Map(function (i) {
     return(branch_peaks(CWTTree, i))
   }, 1:length(CWTTree)))
-  #print(length(CWTTree))
-
+  
   peaks <- peaks[peaks$snr >= min.snr,]
   peaks <- peaks[peaks$scale >= scale.range[1] & peaks$scale <= scale.range[2],]
-  #print(peaks)
-  #stop()
-
+  
   deltanu <- diff(attr(CWTTree, "time")[1:2])
   if (!is.null(peaks)) {
     peaks$height <- Lor_I(peaks$extrema, peaks$scale, deltanu)
@@ -612,11 +609,18 @@ lorentzian_peaks <- function(pds, min.snr = 3, linewidth.range = NULL,
   ## Returns a data.frame with columns: frequency, linewidht, height
   if (is.null(pds.CWTTree)) {
     pds.SS      <- splus2R::signalSeries(data = pds$power, positions. = pds$frequency)
-    pds.CWT     <- wavCWT(pds.SS)#, scale.range = CWT_scale_from_HWHM(linewidth.range))
-
+    pds.CWT     <- wavCWT(pds.SS, scale.range = CWT_scale_from_HWHM(linewidth.range))
+    
     pds.CWTTree <- try(expr = wavCWTTree(pds.CWT), silent = TRUE)
     #print("PLOTTING")
-
+    #X11()
+    #plot(pds.CWT, series=TRUE)
+   # #plot(pds.CWT)#, series=TRUE)
+   # #plot(pds.CWTTree, extrema=TRUE, add=TRUE)
+    #prompt  <- "hit spacebar to close plots"
+    #extra   <- "some extra comment"
+    #capture <- tk_messageBox(message = prompt, detail = extra)
+   
     if(class(pds.CWTTree) == "try-error") return(NULL)
     # X11()
     # plot(pds.CWT, series=TRUE)
@@ -624,21 +628,32 @@ lorentzian_peaks <- function(pds, min.snr = 3, linewidth.range = NULL,
     # #plot(pds.CWTTree, extrema=TRUE, add=TRUE)
     # prompt  <- "hit spacebar to close plots"
     # extra   <- "some extra comment"
-    # capture <- tk_messageBox(message = prompt, detail = extra) 
+    # capture <- tk_messageBox(message = prompt, detail = extra)
   } else if (!is(pds.CWTTree, "wavCWTTree")) {
     stop("pds.CWTTree must be of class wavCWTTree")
   }
+ 
   if (is.null(linewidth.range)) {
-    scale.range <- attr(pds.CWTTree, "scale")[c(3, length(attr(pds.CWTTree, "scale")))]
+    scale.range <- attr(pds.CWTTree, "scale")[c(1, length(attr(pds.CWTTree, "scale")))]
   } else if (linewidth.range[1] > linewidth.range[2]) {
     stop("linewidth.range[1] should be greater than linewidth.range[2]")
   } else {
     scale.range <- CWT_scale_from_HWHM(linewidth.range)
 
+    #print(linewidth.range)
+    #print(scale.range)
     #print(log2(scale.range))
   }
-  pds.Peaks   <- cwtPeaks(pds.CWTTree, min.snr = min.snr, scale.range = 0.8*scale.range)
-  #print(pds.Peaks)
+  ##################################
+  #######     OLD VERSION     ######
+  ##################################
+  #pds.Peaks   <- cwtPeaks(pds.CWTTree, min.snr = min.snr, scale.range = 0.8*scale.range)
+  ##################################
+  #######    NEW VERSION     ######
+  ##################################
+  
+  pds.Peaks   <- cwtPeaks(pds.CWTTree, min.snr = min.snr, scale.range = scale.range)
+  
   #stop()
   # Uncomment to save out CWT!
   #print(dim(pds.CWT))
@@ -650,7 +665,6 @@ lorentzian_peaks <- function(pds, min.snr = 3, linewidth.range = NULL,
   #exit()
   #print(pds.Peaks)
   pds.peakFind <- as_tibble(find_best_peaks(pds, pds.Peaks, use.AIC = use.AIC, naverages=naverages))
-
 
   #if(nrow(pds.peakFind) == 0) return(NULL)
   # 20/04/2020 Changed from !is.null to if doesn't have 0 rows
@@ -916,7 +930,7 @@ peak_find <- function(pds, min.snr = 3, p=0.0001, linewidth.range = NULL, use.AI
         if(is.null(peaks) || nrow(peaks) == 0) return(NULL)
         # AIC computed in lorentzian peaks and again here, why?!?!
         #print(paste("Before unresolved check: ", sum(is.na(peaks$linewidth))))
-
+        
         #peaks <-
         #    do.call(bind_rows,
         #            Map(function (i) {
@@ -942,8 +956,8 @@ peak_find <- function(pds, min.snr = 3, p=0.0001, linewidth.range = NULL, use.AI
                           pds.CWTTree = NULL, use.AIC = use.AIC, naverages=naverages) %>%
           #filter(AIC > 2) %>%
           add_unresolved_peaks(pds=pds, p = p, naverages=naverages) %>%
-          peaks_with_amplitude(deltanu)
-          #peaks_with_AIC(pds, naverages=naverages)# %>%
+          peaks_with_amplitude(deltanu) %>%
+          peaks_with_AIC(pds, naverages=naverages)# %>%
           #filter(AIC > 2)
       peaks <-
               do.call(bind_rows,
