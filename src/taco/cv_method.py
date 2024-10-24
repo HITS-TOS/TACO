@@ -121,6 +121,7 @@ def bins_ind(f):
 
 def cv_bins_ind(f, edges):
     cvs, bin_size, centers = [], [], []
+    freq_res = np.mean(np.diff(np.array(f['frequency'])))
     
     n = 1
     while n < len(edges):
@@ -128,14 +129,24 @@ def cv_bins_ind(f, edges):
         if n < len(edges) - 1:
             left = edges[n - 1]
             right = edges[n]
+            #print(left, right)
             binned_f = f[(f['frequency'] <= right) & (f['frequency'] >= left)].reset_index().drop(columns = ['index'])
             
-        
         else:
             left = edges[n - 1]
             
             binned_f = f[f['frequency'] >= left].reset_index().drop(columns = ['index'])
-           
+
+        
+        if len(binned_f) == 0:
+            if n < len(edges) - 1:
+                binned_f = pd.DataFrame(data = {'frequency': np.arange(left, right, freq_res),
+                                                'power': np.array([1]*len(np.arange(left, right, freq_res)))})
+            else:
+                binned_f = pd.DataFrame(data = {'frequency': np.arange(left, 283.4, freq_res),
+                                                'power': np.array([1]*len(np.arange(left, 283.4, freq_res)))})
+        
+        
         binned_power = np.array(binned_f['power'])
         
         cvs.append(np.std(binned_power) / np.mean(binned_power))

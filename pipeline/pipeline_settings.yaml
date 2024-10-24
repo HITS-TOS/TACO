@@ -52,6 +52,8 @@ pipeline:
         navg: 1
     - peak_bag_period_spacing:
         maxiters: 10
+        conv_thresh: 0.001
+        sig_thresh: 0.95
         niters: 5
         dpi_only: True
         ncores: 1
@@ -60,10 +62,12 @@ pipeline:
         summary: summary.csv
         pds: pds.csv
         oversampled_pds: oversampled_pds.csv
-        background_pds: pds_bgr.csv
-        background_oversampled: oversampled_pds_bgr.csv
+        background_corrected_pds: pds_bgr.csv
+        background_corrected_oversampled_pds: oversampled_pds_bgr.csv
         resolved_modes: peaks.csv
         mle_resolved_modes: peaks_mle.csv
         mixed_modes: mixed_peaks.csv
         mle_mixed_modes: mixed_peaks_mle.csv
         final_modes: final_peaks_mle.csv
+    - cv_method:
+        cv_method_check: False

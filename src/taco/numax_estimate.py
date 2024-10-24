@@ -23,6 +23,20 @@ def numax_estimate(pds, data, filter_width = 0.2):
                 nuNyq(float): Nyquist frequency
         filterwidth(float): The width of the log-median filter used to remove the background
                             for the wavelet numax estimation
+    
+    Returns:
+        data(pandas.DataFrame): Summary data
+            Columns:
+                numax_var(float): numax estimate from variance of timeseries [micro-Hertz]
+                numax_CWTMexHat(float): numax estimate from Mexican Hat continues wavelet [micro-Hertz]
+                numax_Morlet(float): numax estimate from Morlet continues wavelet[micro-Hertz]
+                initial_numax(float): numax estimate based on numax_var, numax_CWTMexHat and numax_Morlet [micro-Hertz]
+                initial_numax_flag(bool): Numax estimates consistency
+        flag(int): Numax estimate flag    
+            Values:
+                0: numax_var, numax_CWTMexHat and/or numax_Morlet are consistent within 50%
+                1: numax estimates are not consistent.
+
     """
 
     with open(Path(Path(__file__).parent, 'numax_estimate.R'), 'r') as f:
@@ -36,6 +50,6 @@ def numax_estimate(pds, data, filter_width = 0.2):
             r_data = ro.conversion.py2rpy(data)
             result = numax_estimate.numax_estimate_r(r_pds, r_data, filter_width)
             
-            flag = ro.conversion.rpy2py(result[1])
-            data = ro.conversion.rpy2py(result[0])
+            flag = ro.conversion.rpy2py(result['flag'])
+            data = ro.conversion.rpy2py(result['data'])
             return data, int(flag[0])

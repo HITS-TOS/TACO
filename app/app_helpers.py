@@ -21,8 +21,8 @@ def find_nearest(array, value):
     idx = (np.abs(array - value)).argmin()
     return array[idx]#, idx
 
-def _sLor(f, A, b, c):
-    return A / (1 + (f / b) ** c)
+def _sLor(f, H, b, c):
+    return H / (1 + (f / b) ** c)
 
 def _sinc(x):
     return np.sinc(x/np.pi)
@@ -38,14 +38,18 @@ def bgModel(nu, theta, nuNyq, n_comps, n_gauss, individual=True):
     comp_names = []
     model = np.zeros(len(nu))
     model_no_osc = np.zeros(len(nu))
+    if "H1" in theta.columns:
+        height_var = "H"
+    elif "A1" in theta.columns:
+        height_var = "A"
     for i in range(n_comps):
-        A = theta[f"A{i+1}"].values
+        H = theta[height_var+f"{i+1}"].values
         b = theta[f"b{i+1}"].values
         if f'c{i+1}' in theta.columns:
             c = theta[f"c{i+1}"].values
         else:
             c = 4
-        comp = _sLor(nu, A, b, c)
+        comp = _sLor(nu, H, b, c)
         model += comp
         model_no_osc += comp
         comps.append(comp)  

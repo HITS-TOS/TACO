@@ -11,7 +11,6 @@ source("src/l02_modes_id.R", chdir = TRUE)
 
 peak_find_r <- function(pds, ofac_pds, data, peaks, snr, prob,
                         maxlwd, removel02, minAIC, navg) {
-
     pds <- pds %>%
         filter(frequency > data$numax - 3 * data$sigmaEnv,
                frequency < data$numax + 3 * data$sigmaEnv)
@@ -25,9 +24,9 @@ peak_find_r <- function(pds, ofac_pds, data, peaks, snr, prob,
 
     pds <- ofac_pds
     deltanu <- ofac_deltanu
+    
     # Need to actually oversample!
     # If timeseries is too short then "oversample"
-
     if (removel02 == TRUE) {
         # Finding mixed modes!
 
@@ -48,6 +47,7 @@ peak_find_r <- function(pds, ofac_pds, data, peaks, snr, prob,
         }
        
         # If max linewidth argument not set
+        
         if (is.null(maxlwd)) {
             # Since this is for finding mixed modes we add in constraint that linewidth must be less than Gamma0
             if(is.null(data$gamma0)) {
@@ -62,10 +62,11 @@ peak_find_r <- function(pds, ofac_pds, data, peaks, snr, prob,
             maxlwd <- 1.5 * as.numeric(maxlwd)
             print(paste("Maximum peak linewidth (HWHM) set, using value ", maxlwd, "uHz"))
         }
+        
         # 23/12/19 Because we are fitting in terms of HWHM the minimum linewidth should be bw/2 not bw!
         peaks <- peak_find(pds_l02_removed, min.snr = snr, p = prob,
                            linewidth.range = c(deltanu / 2, maxlwd),
-                           find.resolved.only = FALSE, naverages = navg)
+                           find.first.set = FALSE, naverages = navg)
 
         ## Choose only the significant ones
         peaks <- peaks %>%
@@ -74,29 +75,35 @@ peak_find_r <- function(pds, ofac_pds, data, peaks, snr, prob,
 
     } else {
         # Only find resolved peaks
+
         # If value not given then set it to be equal to 0.1 * dnu or just less than ~d02 # nolint
-        if (is.null(maxlwd) || is.na(maxlwd)) {
-            deltanu_est <- DeltaNu_from_numax(data$numax)
+        #if (is.null(maxlwd) || is.na(maxlwd)) {
+        #    deltanu_est <- DeltaNu_from_numax(data$numax)
             # Set to be < d02 from scaling relation (~0.125 dnu)
             # Divide by 2 because HWHM defined here and want FWHM to be less than ~d02 # nolint
-            maxlwd <- 0.125 * deltanu_est / 2
+        #    maxlwd <- 0.125 * deltanu_est / 2
+
+        # NEW VERSION 29.02.2024
+        # Set maxlwd based on empirical relation with numax (FER)
+        if (is.null(maxlwd) || is.na(maxlwd)) {
+            maxlw_slope = 0.249
+            maxlwd <- ((0.16423368 * log10(data$numax)) - 0.08792122)
+            
             if (maxlwd < deltanu / 2) {
                 print("Maximum peak linewidth (HWHM) is less than frequency resolution! Increasing upper bound slightly")
                 maxlwd <- deltanu / 2 + 0.1 * deltanu / 2
-            }
-            print(paste("Maximum peak linewidth (HWHM) not set, therefore taking estimated value ", maxlwd, "uHz"))
-        } else {
+            } else if (maxlwd < 5 * deltanu / 2){
+                    maxlwd <- 10 * deltanu / 2
+            } 
             maxlwd <- as.numeric(maxlwd)
             print(paste("Maximum peak linewidth (HWHM) set, using value ", maxlwd, "uHz"))
         }
 
-        print(paste("deltanu = ", deltanu))
-        print(paste("maxlwd = ", maxlwd))
-
         peaks <- peak_find(pds, min.snr = snr, p = prob,
-                           linewidth.range = c(deltanu / 2, maxlwd),
-                           find.resolved.only = TRUE, naverages = navg)
-
+                           linewidth.range = c(0.8*(deltanu / 2), 1.5*maxlwd),
+                           find.first.set = TRUE, naverages = navg,
+                           var.maxlw = TRUE)
+                           
         if (is.null(peaks)) {
             peaks <- tibble(frequency = double(),
                             linewidth = double(),
@@ -109,6 +116,9 @@ peak_find_r <- function(pds, ofac_pds, data, peaks, snr, prob,
             print("No resolved peaks found!")
         } else {
             ## Choose only the significant ones
+            respeaks <- peaks %>% filter(!is.na(linewidth))
+            unrespeaks <- peaks %>% filter(is.na(linewidth)) %>% mutate(linewidth = deltanu / 2)
+            peaks <- bind_rows(respeaks,unrespeaks)
             peaks <- peaks %>%
                      arrange(frequency) %>%
                      filter(AIC > minAIC-5)

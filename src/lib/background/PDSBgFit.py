@@ -234,7 +234,7 @@ class PDSBgFit(object):
                         small region around them
             nwalkers    Number of walkers to use. Must be more than 2*self.ndim
             nwarmup     Warm-up iterations. These will be discarded.
-            minsteps    Minimum number of MCMC steps after warm-uü. Too low values might
+            minsteps    Minimum number of MCMC steps after warm-up. Too low values might
                         cause issues with the mESS estimation.
             maxsteps    Maximum number of MCMC steps (on each chain) before giving up
             bins        If provided, the pds will be binned with this number of bins. Set this

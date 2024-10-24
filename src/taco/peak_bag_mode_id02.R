@@ -66,7 +66,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                 modeIDFlag = 1)
         flag <- 1
         print("No peaks detected so not proceeding with mode ID")
-        return(list(peaks, flag, data))
+        return(list(peaks=peaks, flag=flag, data=data))
     } else if (nrow(peaks) < 7) {
         peaks$l <- NA
         data <- data %>%
@@ -87,7 +87,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                 modeIDFlag = 1)
         flag <- 2
         print("Not enough peaks detected so not proceeding with mode ID")
-        return(list(peaks, flag, data))
+        return(list(peaks=peaks, flag=flag, data=data))
     }
 
     if (data$numax < 5) {
@@ -108,8 +108,8 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                 gamma0    = NULL,
                 modeIDFlag = 2)
         flag <- 3
-        print("Numax < 10 uHz and is too low for the automated mode identification to be reliable.")
-        return(list(peaks, flag, data))
+        print("Numax < 5 uHz and is too low for the automated mode identification to be reliable.")
+        return(list(peaks=peaks, flag=flag, data=data))
     }
 
     if (data$numax > 0.9*data$nuNyq ) {
@@ -131,7 +131,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                 modeIDFlag = 2)
         flag <- 4
         print("Numax > 0.9 * Nyquist frequency. This is too high for the automated mode identification to be reliable.")
-        return(list(peaks, flag, data))
+        return(list(peaks=peaks, flag=flag, data=data))
     }
     
     ## Expected Δν from ν_max
@@ -159,15 +159,18 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
     print(paste0("Initial d02 from PSxPS ", d02))
     
     # Expected alpha from Δν
-    n_max <- data$numax / Dnu - eps_p_from_Dnu(Dnu)
-#    alpha <- 1.5 * alpha_obs_from_n_max(n_max) # overestimating alpha a bit to avoid issues at extreme frequencies
+    #n_max <- data$numax / Dnu - eps_p_from_Dnu(Dnu)
+    #alpha <- 1.5 * alpha_obs_from_n_max(n_max) # overestimating alpha a bit to avoid issues at extreme frequencies
+    
     alpha <- alpha_obs_from_DeltaNu(Dnu)
-    print(paste0("Expected alpha from nmax ", alpha))
+    print(paste0("Expected alpha from Dnu (early TACO results) ", alpha))
+    Alpha <- alpha_obs_from_DeltaNu_Hekker24(Dnu)
+    print(paste0("Expected alpha from Dnu (Hekker et al. 2024) ", Alpha))
 
     ## Mode identification for l=0,2 modes
     peaks <- peaks %>%
         tag_l02_peaks(pds = pds, DeltaNu = Dnu, d02 = d02,
-            alpha = alpha, numax = data$numax,
+            alpha = Alpha, numax = data$numax,
             HBR = NULL, sigmaEnv = data$sigmaEnv,
             nuNyq = data$nuNyq,
             search.range = search.range)
@@ -204,40 +207,48 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                         modeIDFlag = 3)
         flag <- 5
         print("Not enough radial modes found to go any further. Mode ID not performed and Δν not estimated")
-        return(list(peaks, flag, data))
+        return(list(peaks=peaks, flag=flag, data=data))
     }
 
+    # Fit through frequencies to estimate delta nu, epsilon and alpha using UP
+    #res <- DeltaNu_l0_fit(
+    #            peaks = peaks %>%
+    #            filter(l == 0) %>%
+    #               drop_na() %>% # in case have nan in frequency_sd
+    #                arrange(frequency),
+    #                numax = data$numax,
+    #                DeltaNu0 = dnu_est,
+    #                alpha0 = Alpha)
+    
     # Fit through frequencies to estimate delta nu, epsilon and alpha
-    res <- DeltaNu_l0_fit(
+    res <- DeltaNu_l0_fit_Hekker24(
                 peaks = peaks %>%
                 filter(l == 0) %>%
                     drop_na() %>% # in case have nan in frequency_sd
                     arrange(frequency),
-                    numax = data$numax,
-                    DeltaNu0 = dnu_est,
-                    alpha0 = alpha)
-
+                    numax = data$numax)
+    
     # Extract Delta Nu and eps_p values
     Dnu <- res$DeltaNu
     Dnu_sd <- res$DeltaNu_sd
-    eps_p <- res$eps_p
-    alpha <- res$alpha
-    alpha_sd <- res$alpha_sd
+    Eps_p <- res$eps_p
+    Alpha <- res$alpha
+    Alpha_sd <- res$alpha_sd
 
     # For consistency with epsilon from Kallinger et al. (2012)
-    if (eps_p < 0) {
+    if (Eps_p < 0) {
         print("Epsilon p is negative! There may be a problem with the mode ID.")
-    } else if ((eps_p < 0.5) & (eps_p > 0) & (Dnu > 3)) {
-        eps_p <- eps_p + 1
+    } else if ((Eps_p < 0.5) & (Eps_p > 0) & (Dnu > 3)) {
+        Eps_p <- Eps_p + 1
         peaks$n <- peaks$n - 1
         print("Epsilon p was too small, corrected")
-    } else if ((eps_p > 1.8)) {
-        eps_p <- eps_p - 1
+    } else if ((Eps_p > 1.8)) {
+        Eps_p <- Eps_p - 1
         peaks$n <- peaks$n + 1
         print("Epsilon p was too large, corrected")
     }
     # Extract uncertainties
-    eps_p_sd <- res$eps_p_sd
+    Eps_p_sd <- res$eps_p_sd
    
     # fit for d02, while keeping delta nu, epsilon and alpha fixed
     
@@ -248,8 +259,8 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                     arrange(frequency),
                     numax = data$numax,
                     DeltaNu0 = Dnu,
-                    alpha0 = alpha,
-                    eps_p0 = eps_p,
+                    alpha0 = Alpha,
+                    eps_p0 = Eps_p,
                     d020 = d02)
 
         # extract d02 values
@@ -258,10 +269,12 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
     }
 
     print(paste0("Initial fit to radial modes gives dnu: ", round(Dnu, 2),
-          ", eps: ", round(eps_p, 2),
-          ", alpha: ", round(alpha, 4),
+          ", eps: ", round(Eps_p, 2),
+          ", alpha: ", round(Alpha, 4),
           ", d02: ", round(d02, 4)))
 
+    
+    
     ## Make the tagging again with the new Δν
     peaks.l0 <- peaks %>% filter(l == 0)
     peaks.l2 <- peaks %>% filter(l == 2)
@@ -278,10 +291,11 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
     }
 
     # 31/01/2020 Tag l=3 as wide modes around where expected
-    peaks$x <- (peaks$frequency / Dnu - eps_p) %% 1
+    peaks$x <- (peaks$frequency / Dnu - Eps_p) %% 1 #include alpha
     # l=3 occur at l=0 + deltanu/2 - 0.280 according to Mosser et al. (2010)
-    l3 <- peaks %>% filter((x > 0.15) && (x < 0.26))
-    l3['n'] <- floor((l3$frequency / Dnu) - eps_p)
+    l3 <- peaks %>% filter((x > 0.15))
+    l3 <- peaks %>% filter((x < 0.26))
+    l3['n'] <- floor((l3$frequency / Dnu) - Eps_p)
 
     print("Tagging any possible l=3 modes...")
     if (nrow(l3) > 0) {
@@ -318,71 +332,71 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
     peaks <- peaks %>% select(-x)
 
     # Fit through frequencies to estimate delta nu, epsilon and alpha
-    res <- DeltaNu_l0_fit(
-                peaks = peaks %>%
-                    filter(l == 0) %>%
-                    drop_na() %>% # in case have nan in frequency_sd
-                    arrange(frequency),
-                    numax = data$numax,
-                    DeltaNu0 = dnu_est,
-                    alpha0 = alpha)
+    #res <- DeltaNu_l0_fit(
+    #            peaks = peaks %>%
+    #                filter(l == 0) %>%
+    #                drop_na() %>% # in case have nan in frequency_sd
+    #                arrange(frequency),
+    #                numax = data$numax,
+    #                DeltaNu0 = dnu_est,
+    #                alpha0 = Alpha)
 
     # Extract Delta Nu and eps_p values
-    Dnu <- res$DeltaNu
-    Dnu_sd <- res$DeltaNu_sd
-    eps_p <- res$eps_p
+    #Dnu <- res$DeltaNu
+    #Dnu_sd <- res$DeltaNu_sd
+    #Eps_p <- res$eps_p
 
     # For consistency with epsilon from Kallinger et al. (2012)
-    if (eps_p < 0) {
-        print("Epsilon p is negative! There may be a problem with the mode ID.")
-    } else if ((eps_p < 0.5) && (eps_p > 0) && (Dnu > 3)) {
-        eps_p <- eps_p - 1
-    } else if ((eps_p > 1.6)) {
-        print("Epsilon p too large, altering radial orders and rerunning fit")
-        peaks$n <- peaks$n + 1
+    #if (Eps_p < 0) {
+    #    print("Epsilon p is negative! There may be a problem with the mode ID.")
+    #} else if ((Eps_p < 0.4) && (Eps_p > 0)) {#((Eps_p < 0.5) && (Eps_p > 0) && (Dnu > 3)) 
+    #    Eps_p <- Eps_p + 1 #Eps_p - 1
+    #} else if ((Eps_p > 1.6)) {
+    #    print("Epsilon p too large, altering radial orders and rerunning fit")
+    #    peaks$n <- peaks$n + 1
         # Fit through frequencies to estimate delta nu, epsilon and alpha
-        res <- DeltaNu_l0_fit(
-                    peaks = peaks %>%
-                        filter(l == 0) %>%
-                        drop_na() %>% # in case have nan in frequency_sd
-                        arrange(frequency),
-                        numax = data$numax,
-                        DeltaNu0 = dnu_est,
-                        alpha0 = alpha)
+    #    res <- DeltaNu_l0_fit(
+    #                peaks = peaks %>%
+    #                    filter(l == 0) %>%
+    #                    drop_na() %>% # in case have nan in frequency_sd
+    #                    arrange(frequency),
+    #                    numax = data$numax,
+    #                    DeltaNu0 = dnu_est,
+    #                    alpha0 = Alpha)
 
         # Extract Delta Nu and eps_p values
-        Dnu <- res$DeltaNu
-        Dnu_sd <- res$DeltaNu_sd
-        eps_p <- res$eps_p
-    }
+     #   Dnu <- res$DeltaNu
+     #   Dnu_sd <- res$DeltaNu_sd
+     #   Eps_p <- res$eps_p
+    #}
     # Extract uncertainties
-    eps_p_sd <- res$eps_p_sd
-    alpha <- res$alpha
-    alpha_sd <- res$alpha_sd
+    #Eps_p_sd <- res$eps_p_sd
+    #Alpha <- res$alpha
+    #Alpha_sd <- res$alpha_sd
 
     # fit for d02, while keeping delta nu, epsilon and alpha fixed
-    if (nrow(peaks.l2) > 0){
-        res2 <- DeltaNu_l2_fit(
-                peaks = peaks %>%
-                    filter(l == 2) %>%
-                    arrange(frequency),
-                    numax = data$numax,
-                    DeltaNu0 = Dnu,
-                    alpha0 = alpha,
-                    eps_p0 = eps_p,
-                    d020 = d02)
+    #if (nrow(peaks.l2) > 0){
+    #    res2 <- DeltaNu_l2_fit(
+    #            peaks = peaks %>%
+    #                filter(l == 2) %>%
+    #                arrange(frequency),
+    #                numax = data$numax,
+    #                DeltaNu0 = Dnu,
+    #                alpha0 = Alpha,
+    #                eps_p0 = Eps_p,
+    #                d020 = d02)
 
         # extract d02 values
-        d02 <- res2$d02
-        d02_sd <- res2$d02_sd
-    }
+     #  d02 <- res2$d02
+     #   d02_sd <- res2$d02_sd
+    #}
     
     print(paste0("Final dnu: ", format(round(Dnu, 3), nsmall = 3),
                  "+/- ", format(round(Dnu_sd, 3), nsmall = 3),
-                 " uHz, and eps: ", format(round(eps_p, 3), nsmall = 3),
-                 "+/- ", format(round(eps_p_sd, 3), nsmall = 3),
-                 ", alpha: ", format(round(alpha, 4),nsmall = 3),
-                 "+/-",format(round(alpha_sd, 4), nsmall = 4),
+                 " uHz, and eps: ", format(round(Eps_p, 3), nsmall = 3),
+                 "+/- ", format(round(Eps_p_sd, 3), nsmall = 3),
+                 ", alpha: ", format(round(Alpha, 4),nsmall = 3),
+                 "+/-",format(round(Alpha_sd, 4), nsmall = 4),
                  ", d02: ", format(round(d02, 4))))
 
     #checking if the central l=0 peaks are roughly Dnu apart. If that is the case, we fit for the central values, otherwise set them to 0
@@ -393,18 +407,28 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                 slice(1:3) %>%
                 arrange(frequency)
     dif <- ((peaks_check$frequency-peaks_check$frequency[1])/Dnu) %% 1.0
-    if(dif[2] > 0.8 & dif[2] < 0.2 & dif[3] > 0.8 & dif[3] < 0.2){
+    if((dif[2] > 0.8 || dif[2] < 0.2) & (dif[3] > 0.8 || dif[3] < 0.2)){
         ## Estimate central Δν from a linear fit through the 3 l=0 peaks closest to numax
-        central_res <- DeltaNu_l0_fit(
+        #central_res <- DeltaNu_l0_fit(
+        #            peaks = peaks %>%
+        #                filter(l == 0) %>%
+        #                mutate(absdiff = abs(frequency - data$numax)) %>%
+        #                arrange(absdiff) %>%
+        #                slice(1:3) %>%
+        #                arrange(frequency),
+        #                numax = data$numax,
+        #                DeltaNu0 = Dnu,
+        #                alpha0 = Alpha)
+
+        central_res <- DeltaNu_l0_fit_Hekker24(
                     peaks = peaks %>%
                         filter(l == 0) %>%
                         mutate(absdiff = abs(frequency - data$numax)) %>%
                         arrange(absdiff) %>%
                         slice(1:3) %>%
                         arrange(frequency),
-                        numax = data$numax,
-                        DeltaNu0 = Dnu,
-                        alpha0 = alpha)
+                        numax = data$numax)
+    
 
         # Extract Delta Nu and eps_p values
         central_Dnu <- central_res$DeltaNu
@@ -423,7 +447,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
     } else {
         flag <- 6
         print("Delta nu and diffence in central radial frequencies not in line")
-        return(list(peaks, flag, data))
+        return(list(peaks=peaks, flag=flag, data=data))
     }
 
     print(paste0("Central dnu: ", format(round(central_Dnu, 3), nsmall = 3),
@@ -434,39 +458,43 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                  "+/-", format(round(central_alpha_sd, 4), nsmall = 4)))
 
     # Calculate the Γ_0(ν_max) of Vrard et al. 2018 http://dx.doi.org/10.1051/0004-6361/201832477
-    gamma0 <-
+    Gamma0 <-
         peaks %>%
         filter(l == 0) %>%
         arrange(abs(frequency - data$numax)) %>%
         slice(1:3) %>%
         summarise(gamma0 = sum(amplitude * linewidth) / sum(amplitude)) %>%
         as.numeric()
-
+    
+    
     # Central Δν
     data <-
         data %>%
         mutate(
-            DeltaNu    = Dnu,
+            DeltaNu = Dnu,
             DeltaNu_sd = Dnu_sd,
-            dNu02     = d02,
-            eps_p     = eps_p,
-            eps_p_sd  = eps_p_sd,
-            alpha     = alpha,
-            alpha_sd  = alpha_sd,
+            dNu02 = d02,
+            eps_p = Eps_p,
+            eps_p_sd = Eps_p_sd,
+            alpha = Alpha,
+            alpha_sd = Alpha_sd,
+            gamma0 = Gamma0,
             Central_DeltaNu = central_Dnu,
             Central_DeltaNu_sd = central_Dnu_sd,
-            Central_eps_p     = central_eps_p,
-            Central_eps_p_sd  = central_eps_p_sd,
-            Central_alpha     = central_alpha,
-            Central_alpha_sd  = central_alpha_sd,
-            gamma0    = gamma0,
+            Central_eps_p = central_eps_p,
+            Central_eps_p_sd = central_eps_p_sd,
+            Central_alpha = central_alpha,
+            Central_alpha_sd = central_alpha_sd,
             modeIDFlag = 0)
+    
 
+    
     peaks <-
         peaks %>%
         filter(l == 0 | l == 2 | l == 3)
         #filter(l != "NA")
             
-    return(list(peaks, flag, data))
+    
+    return(list(peaks=peaks, flag=flag, data=data))
 
 }

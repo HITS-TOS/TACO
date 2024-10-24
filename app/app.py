@@ -1,35 +1,20 @@
 import site
-import sys
 site.addsitedir('../')
-#import sys
 
-#sys.path.insert(0, '../libs/sloscillations')
-
-#import site
-
-#site.addsitedir('../libs/sloscillations')
-
-
-from bokeh.models.layouts import Column
-from numpy.lib.function_base import angle
 import streamlit as st
 import SessionState
 
 from bokeh.models import ColumnDataSource, Whisker, HoverTool, Span
 from bokeh.transform import factor_cmap, factor_mark
 
-import glob
+import os
 import pandas as pd
 import numpy as np
-import pathlib
-import matplotlib.pyplot as plt
 
 from bokeh.plotting import figure
 import app_helpers
 
-from bokeh.palettes import Greys256, Colorblind7
-
-from scipy.interpolate import interp1d
+from bokeh.palettes import Colorblind7
 
 from pathlib import Path
 
@@ -38,7 +23,10 @@ import itertools
 def find_stars():
     dir = Path().cwd().parent / "resultspipeline"
     dirs = dir.rglob('*/summary.csv')
-    KICs = ['KIC '+str(i).split('/')[-2].lstrip('0') for i in dirs]
+    KICs = [int(str(i).split('/')[-2].lstrip('0')) for i in dirs]
+    KICs.sort()
+    KICs = ['KIC '+ str(i) for i in KICs]
+    
     return KICs
 
 #@st.cache
@@ -67,20 +55,14 @@ def load_ts(KIC, filtered=True):
     if filtered == True:
         ts = pd.read_csv(str(dir)+'/'+str(KIC)+'/filtered.csv')
     else:
- #       ts = pd.read_csv(str(dir)+'/'+str(KIC)+'.dat', names=['time', 'flux'], comment = '#', header = None, delim_whitespace = True)
-         ts = pd.read_csv(str(dir)+'/'+str(KIC)+'.dat', delimiter=r'\s+', names=['time', 'flux', 'err_flux'], comment = '#')
+        ts = pd.read_csv(str(dir)+'/'+str(KIC)+'.dat', names=['time', 'flux'], comment = '#', header = None, delim_whitespace = True)
+        #ts = pd.read_csv(str(dir)+'/'+str(KIC)+'.dat', delimiter=r'\s+', names=['time', 'flux', 'err_flux'], comment = '#')
 
-
- #   if ts.flux.mean() > 1e3:
-    #    ts.flux -= ts.flux.mean()
-
-   # if ts.flux.std() < 1:
-  #      ts.flux *= 1e6
     return ts
 
 #@st.cache
 def load_peaks(KIC, peakFind=False, resolved=False, final=True):
-    dir = Path().cwd().parent / "resultspipeline"
+    dir = Path().cwd().parent #/ "resultspipeline"
     KIC = KIC.lstrip('KIC ').zfill(9)
     if peakFind == False:
         if resolved == False:
@@ -180,10 +162,14 @@ def visualise_psd(psd, summary):
     if (overplot_fit == True) & ('Pn' in summary):
         
         theta = summary.loc[:, 'Pn':'sigmaEnv']
-
-        n_comps = np.array([i.startswith("A") for i in list(theta)]).sum()
-        n_gauss = np.array([i.startswith("Pg") for i in list(theta)]).sum()
-
+        if "H1" in theta.columns:
+            height_var = "H"
+        elif "A1" in theta.columns:
+            height_var = "A"
+            
+        n_comps = np.array([i.startswith(height_var) for i in list(theta) if '_sd' not in i]).sum()
+        n_gauss = np.array([i.startswith("Pg") for i in list(theta) if '_sd' not in i]).sum()
+        
         comps, comp_names, bg_fit, bg_fit_no_osc = app_helpers.bgModel(psd.frequency,
                                                                         theta,
                                                                         summary['nuNyq'].values,
@@ -424,9 +410,6 @@ def visualise_pds_bgr(KIC,psd_bgr, summary):
   #          p.line(psd_bgr.frequency, psd_bgr.power.values/(model_l02+1), color="black")
   #          p.line(psd_bgr.frequency, model_l1+1, color="red", line_width=3, legend_label="l=1/3 (Odd)")
         #st.bokeh_chart(p)
-
-
-
 
 def visualise_echelle(KIC, psd_bgr, summary, session):
 

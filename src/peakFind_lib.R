@@ -283,7 +283,8 @@ branch_peaks <- function(CWTTree, branch_number) {
 }
 
 cwtPeaks <- function(CWTTree, min.snr = 3,
-                     scale.range = attr(CWTTree, "scale")[c(3, length(attr(CWTTree, "scale")))]) {
+                     scale.range = attr(CWTTree, "scale")[c(3, length(attr(CWTTree, "scale")))],
+                     var.maxlw = FALSE) {
   ## A 'peak' is a local maxima (in scale) from a branch
   ## found in CWTTree. Here I just call brach_peaks for all branches.
   if (!is(CWTTree, "wavCWTTree"))
@@ -291,19 +292,58 @@ cwtPeaks <- function(CWTTree, min.snr = 3,
   peaks <- do.call(rbind, Map(function (i) {
     return(branch_peaks(CWTTree, i))
   }, 1:length(CWTTree)))
-  #print(length(CWTTree))
-
+  
   peaks <- peaks[peaks$snr >= min.snr,]
-  peaks <- peaks[peaks$scale >= scale.range[1] & peaks$scale <= scale.range[2],]
-  #print(peaks)
-  #stop()
+  
+  if (var.maxlw==TRUE) {
+    # Updated on 06.05.2024.
+    # According to Vrard+2016, radial modes linewidth is expected to increase with frequency 
+    # This is implemented to change maxlw used to find peaks.
+
+    # 1. Find peaks around numax, within 1.1*Deltanu
+    numax <- 10^(((Lor_HWHM(scale.range[2])/1.5) + 0.08792122)/0.16423368)
+    estimated_dnu <- 1.1 * DeltaNu_from_numax(numax)
+    central_peaks <- peaks[peaks$frequency >= numax - (estimated_dnu/2) & peaks$frequency <= numax + (estimated_dnu/2),]
+    
+    # 2. Peak with maximum scale in this range is going to be used as reference ("central mode")
+    central <- central_peaks[which.max(central_peaks$scale), ]
+    
+    # 3. Assign estimated radial orders to all the peaks with respect to central one.
+    if (length(central$frequency) > 0) {
+      peaks$n_frac <- (peaks$frequency - central$frequency) / estimated_dnu
+      
+      # 4. Correct maxlw estimation 
+      good_peaks <- peaks[NULL,]
+      
+      for (i in 1:length(peaks$scale)){
+        peak <- peaks[i,]
+        if (peak$n_frac>0){
+          slope = 0.249
+        } else {
+          slope = 0.0
+        }
+
+        if (peak$scale >= scale.range[1] & peak$scale <= (scale.range[2]*(1 + slope*peak$n_frac))){
+          peak$maxlw <- (scale.range[2]*(1 + slope*peak$n_frac))
+          good_peaks <- rbind(good_peaks, peak)
+        }
+      } 
+    } else {
+      good_peaks <- peaks[peaks$scale >= scale.range[1] & peaks$scale <= scale.range[2],] #[fixed maxlw] 
+    }
+    
+  } else {
+    good_peaks <- peaks[peaks$scale >= scale.range[1] & peaks$scale <= scale.range[2],] #[fixed maxlw] 
+  }
+  
 
   deltanu <- diff(attr(CWTTree, "time")[1:2])
-  if (!is.null(peaks)) {
-    peaks$height <- Lor_I(peaks$extrema, peaks$scale, deltanu)
-    peaks$linewidth <- Lor_HWHM(peaks$scale)
+  if (!is.null(good_peaks)) {
+    good_peaks$height <- Lor_I(good_peaks$extrema, good_peaks$scale, deltanu)
+    good_peaks$linewidth <- Lor_HWHM(good_peaks$scale)
   }
-  return(peaks)
+  
+  return(good_peaks)
 }
 
 which_all_peaks_under <- function(peaks, p) {
@@ -590,6 +630,32 @@ peaks_with_low_AIC <- function(peaks, pds, minAIC= 2, naverages=1) {
  return(as_tibble(peaks))
 }
 
+peaks_AIC_addvalues <- function(peaks, pds, minAIC = 2, naverages=1) {
+  peaks['AIC1'] <- NA
+  maxAIC <- max(peaks$AIC, na.rm = TRUE)
+  #peaks_low <- peaks %>% filter(AIC < minAIC)
+  #peaks_low <- peaks_low %>% arrange(desc(AIC))
+  #peaks_high <- peaks %>% filter(AIC >= minAIC)
+  peaks_high <- peaks %>% filter(AIC >= maxAIC)
+  peaks_resolved <- peaks %>% filter(linewidth > 0) %>%
+                           arrange(desc(AIC))
+  peaks_unresolved <- peaks %>% filter(is.na(linewidth)) %>%
+                             arrange(desc(AIC))
+  peaks <- bind_rows(peaks_resolved,peaks_unresolved)
+  #res <- do.call(rbind,
+  #               Map(function (i) {
+  for(i in 1:nrow(peaks)){
+    if (peaks[i,9] < maxAIC){
+        AIC1 = peak_AIC_diff(pds, peaks[i,], peaks_high, naverages=naverages)
+        peaks[i,12] <- AIC1
+        if (AIC1 >= minAIC){
+            peaks_high <- rbind(peaks[i,],peaks_high)
+            peaks_high <- peaks_high %>% arrange(frequency)
+        }
+    }
+ }
+ return(as_tibble(peaks))
+}
 
 peaks_with_EFPp <- function(peaks, dw) {
   peaks <- peaks %>% select_if(names(peaks) != "EFPp")
@@ -598,7 +664,7 @@ peaks_with_EFPp <- function(peaks, dw) {
     mutate(linewidth = linewidth / dw) %>%
     peaks_with_amplitude(1) %>%
     add_predictions(EFP_model) %>%
-#    mutate(EFPp = exp(pred)) %>%
+    #mutate(EFPp = exp(pred)) %>%
     mutate(EFPp = ifelse(amplitude > 10 | snr > 6,
                          0,
                          exp(pred))) %>%
@@ -607,7 +673,8 @@ peaks_with_EFPp <- function(peaks, dw) {
 }
 
 lorentzian_peaks <- function(pds, min.snr = 3, linewidth.range = NULL,
-                             pds.CWTTree = NULL, use.AIC = TRUE, naverages=1) {
+                             pds.CWTTree = NULL, use.AIC = TRUE, naverages=1,
+                             var.maxlw = FALSE) {
   ## Uses the tree-map of CWT values to identify lorentzian-shaped peaks
   ## Returns a data.frame with columns: frequency, linewidht, height
   if (is.null(pds.CWTTree)) {
@@ -637,18 +704,9 @@ lorentzian_peaks <- function(pds, min.snr = 3, linewidth.range = NULL,
 
     #print(log2(scale.range))
   }
-  pds.Peaks   <- cwtPeaks(pds.CWTTree, min.snr = min.snr, scale.range = 0.8*scale.range)
-  #print(pds.Peaks)
-  #stop()
-  # Uncomment to save out CWT!
-  #print(dim(pds.CWT))
-  #print(scale.range)
-  #print(pds.CWT.scales)
-  #write_csv(as.data.frame(as.matrix(pds.CWT)), path = "CWT.csv")#argv$output)
-  #print(pds.Peaks)
-  #print(pds.CWT)
-  #exit()
-  #print(pds.Peaks)
+  #pds.Peaks   <- cwtPeaks(pds.CWTTree, min.snr = min.snr, scale.range = 0.8*scale.range)
+  pds.Peaks   <- cwtPeaks(pds.CWTTree, min.snr = min.snr, scale.range = scale.range, var.maxlw = var.maxlw)
+  
   pds.peakFind <- as_tibble(find_best_peaks(pds, pds.Peaks, use.AIC = use.AIC, naverages=naverages))
 
 
@@ -670,8 +728,6 @@ lorentzian_peaks <- function(pds, min.snr = 3, linewidth.range = NULL,
                               snr=double(),
                               height=double())
   }
-
-  #print(pds.peakFind %>% arrange(frequency), n=200)
   return(pds.peakFind %>%
                     select(frequency, linewidth, height, snr))
 }
@@ -733,6 +789,7 @@ add_unresolved_peaks <- function(peaks, pds, p, naverages=1) {
       peaks <- bind_rows(peaks, new_peak)
     }
   }
+  
   return(peaks)
 }
 
@@ -833,8 +890,7 @@ check_if_peak_unresolved <- function(peak, pds, naverages=1) {
     if(is.na(peak$linewidth)) return(peak)   # 'peak' is already unresolved...
     if(peak$linewidth > 1 * deltanu) return(peak) # Peak resolved and not tested
     p <- narrow_peak_check(pds, peak, naverages=1)
-    #print(as_tibble(peak))
-    #print(p)
+    
     #stop()
     if(is.null(p)){
       return(peak)
@@ -878,17 +934,15 @@ narrow_peak_check <- function(pds, peak, naverages=1) {
   p.sinc2 <- optimise_sinc2(pds = pds.local, peak = p.sinc2, other_peaks = NULL)
 
   ## Make the comparisons
-  #print(paste("Peak before: ", peak))
-  #print(paste("LOR: ", p.lorentzian))
-  #print(paste("SINC: ", p.sinc2))
+  
   if (relative_log_likelihood(pds.local, p.lorentzian, p.sinc2, other_peaks = NULL, naverages=naverages) < 0) {
     p <- p.lorentzian
   } else {
     p <- p.sinc2
   }
-  #print(paste("Rel. ln(L): ", p$frequency, " ", relative_log_likelihood(pds.local, p.lorentzian, p.sinc2, other_peaks = NULL, naverages=naverages)))
+  
   return(p)
-  #print(paste("Peak after: ", p))
+  
   #if (relative_log_likelihood(pds.local, p, other_peaks = NULL, naverages=naverages) < 0) {
   #  return(p)
   #} else {
@@ -897,7 +951,7 @@ narrow_peak_check <- function(pds, peak, naverages=1) {
 }
 
 peak_find <- function(pds, min.snr = 3, p=0.0001, linewidth.range = NULL, use.AIC = TRUE, 
-                      find.resolved.only=TRUE, naverages=1) {
+                      find.first.set=TRUE, naverages=1, var.maxlw = FALSE) {
     ## Strategy:
     ## 1. Find the resolved peaks (p1)
     ## 2. Normalise by p1 to get the unidentified "narrow" peaks (p2)
@@ -906,50 +960,48 @@ peak_find <- function(pds, min.snr = 3, p=0.0001, linewidth.range = NULL, use.AI
     ## 5. Check if there are "narrow" peaks confounding the p idenfitications
     ## 19/11/19 Added extra keyword find.resolved.only which allows us to only find resolved peaks, ignoring those that are unresolved
     deltanu <- diff(pds$frequency[1:2])
-
-    if(find.resolved.only == TRUE){
-        print("Finding only resolved peaks")
+    
+    if(find.first.set == TRUE){
+        print("Finding all peaks")
         peaks <-
             lorentzian_peaks(pds = pds, min.snr = min.snr,
                              linewidth.range = linewidth.range,
-                             pds.CWTTree = NULL, use.AIC = use.AIC, naverages=naverages)
+                             pds.CWTTree = NULL, use.AIC = use.AIC, naverages=naverages,
+                             var.maxlw = var.maxlw)%>%
+                             add_unresolved_peaks(pds=pds, p = p, naverages=naverages) 
+
         if(is.null(peaks) || nrow(peaks) == 0) return(NULL)
         # AIC computed in lorentzian peaks and again here, why?!?!
-        #print(paste("Before unresolved check: ", sum(is.na(peaks$linewidth))))
-
+        
         #peaks <-
         #    do.call(bind_rows,
         #            Map(function (i) {
         #                return(check_if_peak_unresolved(peak = peaks[i,], pds = pds))
         #            }, 1:nrow(peaks)))
 
-        #print(paste("After unresolved check: ", sum(is.na(peaks$linewidth))))
-        #print(peaks)
         #stop()
-
 
         peaks <- peaks %>%
                        peaks_with_AIC(pds, naverages=naverages)
-        #print(map(peaks, ~sum(is.na(.))))
-        #stop()
-        #print(peaks %>% arrange(frequency), n=200)
         #stop()
             
     } else {
       peaks <-
           lorentzian_peaks(pds = pds, min.snr = min.snr,
                           linewidth.range = linewidth.range,
-                          pds.CWTTree = NULL, use.AIC = use.AIC, naverages=naverages) %>%
-          #filter(AIC > 2) %>%
-          add_unresolved_peaks(pds=pds, p = p, naverages=naverages) %>%
-          peaks_with_amplitude(deltanu)
-          #peaks_with_AIC(pds, naverages=naverages)# %>%
+                          pds.CWTTree = NULL, use.AIC = use.AIC, naverages=naverages,
+                          var.maxlw = var.maxlw) %>%
+                          add_unresolved_peaks(pds=pds, p = p, naverages=naverages) %>%
+                          peaks_with_amplitude(deltanu) %>%
+                          peaks_with_AIC(pds, naverages=naverages)
           #filter(AIC > 2)
+      
       peaks <-
               do.call(bind_rows,
                       Map(function (i) {
                           return(check_if_peak_unresolved(peak = peaks[i,], pds = pds))
                       }, 1:nrow(peaks)))
+
     }
     if(is.null(peaks) || nrow(peaks) == 0) return(NULL)
     #peaks <-
@@ -960,7 +1012,6 @@ peak_find <- function(pds, min.snr = 3, p=0.0001, linewidth.range = NULL, use.AI
     #            }, 1:nrow(peaks)))
 
     # AIC calculated AGAIN! WHY?!?!?!?!
-    
     peaks <-
         peaks %>%
         arrange(frequency) %>%
@@ -1030,15 +1081,7 @@ peaks_MLE2 <- function(peaks, pds, maxLWD, other_peaks = NULL, hessian = FALSE, 
                                     peaks.res.lwd.low <- peaks.res$linewidth - final_fit_factor * peaks.res$linewidth))
   ifelse(final_fit == FALSE, peaks.res.lwd.upp <- rep(maxLWD, times = n.res),
                              peaks.res.lwd.upp <- peaks.res$linewidth + final_fit_factor * peaks.res$linewidth)
-  #print(final_fit)
-  #print("UPPER")
-  #print(peaks.res.lwd.upp)
-  #print("LWD")
-  #print(peaks.res$linewidth)
-  #print("LOWER")
-  #print(peaks.res.lwd.low)
-  #stop()
-
+  
   # Amplitude lower and upper limits - unresolved
   ifelse(final_fit == FALSE, peaks.unr.amp.low <- rep(sqrt(pi*deltanu), times = n.unr),
                              peaks.unr.amp.low <- peaks.unr$amplitude - final_fit_factor * peaks.unr$amplitude)
@@ -1227,10 +1270,7 @@ peak_res_sd <- function(peak, pds, maxLWD, other_peaks = NULL, final_fit = FALSE
               lwd.upp)
   )
   peak.hess <- peak.optim$hessian
-  # print("HESSIAN")
-  # print(peak.hess)
-  # print(sqrt(diag(solve(peak.hess))))
-  
+   
   # numHessian <- hessian(func = 
   #                       function(theta) {
   #                                     pk <- data.frame(frequency = theta[1],
@@ -1240,8 +1280,6 @@ peak_res_sd <- function(peak, pds, maxLWD, other_peaks = NULL, final_fit = FALSE
   #                                     return(-log_likelihood(pds, fit_model(pds, bind_rows(pk, other_peaks)), naverages=naverages))
   #                                   }, 
   #                       peak.optim$par)
-  # print(numHessian)
-  # print(sqrt(diag(solve(numHessian))))
   peak.pars <- peak.optim$par
   sd <- sqrt(diag(solve(peak.hess)))
   res <- data.frame(
@@ -1298,7 +1336,6 @@ peak_unr_sd <- function(peak, pds, maxLWD, other_peaks = NULL, final_fit = FALSE
     res <- data.frame(
         frequency = peak.pars[1], amplitude = peak.pars[2], linewidth = NA,
         frequency_sd = sd[1], amplitude_sd = sd[2], linewidth_sd = NA, convergence=peak.optim$convergence)
-    #print(res)
     #stop()
     return(res)
 }
@@ -1337,7 +1374,6 @@ peaks_with_MLE_sd2 <- function(peaks, pds, maxLWD, naverages=1) {
 peaks_MLE_sd <- function(peaks, pds, maxLWD = 0.5, naverages=1) {
   deltanu <- diff(pds$frequency[1:2])
   ## Optimise all the peaks simultaneously
-  #print(peaks)
   mle.fit <- peaks_MLE2(peaks, pds, maxLWD, other_peaks = NULL, naverages=naverages)
   ## Get the error estimates one at a time
   print("Getting error estimates")

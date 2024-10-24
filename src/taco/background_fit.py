@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import math
 import emcee
 import lib.background.KeplerLCBgFit
 import lib.background.mESS as mESS
@@ -60,7 +61,7 @@ def background_fit(pds, ofac_pds, data, output = '', output_directory = '', **kw
                 Name: power, dtype: float
         data(pandas.DataFrame):Summary data
             Columns:
-                numax0(float):Initial numax estimation
+                initial_numax(float):Initial numax estimation
                 nuNyq(float):Nyquist frequency
         kwargs(dict):
 
@@ -69,12 +70,32 @@ def background_fit(pds, ofac_pds, data, output = '', output_directory = '', **kw
         ofac_pds_bgr(pandas.DataFrame): Oversampled periodogram, background corrected
         data(pandas.DataFrame): Summary data
             Columns:
-                Hmax(float):
-                Bmax(float):
-                HBR(float):
+                Hmax(float): Power of background model at numax [ppm^2/micro-Hertz]
+                Bmax(float): Power of background model (without gaussian envelope) at numax [ppm^2/micro-Hertz]
+                HBR(float): Hmax over Bmax ratio
+                Pn (float): White noise [ppm^2/micro-Hertz]
+                Pn_sd (float): White noise standard deviation [ppm^2/micro-Hertz]
+                Ai (float): Height of background component i [ppm^2/micro-Hertz]
+                Ai_sd (float): Ai standard deviation [ppm^2/micro-Hertz]
+                bi (float): Characteristic frequency of background component i [micro-Hertz]
+                bi_sd (float): bi standard deviation [micro-Hertz]
+                Pg (float): Gaussian envelope height [ppm^2/micro-Hertz]
+                Pg_sd (float): Pg standard deviation [ppm^2/micro-Hertz]
+                numax (float): Numax fit [micro-Hertz]
+                numax_sd (float): numax standard deviation [micro-Hertz]
+                sigmaEnv (float): [micro-Hertz]
+                sigmaEnv_sd (float): [micro-Hertz]
+        flag_bgr(int): Background fit flag
+            Values:
+                0: Background fit converged
+                1: Background fit didn't converge
+                2: Amplitude of power excess is too low
+
     """
 
     settings = Settings(**kwargs)
+    if (max(pds['frequency']) > 10 * settings.bins):
+        settings.bins = math.floor(0.1 * (max(pds['frequency'])))
     print(settings.bkg_model)
 
     # Set random number generator seed for reproducible results
@@ -83,24 +104,22 @@ def background_fit(pds, ofac_pds, data, output = '', output_directory = '', **kw
 
     # Fetch background model
     bkg_model = getattr(lib.background.KeplerLCBgFit, settings.bkg_model)
-    #print(data['numax0'][0])
-    #print(data['numax0_sd'][0])
+     
     j = 1
     done_q = False
     
     while (j < 3 and not done_q):
-        if (data['numax0_sd'][0] < data['numax0'][0]/10.0):
-            data['numax0_sd'][0] = data['numax0'][0]/5.0
+        if (data['initial_numax_sd'][0] < data['initial_numax'][0]/10.0):
+            data['initial_numax_sd'][0] = data['initial_numax'][0]/5.0
         
-        if (data['numax0_sd'][0] > data['numax0'][0]/4.0):
-            data['numax0_sd'][0] = data['numax0'][0]/4.0
+        if (data['initial_numax_sd'][0] > data['initial_numax'][0]/4.0):
+            data['initial_numax_sd'][0] = data['initial_numax'][0]/4.0
                     
         if (j > 1):
-            data['numax0'][0] = np.nanmean([data['numax_var'][0],data['numax_Morlet'][0],data['numax_CWTMexHat'][0]])
-            data['numax0_sd'][0] = max([data['numax_var'][0],data['numax_Morlet'][0],data['numax_CWTMexHat'][0]]) - np.nanmin([data['numax_var'][0],data['numax_Morlet'][0],data['numax_CWTMexHat'][0]])
+            data['initial_numax'][0] = np.nanmean([data['numax_var'][0],data['numax_Morlet'][0],data['numax_CWTMexHat'][0]])
+            data['initial_numax_sd'][0] = max([data['numax_var'][0],data['numax_Morlet'][0],data['numax_CWTMexHat'][0]]) - np.nanmin([data['numax_var'][0],data['numax_Morlet'][0],data['numax_CWTMexHat'][0]])
         
-        #print(data['numax0_sd'][0])
-        bg_fit = bkg_model(pds, data['numax0'][0], data['numax0_sd'][0], data['nuNyq'][0], logfile = Path(output_directory,settings.logfile))
+        bg_fit = bkg_model(pds, data['initial_numax'].iloc[0], data['initial_numax_sd'].iloc[0], data['nuNyq'].iloc[0], logfile = Path(output_directory,settings.logfile))
         minESS = mESS.minESS(bg_fit.ndim, alpha=0.05, eps=0.1)
         i = 0
         done_p = False
@@ -131,17 +150,23 @@ def background_fit(pds, ofac_pds, data, output = '', output_directory = '', **kw
                 iguess = bg_fit.theta_to_dict(theta0)
                 #iguess = {"Pn":Pn, "A1":A1, "b1":b1, "A2":A2, "b2":b2, "A3":A3, "b3":b3,
                 #          "Pg":Pg, "numax":numax, "sigmaEnv":sigmaEnv}
-                print("Attempting again (%s/5) the MCMC with binned PDS. Number of bins: %s" %
+                try:
+                    print("Attempting again (%s/5) the MCMC with binned PDS. Number of bins: %s" %
                     (i, settings.bins))
-                bg_fit.MCMC(iguess, output_directory, **settings.get_mcmc_settings())
-                i = i + 1
+                    print("Starting initial MCMC with binned PDS. Number of bins:", settings.bins)
+                    bg_fit.MCMC(iguess, output_directory, **settings.get_mcmc_settings())
+                    print("Finished initial MCMC with binned PDS")
+                    i = i + 1
+                    
+                except (ValueError, RuntimeError, TypeError, NameError):
+                    print("Background fit did not converge")
+                    flag = 1
+                    return None, None, data, flag
+                
+                
 
         if not done_p:
-            #print("Giving up")
-            # flag_file = os.path.join(os.path.dirname(settings.pds), "BACKGROUND_FIT_FLAG")
-            # open(flag_file, "a").close()
-            #return None, None, None
-            j=j+1
+            j+=1
         else:
             # Create background_subtracted spectra
 
@@ -157,7 +182,6 @@ def background_fit(pds, ofac_pds, data, output = '', output_directory = '', **kw
                 # Flattened chains and log-probability
                 #tau = bg_fit.MCMC_sampler.get_autocorr_time()
                 #print(f"Autocorrelation time: {tau}")
-                #print(settings.nwarmup)
                 flatchain = bg_fit.MCMC_sampler.get_chain(discard=settings.nwarmup, flat=True)
                 lnprob = bg_fit.MCMC_sampler.get_log_prob(discard=settings.nwarmup, flat=True)
 
@@ -200,14 +224,26 @@ def background_fit(pds, ofac_pds, data, output = '', output_directory = '', **kw
 
                 for idx, row in bkg_summary.iterrows():
                     data[row['parameter']] = row['Q50']
+                    data[row['parameter']+'_sd'] = row['sd']
 
                 bkg_summary.to_csv(Path(output_directory,settings.output_quantiles), index = False)
             else:
-                j=j+1
+                j+=1
                 
+
+    if (done_p and not done_q):
+        print("too low amplitude of power excess")
+        flag = 2
+        for idx, row in bkg_summary.iterrows():
+            data[row['parameter']] = row['Q50']
+            data[row['parameter']+'_sd'] = row['sd']
+
+        bkg_summary.to_csv(Path(output_directory,settings.output_quantiles), index = False)
+        
     if (not done_p and not done_q):
         print("Giving up")
         flag = 1
         return None, None, None, flag
-
+    
+   
     return pds_bgr, ofac_pds_bgr, data, flag

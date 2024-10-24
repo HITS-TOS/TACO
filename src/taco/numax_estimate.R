@@ -3,6 +3,7 @@
 library(argparser, quietly = TRUE)
 library(readr, quietly = TRUE)
 library(tidyr, quietly = TRUE)
+library(pracma, quietly = TRUE)
 
 source("src/peakFind_lib.R", chdir = TRUE)
 source("src/wavelets.R", chdir = TRUE)
@@ -11,11 +12,11 @@ numax_estimate_r <- function(pds, data, filter_width) {
     numpeaks <- 5
     do_estimation <- TRUE
 
-    if (("numax0_flag" %in% names(data)) && ("numax0" %in% names(data))) {
+    if (("initial_numax_flag" %in% names(data)) && ("initial_numax" %in% names(data))) {
         data <- data %>%
-                mutate(numax0_flag = as.factor(numax0_flag))
-        if (is.numeric(data$numax0)) {
-            if(data$numax0_flag == FALSE) {
+                mutate(initial_numax_flag = as.factor(initial_numax_flag))
+        if (is.numeric(data$initial_numax)) {
+            if(data$initial_numax_flag == FALSE) {
                 print(paste("Skipping initial numax estimation "))
                 do_estimation <- FALSE
             }
@@ -23,9 +24,9 @@ numax_estimate_r <- function(pds, data, filter_width) {
     }
 
     if (do_estimation) {
-        if(!("numax0_flag" %in% names(data)))
-            data$numax0_flag <- FALSE
-        if(data$numax0_flag == FALSE) {
+        if(!("initial_numax_flag" %in% names(data)))
+            data$initial_numax_flag <- FALSE
+        if(data$initial_numax_flag == FALSE) {
             print(paste("Initial estimation of numax"))
         } else {
             print(paste("Attempting again the estimation of numax"))
@@ -53,7 +54,26 @@ numax_estimate_r <- function(pds, data, filter_width) {
 
         pds$power_bgr <- pds$power / bkg
 
-        pds.SS <- splus2R::signalSeries(data = pds$power_bgr, positions. = pds$frequency)
+        # Bin PDS for short-cadence data:
+        if (length(pds$power_bgr) < 40000){
+            power <- pds$power_bgr
+            pos <- pds$frequency
+        } else {
+            npoints <- 20000
+            pos <- seq(1.,max(pds$frequency),length.out = npoints)
+            difpos <- 0.5 * ((pos[2])-(pos[1]))
+            power <- c(1:npoints) * 0
+            i <- 1
+            while (i < npoints){
+                m = abs((pds$frequency) - (pos[i])) < difpos
+                if (length(pds$power_bgr[m]) > 0){
+                    power[i] <- median(pds$power_bgr[m], na.rm = TRUE)
+                }
+            i <- i+1
+            }
+        }
+
+        pds.SS <- splus2R::signalSeries(data = power, positions. = pos)
 
         ## Estimating numax from the variance of the time-series
         ## ====================================================
@@ -145,37 +165,37 @@ numax_estimate_r <- function(pds, data, filter_width) {
        if (abs(1 - min(data$numax_CWTMexHat,data$numax_Morlet)/max(data$numax_CWTMexHat,data$numax_Morlet)) < 0.5 &
            abs(1 - min(data$numax_var,data$numax_Morlet)/max(data$numax_var,data$numax_Morlet)) < 0.5 &
            abs(1 - min(data$numax_CWTMexHat,data$numax_var)/max(data$numax_CWTMexHat,data$numax_var)) < 0.5){
-            data$numax0 <- (data$numax_var+data$numax_Morlet+data$numax_CWTMexHat)/3.0
-            data$numax0_sd <- (max(data$numax_var,data$numax_Morlet,data$numax_CWTMexHat) - min(data$numax_var,data$numax_Morlet,data$numax_CWTMexHat))/2.0
-            data$numax0_flag <- FALSE
+            data$initial_numax <- (data$numax_var+data$numax_Morlet+data$numax_CWTMexHat)/3.0
+            data$initial_numax_sd <- (max(data$numax_var,data$numax_Morlet,data$numax_CWTMexHat) - min(data$numax_var,data$numax_Morlet,data$numax_CWTMexHat))/2.0
+            data$initial_numax_flag <- FALSE
             flag <- 0
         } else if (abs(1 - min(data$numax_CWTMexHat,data$numax_Morlet)/max(data$numax_CWTMexHat,data$numax_Morlet)) < 0.5 ){
-            data$numax0 <- (data$numax_Morlet+data$numax_CWTMexHat)/2.0
-            data$numax0_sd <- (max(data$numax_Morlet,data$numax_CWTMexHat) - min(data$numax_Morlet,data$numax_CWTMexHat))/2.0
-            data$numax0_flag <- FALSE
+            data$initial_numax <- (data$numax_Morlet+data$numax_CWTMexHat)/2.0
+            data$initial_numax_sd <- (max(data$numax_Morlet,data$numax_CWTMexHat) - min(data$numax_Morlet,data$numax_CWTMexHat))/2.0
+            data$initial_numax_flag <- FALSE
             flag <- 0
         } else if (abs(1 - min(data$numax_CWTMexHat,data$numax_var)/max(data$numax_CWTMexHat,data$numax_var)) < 0.5 ){
-            data$numax0 <- (data$numax_var+data$numax_CWTMexHat)/2.0
-            data$numax0_sd <- (max(data$numax_var,data$numax_CWTMexHat) - min(data$numax_var,data$numax_CWTMexHat))/2.0
-            data$numax0_flag <- FALSE
+            data$initial_numax <- (data$numax_var+data$numax_CWTMexHat)/2.0
+            data$initial_numax_sd <- (max(data$numax_var,data$numax_CWTMexHat) - min(data$numax_var,data$numax_CWTMexHat))/2.0
+            data$initial_numax_flag <- FALSE
             flag <- 0
         } else if (abs(1 - min(data$numax_var,data$numax_Morlet)/max(data$numax_var,data$numax_Morlet)) < 0.5 ){
-            data$numax0 <- (data$numax_var+data$numax_Morlet)/2.0
-            data$numax0_sd <- (max(data$numax_var,data$numax_Morlet) - min(data$numax_var,data$numax_Morlet))/2.0
-            data$numax0_flag <- FALSE
+            data$initial_numax <- (data$numax_var+data$numax_Morlet)/2.0
+            data$initial_numax_sd <- (max(data$numax_var,data$numax_Morlet) - min(data$numax_var,data$numax_Morlet))/2.0
+            data$initial_numax_flag <- FALSE
             flag <- 0
         } else {
             if (data$numax_CWTMexHat > 0) {
-                data$numax0 <- min(data$numax_var,data$numax_Morlet,data$numax_CWTMexHat)
+                data$initial_numax <- min(data$numax_var,data$numax_Morlet,data$numax_CWTMexHat)
             } else {
-                data$numax0 <- min(data$numax_var,data$numax_Morlet)
+                data$initial_numax <- min(data$numax_var,data$numax_Morlet)
             }
-            data$numax0_sd <- data$numax0/2.0
-            data$numax0_flag <- TRUE
+            data$initial_numax_sd <- data$initial_numax/2.0
+            data$initial_numax_flag <- TRUE
             flag <- 1
         }
     }
 
-    return(list(data,flag))
+    return(list(data=data,flag=flag))
 
 }

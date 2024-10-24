@@ -26,27 +26,27 @@ class _KeplerLCBgFit(PDSBgFit):
         parameter = k*numax^s. First column is 'k', second is 's'
         """
         return {"Pn"       : [1.000000e-00,  0.000000], # Inferred from data, left alone
-                "H1"       : [1.000000e-00,  0.000000], # Inferred from data left alone
+                "A1"       : [1.000000e-00,  0.000000], # Inferred from data left alone
                 "b1"       : [0.5787,  0], # For filter of length 40 days
-                "H2"       : [3382, -0.609], # Kallinger (2014)
+                "A2"       : [3382, -0.609], # Kallinger (2014)
                 "b2"       : [0.317,  0.970], # Kallinger (2014)
-                "H3"       : [3382, -0.609], # Kallinger (2014)
+                "A3"       : [3382, -0.609], # Kallinger (2014)
                 "b3"       : [0.948,  0.992], # Kallinger (2014)
                 "Pg"       : [2.03e7, -2.38], # Mosser (2012)
                 "numax"    : [1.000000e-00,  1.000000],
                 "sigmaEnv" : [0.28,  0.88]} # Mosser (2012) converted from denv to sigma
 
 
-    def __init__(self, pds, initial_numax, initial_numax_sd, nuNyq, logfile=None):
+    def __init__(self, pds, numax0, numax0_sd, nuNyq, logfile=None):
         """
-        We require the PDS and an initial guess at numax: 'initial_numax'
+        We require the PDS and an initial guess at numax: 'numax0'
         """
         PDSBgFit.__init__(self, pds, logfile)
-        self.initial_numax_sd = initial_numax_sd
-        self.initial_numax = initial_numax
+        self.numax0_sd = numax0_sd
+        self.numax0 = numax0
         self.nuNyq = nuNyq
-        self.bg_params = self.guesses_from_numax(initial_numax)
-        self._log_message("# Initial background values set by guesses using numax=%s." % initial_numax)
+        self.bg_params = self.guesses_from_numax(numax0)
+        self._log_message("# Initial background values set by guesses using numax=%s." % numax0)
 
 
     @classmethod
@@ -58,79 +58,75 @@ class _KeplerLCBgFit(PDSBgFit):
         raise NotImplementedError
 
 
+
 class KeplerBg3Comp(_KeplerLCBgFit):
 
     @classmethod
     def bg_param_names(cls):
-        return ["Pn", "H1", "b1", "H2", "b2", "H3", "b3", "Pg", "numax", "sigmaEnv"]
+        return ["Pn", "A1", "b1", "A2", "b2", "A3", "b3", "Pg", "numax", "sigmaEnv"]
 
 
     def bgModel(self, theta, nu, no_osc=False):
         """
         Background model value at a given frequency 'nu'
         """
-        Pn, H1, b1, H2, b2, H3, b3, Pg, numax, sigmaEnv = theta
+        Pn, A1, b1, A2, b2, A3, b3, Pg, numax, sigmaEnv = theta
         sc = _sinc(np.pi * nu / (2 * self.nuNyq)) ** 2
         bg = Pn
-        bg = bg + sc * _sLor(nu, H1, b1, 4)
-        bg = bg + sc * _sLor(nu, H2, b2, 4)
-        bg = bg + sc * _sLor(nu, H3, b3, 4)
+        bg = bg + sc * _sLor(nu, A1, b1, 4)
+        bg = bg + sc * _sLor(nu, A2, b2, 4)
+        bg = bg + sc * _sLor(nu, A3, b3, 4)
         if not no_osc:
             bg = bg + sc * Pg * np.exp(-((nu - numax) ** 2) / (2 * sigmaEnv ** 2))
         return bg
 
 
     def logPrio(self, theta):
-        Pn, H1, b1, H2, b2, H3, b3, Pg, numax, sigmaEnv = theta
-
+        Pn, A1, b1, A2, b2, A3, b3, Pg, numax, sigmaEnv = theta
         # Prior 1
+        
         if not ((Pn > 0) and (Pn < self._maxPDS)):
             #print(1)
             return -np.inf
         # Prior 2
-        if not (H1 < 1.2*self._maxPDS):
+        if not (A1 < 1.2*self._maxPDS):
         #    #print(2)
             return -np.inf
         # Prior 3
-        if not (H1 > 0):
-            #print("3")
+        if not (A1 > 0):
+            #print("2a")
+            return -np.inf
+        if not (A2 > A3):
+            #print(3)
             return -np.inf
         # Prior 4
-        if not (H2 > H3):
+        if not (A3 > 0):
             #print(4)
             return -np.inf
         # Prior 5
-        if not (H3 > 0):
+        if not (b1 < b2 < b3):
             #print(5)
             return -np.inf
         # Prior 6
-        if not (b1 < b2 < b3):
+        if not ((b1 > 0) and (((numax * 0.9) < b3 < (numax * 1.1)) or ((numax * 0.9) < b2 < (numax * 1.1)))):
             #print(6)
             return -np.inf
         # Prior 7
-        if not ((b1 > 0) and (((numax * 0.9) < b3 < (numax * 1.1)) or ((numax * 0.9) < b2 < (numax * 1.1)))):
+        if not ((self.numax0 - 1.1*self.numax0_sd) < numax < (self.numax0 + 1.1*self.numax0_sd)):
             #print(7)
             return -np.inf
         # Prior 8
-        if not ((self.initial_numax - 1.1*self.initial_numax_sd) < numax < (self.initial_numax + 1.1*self.initial_numax_sd)):
-            #print(8)
-            return -np.inf
-        # Prior 9
-        if not (numax < 0.95*self.nuNyq):
-            #print(9)
-            return -np.inf
-        # Prior 10
         if not ((Pg > 0) and (Pg < 1.2*self._maxPDS)):
-            #print(10)
+            #print(8)
             return -np.inf
         #Pg0 = self.guess_from_numax("Pg", numax)
         #if not ((Pg0 * 0.1) < Pg < (Pg0 * 6)):
         #    #print(8)
         #    return -np.inf
-        # Prior 11
+        # Prior 9
         sigmaEnv0 = self.guess_from_numax("sigmaEnv", numax)
         if not ((sigmaEnv0 * 0.3) < sigmaEnv < (sigmaEnv0 * 3.0)):
-            #print(11)
+            #print(9)
             return -np.inf
         return 0.0
 
@@ -144,13 +140,13 @@ class KeplerBg3Comp(_KeplerLCBgFit):
                                  for par in self.bg_param_names()])
         ## Check they are consistent with the priors we define above
         # Convert to correct first guesses
-        # First guesses on H2 and H3 from Kallinger are granulation 
+        # First guesses on A2 and A3 from Kallinger are granulation 
         # amplitude, need to convert to height
-        bg["H2"] = (2*np.sqrt(2))/np.pi * (bg["H2"]**2/bg["b2"])
-        bg["H3"] = (2*np.sqrt(2))/np.pi * (bg["H3"]**2/bg["b3"])
+        bg["A2"] = (2*np.sqrt(2))/np.pi * (bg["A2"]**2/bg["b2"])
+        bg["A3"] = (2*np.sqrt(2))/np.pi * (bg["A3"]**2/bg["b3"])
 
-        # Infer H1 from data
-        bg["H1"] = 1.2 * bg["H2"]#0.9 * np.max(self.pds["power"])
+        # Infer A1 from data
+        bg["A1"] = 1.2 * bg["A2"]#0.9 * np.max(self.pds["power"])
 
         # Infer Pn from data - compute using median and corrective factor
         bg["Pn"] = 0.5 * np.mean(self.pds["power"][-10:])
@@ -158,12 +154,12 @@ class KeplerBg3Comp(_KeplerLCBgFit):
         if bg["Pn"] <= 0: bg["Pn"] = 1e-4
         if bg["Pn"] >= self._maxPDS: bg["Pn"] = self._maxPDS - 1e-4
         # Prior 2
-        if bg["H1"] >= self._maxPDS: bg["H1"] = self._maxPDS - 1e-4
+        if bg["A1"] >= self._maxPDS: bg["A1"] = self._maxPDS - 1e-4
         # Prior 3
-        if bg["H1"] <= bg["H2"]: bg["H2"] = bg["H1"] - 1e-4
-        if bg["H2"] <= bg["H3"]: bg["H3"] = bg["H2"] - 1e-4
+        if bg["A1"] <= bg["A2"]: bg["A2"] = bg["A1"] - 1e-4
+        if bg["A2"] <= bg["A3"]: bg["A3"] = bg["A2"] - 1e-4
         # Prior 4
-        if bg["H3"] <= 0: bg["H3"] = 1e-4
+        if bg["A3"] <= 0: bg["A3"] = 1e-4
         # Prior 5
         if bg["b1"] >= bg["b2"]: bg["b2"] = bg["b1"] + 1e-4
         if bg["b2"] >= bg["b3"]: bg["b3"] = bg["b2"] + 1e-4
@@ -174,6 +170,7 @@ class KeplerBg3Comp(_KeplerLCBgFit):
         return bg
 
 
+    
 class KeplerBg2Comp(_KeplerLCBgFit):
 
     @classproperty
@@ -183,9 +180,9 @@ class KeplerBg2Comp(_KeplerLCBgFit):
         parameter = k*numax^s. First column is 'k', second is 's'
         """
         return {"Pn"       : [1.000000e-00,  0.000000], # Inferred from data, left alone
-                "H1"       : [3382, -0.609], # Kallinger (2014)
+                "A1"       : [3382, -0.609], # Kallinger (2014)
                 "b1"       : [0.317,  0.970], # Kallinger (2014)
-                "H2"       : [3382, -0.609], # Kallinger (2014)
+                "A2"       : [3382, -0.609], # Kallinger (2014)
                 "b2"       : [0.948,  0.992], # Kallinger (2014)
                 "Pg"       : [2.03e7, -2.38], # Mosser (2012)
                 "numax"    : [1.000000e-00,  1.000000],
@@ -197,52 +194,60 @@ class KeplerBg2Comp(_KeplerLCBgFit):
 
     @classmethod
     def bg_param_names(cls):
-        return ["Pn", "H1", "b1", "H2", "b2", "Pg", "numax", "sigmaEnv"]
+        return ["Pn", "A1", "b1", "A2", "b2", "Pg", "numax", "sigmaEnv"]
 
 
     def bgModel(self, theta, nu, no_osc=False):
         """
         Background model value at a given frequency 'nu'
         """
-        Pn, H1, b1, H2, b2, Pg, numax, sigmaEnv = theta
+        Pn, A1, b1, A2, b2, Pg, numax, sigmaEnv = theta
         sc = _sinc(np.pi * nu / (2 * self.nuNyq)) ** 2
         bg = Pn
-        bg = bg + sc * _sLor(nu, H1, b1, 4)
-        bg = bg + sc * _sLor(nu, H2, b2, 4)
+        bg = bg + sc * _sLor(nu, A1, b1, 4)
+        bg = bg + sc * _sLor(nu, A2, b2, 4)
         if not no_osc:
             bg = bg + sc * Pg * np.exp(-((nu - numax) ** 2) / (2 * sigmaEnv ** 2))
         return bg
 
 
     def logPrio(self, theta):
-        Pn, H1, b1, H2, b2, Pg, numax, sigmaEnv = theta
+        Pn, A1, b1, A2, b2, Pg, numax, sigmaEnv = theta
         # Prior 1
         if not ((Pn > 0) and (Pn < self._maxPDS)):
             return -np.inf
         # Prior 2
-        if not (H1 < self._maxPDS):
+        if not (A1 < 1.2 * self._maxPDS):
             return -np.inf
         # Prior 3
-        if not (H1 > H2):
+        if not (A1 < 0):
             return -np.inf
         # Prior 4
-        if not (H2 > 0):
+        if not (A1 > A2):
             return -np.inf
         # Prior 5
-        if not (b1 < b2):
+        if not (A2 > 0):
             return -np.inf
         # Prior 6
-        if not (b1 > 0 and b2 < 1.1 * self.nuNyq):
+        if not (b1 < b2):
             return -np.inf
+
         # Prior 7
-        if not ((self.initial_numax * 0.7) < numax < (self.initial_numax * 1.3)):
+        #if not (b1 > 0 and b2 < 1.1 * self.nuNyq):
+        #    return -np.inf
+        if not ((b1 > 0) and ((numax * 0.8) < b2 < (numax * 1.2))):
             return -np.inf
         # Prior 8
-        Pg0 = self.guess_from_numax("Pg", self.initial_numax)
-        if not ((Pg0 * 0.1) < Pg < (Pg0 * 6)):
+        if not ((self.numax0 - 1.1*self.numax0_sd) < numax < (self.numax0 + 1.1 * self.numax0_sd)):
             return -np.inf
         # Prior 9
-        sigmaEnv0 = self.guess_from_numax("sigmaEnv", self.initial_numax)
+        #Pg0 = self.guess_from_numax("Pg", self.numax0)
+        #if not ((Pg * 0.1) < Pg < (Pg0 * 6)):
+        #    return -np.inf
+        if not ((Pg > 0) and (Pg < 1.2*self._maxPDS)):
+            return -np.inf
+        # Prior 9
+        sigmaEnv0 = self.guess_from_numax("sigmaEnv", self.numax0)
         if not ((sigmaEnv0 * 0.3) < sigmaEnv < (sigmaEnv0 * 3.0)):
             return -np.inf
         return 0.0
@@ -260,11 +265,11 @@ class KeplerBg2Comp(_KeplerLCBgFit):
         if bg["Pn"] <= 0: bg["Pn"] = 1e-4
         if bg["Pn"] >= self._maxPDS: bg["Pn"] = self._maxPDS - 1e-4
         # Prior 2
-        if bg["H1"] >= self._maxPDS: bg["H1"] = self._maxPDS - 1e-4
+        if bg["A1"] >= self._maxPDS: bg["A1"] = self._maxPDS - 1e-4
         # Prior 3
-        if bg["H1"] <= bg["H2"]: bg["H2"] = bg["H1"] - 1e-4
+        if bg["A1"] <= bg["A2"]: bg["A2"] = bg["A1"] - 1e-4
         # Prior 4
-        if bg["H2"] <= bg["Pn"]: bg["Pn"] = bg["H2"] - 1e-4
+        if bg["A2"] <= bg["Pn"]: bg["Pn"] = bg["A2"] - 1e-4
         # Prior 5
         if bg["b1"] >= bg["b2"]: bg["b2"] = bg["b1"] + 1e-4
         # Prior 6
@@ -273,12 +278,11 @@ class KeplerBg2Comp(_KeplerLCBgFit):
         # Checking for priors 7-9 here would be redundant
         return bg
 
-
 class KeplerBg3CompExpVar(_KeplerLCBgFit):
 
     @classmethod
     def bg_param_names(cls):
-        return ["Pn", "H1", "b1", "H2", "b2", "c2", "H3", "b3", "c3", "Pg", "numax", "sigmaEnv"]
+        return ["Pn", "A1", "b1", "A2", "b2", "c2", "A3", "b3", "c3", "Pg", "numax", "sigmaEnv"]
 
     def par_rels(self):
         """
@@ -286,12 +290,12 @@ class KeplerBg3CompExpVar(_KeplerLCBgFit):
         parameter = k*numax^s. First column is 'k', second is 's'
         """
         return {"Pn"       : [1.000000e-00,  0.000000], # Inferred from data, left alone
-                "H1"       : [1.000000e-00,  0.000000], # Inferred from data left alone
+                "A1"       : [1.000000e-00,  0.000000], # Inferred from data left alone
                 "b1"       : [0.5787,  0], # For filter of length 40 days
-                "H2"       : [3382, -0.609], # Kallinger (2014)
+                "A2"       : [3382, -0.609], # Kallinger (2014)
                 "b2"       : [0.317,  0.970], # Kallinger (2014)
                 "c2"       : [4, 0.0],
-                "H3"       : [3382, -0.609], # Kallinger (2014)
+                "A3"       : [3382, -0.609], # Kallinger (2014)
                 "b3"       : [0.948,  0.992], # Kallinger (2014)
                 "c3"       : [4, 0.0],
                 "Pg"       : [2.03e7, -2.38], # Mosser (2012)
@@ -305,19 +309,19 @@ class KeplerBg3CompExpVar(_KeplerLCBgFit):
         """
         Background model value at a given frequency 'nu'
         """
-        Pn, H1, b1, H2, b2, c2, H3, b3, c3, Pg, numax, sigmaEnv = theta
+        Pn, A1, b1, A2, b2, c2, A3, b3, c3, Pg, numax, sigmaEnv = theta
         sc = _sinc(np.pi * nu / (2 * self.nuNyq)) ** 2
         bg = Pn
-        bg = bg + sc * _sLor(nu, H1, b1, 4)
-        bg = bg + sc * _sLor(nu, H2, b2, c2)
-        bg = bg + sc * _sLor(nu, H3, b3, c3)
+        bg = bg + sc * _sLor(nu, A1, b1, 4)
+        bg = bg + sc * _sLor(nu, A2, b2, c2)
+        bg = bg + sc * _sLor(nu, A3, b3, c3)
         if not no_osc:
             bg = bg + sc * Pg * np.exp(-((nu - numax) ** 2) / (2 * sigmaEnv ** 2))
         return bg
 
 
     def logPrio(self, theta):
-        Pn, H1, b1, H2, b2, c2, H3, b3, c3, Pg, numax, sigmaEnv = theta
+        Pn, A1, b1, A2, b2, c2, A3, b3, c3, Pg, numax, sigmaEnv = theta
         # Prior 1
         if not ((c2 >= 2) and (c2 <= 6)):
             return -np.inf
@@ -327,18 +331,18 @@ class KeplerBg3CompExpVar(_KeplerLCBgFit):
             #print(1)
             return -np.inf
         # Prior 2
-        if not (H1 < 1.2*self._maxPDS):
+        if not (A1 < 1.2*self._maxPDS):
         #    #print(2)
             return -np.inf
         # Prior 3
-        if not (H1 > 0):
+        if not (A1 > 0):
             #print("2a")
             return -np.inf
-        if not (H2 > H3):
+        if not (A2 > A3):
             #print(3)
             return -np.inf
         # Prior 4
-        if not (H3 > 0):
+        if not (A3 > 0):
             #print(4)
             return -np.inf
         # Prior 5
@@ -350,16 +354,16 @@ class KeplerBg3CompExpVar(_KeplerLCBgFit):
             #print(6)
             return -np.inf
         # Prior 7
-        if not ((self.initial_numax * 0.7) < numax < (self.initial_numax * 1.3)):
+        if not ((self.numax0 * 0.7) < numax < (self.numax0 * 1.3)):
             #print(7)
             return -np.inf
         # Prior 8
-        Pg0 = self.guess_from_numax("Pg", self.initial_numax)
+        Pg0 = self.guess_from_numax("Pg", self.numax0)
         if not ((Pg0 * 0.1) < Pg < (Pg0 * 6)):
             #print(8)
             return -np.inf
         # Prior 9
-        sigmaEnv0 = self.guess_from_numax("sigmaEnv", self.initial_numax)
+        sigmaEnv0 = self.guess_from_numax("sigmaEnv", self.numax0)
         if not ((sigmaEnv0 * 0.3) < sigmaEnv < (sigmaEnv0 * 3.0)):
             #print(9)
             return -np.inf
@@ -375,13 +379,13 @@ class KeplerBg3CompExpVar(_KeplerLCBgFit):
                                  for par in self.bg_param_names()])
         ## Check they are consistent with the priors we define above
         # Convert to correct first guesses
-        # First guesses on H2 and H3 from Kallinger are granulation 
+        # First guesses on A2 and A3 from Kallinger are granulation 
         # amplitude, need to convert to height
-        bg["H2"] = (2*np.sqrt(2))/np.pi * (bg["H2"]**2/bg["b2"])
-        bg["H3"] = (2*np.sqrt(2))/np.pi * (bg["H3"]**2/bg["b3"])
+        bg["A2"] = (2*np.sqrt(2))/np.pi * (bg["A2"]**2/bg["b2"])
+        bg["A3"] = (2*np.sqrt(2))/np.pi * (bg["A3"]**2/bg["b3"])
 
-        # Infer H1 from data
-        bg["H1"] = 1.2 * bg["H2"]#0.9 * np.max(self.pds["power"])
+        # Infer A1 from data
+        bg["A1"] = 1.2 * bg["A2"]#0.9 * np.max(self.pds["power"])
 
         # Infer Pn from data - compute using median and corrective factor
         bg["Pn"] = 0.5 * np.mean(self.pds["power"][-10:])
@@ -389,12 +393,12 @@ class KeplerBg3CompExpVar(_KeplerLCBgFit):
         if bg["Pn"] <= 0: bg["Pn"] = 1e-4
         if bg["Pn"] >= self._maxPDS: bg["Pn"] = self._maxPDS - 1e-4
         # Prior 2
-        if bg["H1"] >= self._maxPDS: bg["H1"] = self._maxPDS - 1e-4
+        if bg["A1"] >= self._maxPDS: bg["A1"] = self._maxPDS - 1e-4
         # Prior 3
-        if bg["H1"] <= bg["H2"]: bg["H2"] = bg["H1"] - 1e-4
-        if bg["H2"] <= bg["H3"]: bg["H3"] = bg["H2"] - 1e-4
+        if bg["A1"] <= bg["A2"]: bg["A2"] = bg["A1"] - 1e-4
+        if bg["A2"] <= bg["A3"]: bg["A3"] = bg["A2"] - 1e-4
         # Prior 4
-        if bg["H3"] <= 0: bg["H3"] = 1e-4
+        if bg["A3"] <= 0: bg["A3"] = 1e-4
         # Prior 5
         if bg["b1"] >= bg["b2"]: bg["b2"] = bg["b1"] + 1e-4
         if bg["b2"] >= bg["b3"]: bg["b3"] = bg["b2"] + 1e-4

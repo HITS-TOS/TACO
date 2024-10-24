@@ -33,7 +33,6 @@ def sinc2_model(pds, peak):
     return peak.height * np.sinc((pds.frequency.values - peak.frequency)/deltanu)**2
 
 def fit_model(pds, peaks):
-
     model = np.ones_like(pds.frequency.values)
 
     for i in range(len(peaks)):
@@ -45,6 +44,18 @@ def fit_model(pds, peaks):
 
 def DeltaNu_from_numax(numax):
     return 0.276 * numax ** 0.751
+
+def coupling_from_dnu_RGB(dnu):
+    """
+    Based on RGB coupling values in Mosser et al.(2017)
+    using a linear fit
+    """
+    return 0.104 + 0.0024*dnu
+
+def density_mixed_modes(DeltaNu, numax):
+    dpi1 = DeltaPi1_from_DeltaNu_RGB(DeltaNu) * 1e-6
+    return DeltaNu / (dpi1 * (numax ** 2))
+
 
 @logger.catch
 def DPi1_from_stretched_PDS(DPi1, q, freqs, pds, return_max=False, plot=False, search_range=None):
@@ -105,6 +116,7 @@ def DPi1_from_stretched_PDS(DPi1, q, freqs, pds, return_max=False, plot=False, s
     # Make computation - in our case this is for the computation of zeta
     freqs(params)
     
+
     # Compute tau from the zeta value just computed
     new_frequency, tau, zeta = mixed_modes_utils.stretched_pds(pds.frequency.values,
                                                                freqs.zeta)
@@ -173,9 +185,79 @@ def DPi1_from_stretched_PDS(DPi1, q, freqs, pds, return_max=False, plot=False, s
         else:
             return highest_peak_period, sig_prob #highest_peak > 5.99 #7.378 #9.210
 
+def DPi1_iteration(maxiters, conv_thresh, sig_thresh, DPi10, q0, freqs, pds, return_max, plot, search_range):
+    """
+                    Iteration over period spacing from stretched PDS 
+
+    Input parameters:
+    -------------------
+        maxiter:      number of maximum iterations
+        conv_thresh:  Minimum DPi1 difference with previous iteration to claim convergence of iterations.
+        sig_thresh:   Minimum DPi1 significance value
+        DPi10:        Initial DPi1 guess
+        q0:           Initial q value
+        freqs:        Artificial frequencies for creation of stretched power spectrum using values determined from TACO for this star
+        pds:          PDS of potential dipole modes (e.g. PDS after removing l = 0,2,3 modes.)
+        return_max:   Return value of highest peak of the LS of strecthed PDS
+        plot:         Boolean
+        search_range: Range of DPi1 to search for RGB or RC stars
+    """
+    
+    converged = False
+    curr_DPi1 = DPi10
+    
+    print(f"Starting DPi1: {curr_DPi1}")
+    
+    estimates_DPi1, value_DPi1, significance_DPi1 = [], [], []
+    looped = False
+    
+    for i in range(maxiters):
+        if curr_DPi1 > 0:
+            old_DPi1 = curr_DPi1
+            new_DPi1, val, sig = DPi1_from_stretched_PDS(curr_DPi1, q0,
+                                                        freqs,
+                                                        pds,
+                                                        return_max = return_max,
+                                                        plot = plot,
+                                                        search_range = search_range)
+            
+            curr_DPi1 = new_DPi1
+            curr_val = val
+            curr_sig = sig
+
+            estimates_DPi1.append(curr_DPi1)
+            value_DPi1.append(curr_val)
+            significance_DPi1.append(curr_sig)
+            
+            if (abs(curr_DPi1 - old_DPi1) < conv_thresh) and (max(np.array(significance_DPi1)) >= sig_thresh) and (i == maxiters - 1):
+    
+                converged = True
+                
+                # Retrive Dpi1 with highest significance.
+                highest_sig = np.array(significance_DPi1) == max(np.array(significance_DPi1))
+
+                curr_DPi1 = np.unique(np.array(estimates_DPi1)[highest_sig])[0]
+                curr_val = np.unique(np.array(value_DPi1)[highest_sig])[0]
+                curr_sig = max(np.array(significance_DPi1))
+                
+            else:
+                if looped == False:
+                    if (i == maxiters - 1):
+                        maxiters *= 10
+                        looped = True
+                else:
+                    return False, np.nan, np.nan, np.nan
+        
+            return converged, curr_DPi1, curr_val, curr_sig
+
+        else:
+            return False, np.nan, np.nan, np.nan
+
 
 def peak_bag_period_spacing(pds, peaks, data,
-        maxiters = 10, niters = 5, dpi_only = False, ncores = 1, plot = False):
+        maxiters = 10, conv_thresh = 1e-3, sig_thresh = 0.9, 
+        niters = 5, dpi_only = False, ncores = 1, plot = False):
+    
     """
     Asymptotic period spacing (ΔΠ1) from the periodogram of the 'stretched' PDS.
 
@@ -200,13 +282,23 @@ def peak_bag_period_spacing(pds, peaks, data,
         data(pandas.DataFrame): Summary data
     """
 
+    #################################
+    #    Keep peaks with AIC > 10
+    #################################
+    AIC_cut = 2.0
+    peaks = peaks.loc[(peaks.AIC.values > AIC_cut) | (peaks.AIC1.values > AIC_cut), ].sort_values(by = 'frequency')
+
+
     # Adding in FLAG for DeltaPi1 computation
     # 0 - computation succeeded
     # 1 - DeltaNu < 3
     # 2 - No significant peak detected in RC PS of stretched PS and delta nu too low to obtain period spacing for RGB star
     # 3 - No significant peak detected in either PS of stretched power spectrum
     # 4 - Algorithm didn't converge after specified number of iterations
-
+    # 5 - Algorithm couldn't compute set of artificial frequencies with sloscillations
+    # 6 - Not enought l = 1 detected candidates (might be suppresed dipole modes)
+    # 7 - Star has more mixed-modes than predicted (might have rotational splittings)
+    
     flag = 0
 
     if (data.DeltaNu.values < 3.0):
@@ -220,39 +312,67 @@ def peak_bag_period_spacing(pds, peaks, data,
         flag = 1
         return(pds, peaks, flag, data)
 
-    # Filter peaks file to be within +/-3 sigmaEnv of numax
+    # Filter peaks file to be within +/-3 sigmaEnv of numax 
+    # NOTE: This is already done from PeaksFind on!!!
+
     peaks = peaks.loc[abs(peaks.frequency.values - data.numax.values) < 3 * data.sigmaEnv.values, ]
     pds = pds.loc[abs(pds.frequency.values - data.numax.values) < 3 * data.sigmaEnv.values, ]
 
     # Split the peaks in the l=0,2,3 peaks (which have been already identified)
     # and the rest, which should hopefully be unidentified l=3
     l023_peaks = peaks.loc[(peaks.l == 0) | (peaks.l == 2) | (peaks.l == 3), ]
+    #l023_peaks = peaks.loc[(peaks.l == 0) | (peaks.l == 2), ]
     l0_peaks = peaks.loc[(peaks.l==0), ]
     l1_peaks = peaks.loc[(peaks.l == 1) | (np.isfinite(peaks.l) == False)]
 
+
+    # Don't proceed if there are less than 3 potential dipole modes per radial order.
+    # To avoid computing period spacing for stars with suppressed dipoles
+    nl1_flag = False
+    l0_freqs = l0_peaks.frequency.values
+    l1_freqs = l1_peaks.frequency.values
+    for i in range(0, len(l0_freqs) - 1):
+        l1_n = l1_peaks[(l0_freqs[i] <= l1_freqs) & (l1_freqs <= l0_freqs[i + 1])]
+        if len(l1_n) < 3:
+            nl1_flag = True
+
+    if nl1_flag:
+        data['DeltaPi1'] = np.nan
+        data['coupling'] = np.nan
+        data['eps_g'] = np.nan
+        data['DeltaPi1_val'] = np.nan
+        data['DeltaPi1_Flag'] = 1
+        data['DeltaPi1_sig'] = np.nan
+        print('Not enought dipole modes detected to obtain period spacing of this star')
+        flag = 6
+        return(pds, peaks, flag, data)
+
+
+ 
     # Initial ΔΠ1 values
     RC_init = 300
-    RGB_init = DeltaPi1_from_DeltaNu_RGB(data.DeltaNu.values
-                                         if np.isfinite(data.DeltaNu.values)
-                                         else DeltaNu_from_numax(data.numax.values))
+    RGB_init = DeltaPi1_from_DeltaNu_RGB(data.DeltaNu.values[0]
+                                         if np.isfinite(data.DeltaNu.values[0])
+                                         else DeltaNu_from_numax(data.numax.values[0]))
 
     # Compute ranges of period spacing to search for RC and RGB stars
     RC_DPi_range = np.array([100, 400])
-    RGB_DPi_range = np.array([20, 120])
-    RGB_DPi_range = np.array([RGB_init*0.6, RGB_init*1.4])
 
+    if (data.DeltaNu.values >= 30.0): # Use a more constrained range before SGs (Dnu ~ 30)
+        RGB_DPi_range = np.array([45, 400])
+    else:
+        RGB_DPi_range = np.array([45, 150])
+        #RGB_DPi_range = np.array([RGB_init*0.6, RGB_init*1.4])
+
+    #RGB_DPi_range = np.array([RGB_init*0.6, RGB_init*1.4]) # Too restrictive
     #RGB_DPi_range = np.array([RGB_init*0.8, RGB_init*1.2])
 
-    # If, for some reason, the RGB initial value is below our range then change
-    # it slightly so it is
-    if RGB_init < np.min(RGB_DPi_range):
-        RGB_init = np.min(RGB_DPi_range) + 1
-    elif RGB_init > np.max(RGB_DPi_range):
-        RGB_init = np.max(RGB_DPi_range) - 1
 
     # Initial coupling values
     q_RC = 0.3
-    q_RGB = 0.2
+    q_RGB = coupling_from_dnu_RGB(data.DeltaNu.values[0]
+                                  if np.isfinite(data.DeltaNu.values[0])
+                                  else DeltaNu_from_numax(data.numax.values[0]))
 
     # We DON'T estimate epsilon_g here and instead do that in the next module
     # when searching for rotation
@@ -260,9 +380,7 @@ def peak_bag_period_spacing(pds, peaks, data,
     # Remove l=0,2 frequencies
     pds_l023_removed = pds.assign(power = pds.power / fit_model(pds, l023_peaks))
 
-    #plt.plot(pds_l023_removed.frequency, pds_l023_removed.power)
-    #plt.show()
-
+    
     bw = np.mean(np.diff(pds.frequency.values))
     ratio = np.sum(fit_model(pds, l1_peaks)-1) / np.sum(fit_model(pds, l0_peaks)-1)
     data['visibility_ratio'] = ratio
@@ -274,8 +392,9 @@ def peak_bag_period_spacing(pds, peaks, data,
                                     delta_nu=data.DeltaNu.values if np.isfinite(data.DeltaNu.values) else None,
                                     epsilon_p=data.eps_p.values if np.isfinite(data.eps_p.values) else None,
                                     alpha=data.alpha.values if np.isfinite(data.alpha.values) else None)
+    
+    
     ## Estimate ΔΠ1 self-consistently with some initial guesses using both a high and low initial guess
-
     _, RC_test_maximum, RC_sig = DPi1_from_stretched_PDS(RC_init, q_RC,
                                                          freqs,
                                                          pds_l023_removed,
@@ -284,7 +403,7 @@ def peak_bag_period_spacing(pds, peaks, data,
                                                          search_range = RC_DPi_range)
 
 
-    if (RC_sig == False) and (data.DeltaNu.values < 4.0):
+    if (RC_sig == False) and (data.DeltaNu.values < 4.0): # Shouldn't it be dnu < 3.0?
         data['DeltaPi1'] = np.nan
         data['coupling'] = np.nan
         data['eps_g'] = np.nan
@@ -301,6 +420,20 @@ def peak_bag_period_spacing(pds, peaks, data,
                                                            return_max = True,
                                                            plot = plot,
                                                            search_range = RGB_DPi_range)
+     
+    #############################################
+    #    New threshold to find RGB or RC
+    # Based on central Dnu and eps_p relation
+    # Also corrects very high eps_p values
+    #############################################
+    DNu = data.Central_DeltaNu.values[0]
+    eps_p = data.Central_eps_p.values[0]
+
+    if (eps_p >= 1.4) and (DNu < 10.0):
+        eps_p = eps_p - 1.0
+    
+    eps_p_threshold = (0.592 * np.log10(DNu)) + 0.6  # Computed using current TACO results from ideal_sample v10.05 (2024)
+    
 
     if (RC_sig == False) and (RGB_sig == False):
         data['DeltaPi1'] = np.nan
@@ -313,49 +446,89 @@ def peak_bag_period_spacing(pds, peaks, data,
         flag = 3
         return(pds, peaks, flag, data)
 
-    # If significant peak only found in one of two test spectra
-    elif (RC_sig < 0.9) and (RGB_sig >= 0.9) or (data['DeltaNu'].values > 13.0): # Take delta_nu > 13uHz as definitely RGB to avoid secondary clump stars
+    # If significant peak only found in one of two test spectra    
+    elif ((RC_sig < sig_thresh) and (RGB_sig >= sig_thresh)) or ((data['DeltaNu'].values > 10.0)): # Take delta_nu > 10uHz as definitely RGB to avoid secondary clump stars from v10.05 TACO results.
         DPi1_init = RGB_init
         q_init = q_RGB
         search_range = RGB_DPi_range
-    elif (RC_sig >= 0.9) and (RGB_sig < 0.9):
+        
+        
+    elif (RC_sig >= sig_thresh) and (RGB_sig < sig_thresh):
         DPi1_init = RC_init
         q_init = q_RC
         search_range = RC_DPi_range
+    
     # Otherwise proceed as normally would
     else:
-        if RC_test_maximum > RGB_test_maximum:
+        #######################################
+        #  New constrains using eps_p and dnu
+        #######################################
+        if (RC_test_maximum > RGB_test_maximum) and (eps_p < eps_p_threshold) and (DNu < 10.0):
             DPi1_init = RC_init
             q_init = q_RC
             search_range = RC_DPi_range
+
         else:
             DPi1_init = RGB_init
             q_init = q_RGB
             search_range = RGB_DPi_range
 
+
+    ###################################
+    #         Estimating DPi1
+    ###################################
+
     curr_DPi1 = DPi1_init
+    converged, curr_DPi1, curr_val, curr_sig = DPi1_iteration(maxiters=maxiters, conv_thresh=conv_thresh, sig_thresh=sig_thresh, 
+                                                              DPi10=curr_DPi1, q0=q_init, freqs=freqs, pds=pds_l023_removed, 
+                                                              return_max = True, plot = plot, search_range = search_range)
+          
+         
+    #####################################################
+    #  Iterate again if DPi1 > 360s or didn't converge
+    #####################################################
+    if converged == False or curr_DPi1 >= 360.0:
+        prev_DPi1 = curr_DPi1
+        prev_sig = curr_sig
+        prev_val = curr_val
 
-    print(f"Starting DPi1: {curr_DPi1}")
+        if curr_DPi1 > 100:
+            print('Testing RGB instead, because it didnt converge')
+            DPi1_init = RGB_init
+            q_init = q_RGB
+            search_range = RGB_DPi_range
+        
+        else:
+            if data.DeltaNu.values < 9.0:
+                print('Testing RC instead, because it didnt converge')
+                DPi1_init = RC_init
+                q_init = q_RC
+                search_range = RC_DPi_range
+            
+            else:
+                print('Testing RGB again')
+                DPi1_init = prev_DPi1
+                q_init = q_RGB
+                search_range = RGB_DPi_range
 
-    converged = False
-    for i in range(maxiters):
+            
+        converged, curr_DPi1, curr_val, curr_sig = DPi1_iteration(maxiters=maxiters, conv_thresh=conv_thresh, sig_thresh=sig_thresh, 
+                                                              DPi10=DPi1_init, q0=q_init, freqs=freqs, pds=pds_l023_removed, 
+                                                              return_max = True, plot = plot, search_range = search_range)
 
-        old_DPi1 = curr_DPi1
-        new_DPi1, val, sig = DPi1_from_stretched_PDS(curr_DPi1, q_init,
-                                                     freqs,
-                                                     pds_l023_removed,
-                                                     return_max = True,
-                                                     plot = plot,
-                                                     search_range = search_range)
-        if sig > 0.9:
-            curr_DPi1 = new_DPi1
-            curr_val = val
-            curr_sig = sig
-            print(f"Current DPi1: {curr_DPi1} at significance level {curr_sig}.")
-
-            if abs(curr_DPi1 - old_DPi1) < 1e-3:
-                converged = True
-                break
+        
+        if prev_DPi1 >= 360.0 and converged == True:
+            if (prev_sig < curr_sig) & (curr_DPi1 <= 360):
+                print('Found a better estimation.')
+            
+            else:
+                converged = False
+            
+    
+    N = density_mixed_modes(data.DeltaNu.values, data.numax.values)
+    if len(l1_freqs) / (l0_peaks.n.values.max() - l0_peaks.n.values.min()) > 1.5 * N[0]:
+        print('Found more peaks than expected. ', curr_DPi1)
+        
 
     if not converged:
         data['DeltaPi1'] = np.nan
@@ -434,7 +607,14 @@ def peak_bag_period_spacing(pds, peaks, data,
             'eps_g': 0.0,
             'l': 1,
             }
-    freqs(params)
+
+    try:
+        freqs(params)
+    
+    except (ValueError, RuntimeError, TypeError, NameError):
+        print("Problems to compute delta Pi")
+        flag = 5
+        return (pds, peaks, flag, data)
 
     # Compute stretched_pds
     _, tau, zeta = mixed_modes_utils.stretched_pds(pds.frequency.values,

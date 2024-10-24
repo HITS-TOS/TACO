@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import numpy as np 
 import pandas as pd
 import rpy2.robjects as ro
 from rpy2.robjects import pandas2ri
@@ -26,18 +27,20 @@ def filter(ts, data = pd.DataFrame.from_dict({"KIC": [float("nan")], "raw_data":
         remove_gaps(int): Remove gaps greater than this value (in days).
                           If set to -1, do not remove gaps
     """
+    
     with open(Path(Path(__file__).parent, 'filter.R'), 'r') as f:
         filter = STAP(f.read(), "filter_r")
-
+            
+            
         with localconverter(ro.default_converter + pandas2ri.converter):
+        #with (ro.default_converter + pandas2ri.converter).context():
             r_ts = ro.conversion.py2rpy(ts)
             r_data = ro.conversion.py2rpy(data)
-
+            
             result = filter.filter_r(r_ts, r_data, width, remove_gaps)
-
-            ts_filtered = ro.conversion.rpy2py(result[0])
-            data = ro.conversion.rpy2py(result[1])
-
+            ts_filtered = ro.conversion.rpy2py(result['filtered'])
+            data = ro.conversion.rpy2py(result['data'])
+            
             if output:
                 ts_filtered.to_csv(Path(output_directory, output), index = False)
 
