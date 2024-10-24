@@ -400,7 +400,6 @@ tag_central_l02 <- function(peaks, pds, DeltaNu, d02, numax,
 
 #' @param sign Whether or not we are searching above or below numax.
 tag_l02_pair <- function(peaks, pds, DeltaNu, d02, alpha, search.range, current_radial_order, central_radial_order, sign) {
-   
     # Bin width
     deltanu <- abs(diff(pds$frequency[1:2]))
     
@@ -907,6 +906,7 @@ DeltaNu_l0_fit <- function(peaks, numax, DeltaNu0,alpha0,
         filter(l==0)
     if(nrow(l0_peaks) == 0)
         stop(paste("'peaks' does not have l=0 modes"))
+   
     res <-
         optim(
             # I use theta = (DeltaNu, epsilonp, alpha)
@@ -1153,7 +1153,7 @@ DeltaNu_l2_fit <- function(peaks, numax, DeltaNu0, alpha0, eps_p0, d020,
                 d02      = res2$par[1],
                 d02_sd   = sd[1],
                 message  = res2$message))
-#    }
+    #    }
     if(nrow(l2_peaks) == 0)
         print("'peaks' does not have l=2 modes")
         list(

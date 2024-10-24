@@ -32,7 +32,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                frequency < data$numax + 3 * data$sigmaEnv)
 
     deltanu <- pds$frequency[2] - pds$frequency[1]
-    
+
     flag <- 0
 
     ## Check to see if there are any peaks in file, if not then stop
@@ -133,7 +133,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
         print("Numax > 0.9 * Nyquist frequency. This is too high for the automated mode identification to be reliable.")
         return(list(peaks=peaks, flag=flag, data=data))
     }
-    
+
     ## Expected Δν from ν_max
     Dnu <- DeltaNu_from_numax(data$numax)
 
@@ -157,7 +157,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
                 type = "period", plot = FALSE, ofac = 10)
     d02 <- psxps$peak.at[1]
     print(paste0("Initial d02 from PSxPS ", d02))
-    
+
     # Expected alpha from Δν
     #n_max <- data$numax / Dnu - eps_p_from_Dnu(Dnu)
     #alpha <- 1.5 * alpha_obs_from_n_max(n_max) # overestimating alpha a bit to avoid issues at extreme frequencies
@@ -238,7 +238,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
     # For consistency with epsilon from Kallinger et al. (2012)
     if (Eps_p < 0) {
         print("Epsilon p is negative! There may be a problem with the mode ID.")
-    } else if ((Eps_p < 0.5) & (Eps_p > 0) & (Dnu > 3)) {
+    } else if ((Eps_p < 0.4) && (Eps_p > 0)) { #(Eps_p < 0.5) & (Eps_p > 0) & (Dnu > 3)
         Eps_p <- Eps_p + 1
         peaks$n <- peaks$n - 1
         print("Epsilon p was too small, corrected")
@@ -251,7 +251,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
     Eps_p_sd <- res$eps_p_sd
    
     # fit for d02, while keeping delta nu, epsilon and alpha fixed
-    
+
     if (nrow(peaks.l2) > 0){
         res2 <- DeltaNu_l2_fit(
                     peaks = peaks %>%
@@ -278,7 +278,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
     ## Make the tagging again with the new Δν
     peaks.l0 <- peaks %>% filter(l == 0)
     peaks.l2 <- peaks %>% filter(l == 2)
-   
+
     if (nrow(peaks.l2) > 0){
         ## Get the central small frequency separation (δν_02) if possible
         d02_est <- central_d02(peaks = peaks, numax = data$numax)
@@ -297,9 +297,8 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
     l3 <- peaks %>% filter((x < 0.26))
     l3['n'] <- floor((l3$frequency / Dnu) - Eps_p)
 
-    print("Tagging any possible l=3 modes...")
     if (nrow(l3) > 0) {
-
+        print("Tagging any possible l=3 modes...")
         tmp_l0 <- peaks %>% filter(l == 0)
 
         for (i in unique(l3$n)) {

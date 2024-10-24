@@ -156,7 +156,7 @@ def background_fit(pds, ofac_pds, data, output = '', output_directory = '', **kw
                     print("Starting initial MCMC with binned PDS. Number of bins:", settings.bins)
                     bg_fit.MCMC(iguess, output_directory, **settings.get_mcmc_settings())
                     print("Finished initial MCMC with binned PDS")
-                    i = i + 1
+                    i += 1
                     
                 except (ValueError, RuntimeError, TypeError, NameError):
                     print("Background fit did not converge")
