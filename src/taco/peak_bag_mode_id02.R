@@ -389,6 +389,10 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
      #  d02 <- res2$d02
      #   d02_sd <- res2$d02_sd
     #}
+
+    # Check if numax and dnu values follow expected relation (FER)
+    
+
     
     print(paste0("Final dnu: ", format(round(Dnu, 3), nsmall = 3),
                  "+/- ", format(round(Dnu_sd, 3), nsmall = 3),
@@ -441,8 +445,8 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
         peaks$n <- peaks$n + 1
         }
         central_eps_p_sd <- central_res$eps_p_sd
-        central_alpha <- central_res$alpha
-        central_alpha_sd <- central_res$alpha_sd
+        #central_alpha <- central_res$alpha
+        #central_alpha_sd <- central_res$alpha_sd
     } else {
         flag <- 6
         print("Delta nu and diffence in central radial frequencies not in line")
@@ -452,9 +456,9 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
     print(paste0("Central dnu: ", format(round(central_Dnu, 3), nsmall = 3),
                  "+/- ", format(round(central_Dnu_sd, 3), nsmall = 3),
                  " uHz, and eps: ", format(round(central_eps_p, 3), nsmall = 3),
-                 "+/- ", format(round(central_eps_p_sd, 3), nsmall = 3),
-                 ", alpha: ", format(round(central_alpha, 4),nsmall = 3),
-                 "+/-", format(round(central_alpha_sd, 4), nsmall = 4)))
+                 "+/- ", format(round(central_eps_p_sd, 3), nsmall = 3)))
+                 #", alpha: ", format(round(central_alpha, 4),nsmall = 3),
+                # "+/-", format(round(central_alpha_sd, 4), nsmall = 4)))
 
     # Calculate the Γ_0(ν_max) of Vrard et al. 2018 http://dx.doi.org/10.1051/0004-6361/201832477
     Gamma0 <-
@@ -482,8 +486,8 @@ peak_bag_mode_id02_r <- function(pds, peaks, data) {
             Central_DeltaNu_sd = central_Dnu_sd,
             Central_eps_p = central_eps_p,
             Central_eps_p_sd = central_eps_p_sd,
-            Central_alpha = central_alpha,
-            Central_alpha_sd = central_alpha_sd,
+            #Central_alpha = central_alpha,
+            #Central_alpha_sd = central_alpha_sd,
             modeIDFlag = 0)
     
 
