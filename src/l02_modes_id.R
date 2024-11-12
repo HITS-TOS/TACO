@@ -1038,6 +1038,7 @@ DeltaNu_l0_fit_Hekker24 <- function(peaks, numax) {
         
     lm_freq= lm(frequency ~ n, data = l0_peaks)
     #print(summary(lm_freq))
+    
     lm_summary <- summary(lm_freq)
     lm_coeffs <- lm_summary$coefficients
     DeltaNu.estimate <- lm_coeffs["n","Estimate"]
@@ -1046,17 +1047,21 @@ DeltaNu_l0_fit_Hekker24 <- function(peaks, numax) {
     intercept.error <- lm_coeffs["(Intercept)","Std. Error"]
     eps_p <- intercept.estimate/DeltaNu.estimate
     eps_p_sd <- eps_p*sqrt((intercept.error/intercept.estimate)^2+(DeltaNu.error/DeltaNu.estimate)^2)
-  
-    l0_peaks$n2 <- l0_peaks$n^2
-    qm_freq = lm(frequency ~ n + n2, data = l0_peaks)
-    #print(summary(qm_freq))
-    qm_summary <- summary(qm_freq)
-    qm_coeffs <- qm_summary$coefficients
-    C.estimate <- qm_coeffs["n2","Estimate"]
-    C.error <- qm_coeffs["n2","Std. Error"]
-    alpha <- 2*C.estimate/DeltaNu.estimate
-    alpha_sd <- alpha*sqrt((C.error/C.estimate)^2+(DeltaNu.error/DeltaNu.estimate)^2)
-   
+    
+    alpha <- -99.9
+    alpha_sd <- -99.9
+
+    if (nrow(l0_peaks) > 3) {
+        l0_peaks$n2 <- l0_peaks$n^2
+        qm_freq = lm(frequency ~ n + n2, data = l0_peaks)
+        #print(summary(qm_freq))
+        qm_summary <- summary(qm_freq)
+        qm_coeffs <- qm_summary$coefficients
+        C.estimate <- qm_coeffs["n2","Estimate"]
+        C.error <- qm_coeffs["n2","Std. Error"]
+        alpha <- 2*C.estimate/DeltaNu.estimate
+        alpha_sd <- alpha*sqrt((C.error/C.estimate)^2+(DeltaNu.error/DeltaNu.estimate)^2)
+    }
     return(
         list(
             DeltaNu  = DeltaNu.estimate,
