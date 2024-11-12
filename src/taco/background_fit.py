@@ -90,6 +90,7 @@ def background_fit(pds, ofac_pds, data, output = '', output_directory = '', **kw
                 0: Background fit converged
                 1: Background fit didn't converge
                 2: Amplitude of power excess is too low
+                3: Background overfitting
 
     """
 
@@ -104,27 +105,27 @@ def background_fit(pds, ofac_pds, data, output = '', output_directory = '', **kw
 
     # Fetch background model
     bkg_model = getattr(lib.background.KeplerLCBgFit, settings.bkg_model)
-     
+
     j = 1
     done_q = False
-    
+
     while (j < 3 and not done_q):
         if (data['initial_numax_sd'][0] < data['initial_numax'][0]/10.0):
             data['initial_numax_sd'][0] = data['initial_numax'][0]/5.0
-        
+
         if (data['initial_numax_sd'][0] > data['initial_numax'][0]/4.0):
             data['initial_numax_sd'][0] = data['initial_numax'][0]/4.0
-                    
+
         if (j > 1):
             data['initial_numax'][0] = np.nanmean([data['numax_var'][0],data['numax_Morlet'][0],data['numax_CWTMexHat'][0]])
             data['initial_numax_sd'][0] = max([data['numax_var'][0],data['numax_Morlet'][0],data['numax_CWTMexHat'][0]]) - np.nanmin([data['numax_var'][0],data['numax_Morlet'][0],data['numax_CWTMexHat'][0]])
-        
+
         bg_fit = bkg_model(pds, data['initial_numax'].iloc[0], data['initial_numax_sd'].iloc[0], data['nuNyq'].iloc[0], logfile = Path(output_directory,settings.logfile))
         minESS = mESS.minESS(bg_fit.ndim, alpha=0.05, eps=0.1)
         i = 0
         done_p = False
         flag = 0
-        
+
         try:
             print("Starting initial MCMC with binned PDS. Number of bins:", settings.bins)
             bg_fit.MCMC(bg_fit.bg_params, output_directory, **settings.get_mcmc_settings())  # MCMC with binned PDS
@@ -134,10 +135,10 @@ def background_fit(pds, ofac_pds, data, output = '', output_directory = '', **kw
             flag = 1
             return None, None, data, flag
 
-        chain_i = np.argmax(bg_fit.MCMC_sampler.get_log_prob()[-1,:])
+        chain_i = np.argmax(bg_fit.MCMC_sampler.get_log_prob()[-1,:]) #Check if needed
         theta0 = bg_fit.MCMC_sampler.get_chain()[-1,chain_i,:]
 
-        while (i < 5 and not done_p):
+        while (i < 3 and not done_p):
             if (bg_fit.MCMCp["mixed_p"]
                 and bg_fit.MCMCp["converged_p"]
                 and bg_fit.MCMCp["mESS"] >= minESS):
@@ -153,17 +154,17 @@ def background_fit(pds, ofac_pds, data, output = '', output_directory = '', **kw
                 try:
                     print("Attempting again (%s/5) the MCMC with binned PDS. Number of bins: %s" %
                     (i, settings.bins))
-                    print("Starting initial MCMC with binned PDS. Number of bins:", settings.bins)
+                    print("Starting MCMC with binned PDS. Number of bins:", settings.bins)
                     bg_fit.MCMC(iguess, output_directory, **settings.get_mcmc_settings())
-                    print("Finished initial MCMC with binned PDS")
+                    print("Finished MCMC with binned PDS")
                     i += 1
-                    
+
                 except (ValueError, RuntimeError, TypeError, NameError):
                     print("Background fit did not converge")
                     flag = 1
                     return None, None, data, flag
-                
-                
+
+
 
         if not done_p:
             j+=1
@@ -213,12 +214,20 @@ def background_fit(pds, ofac_pds, data, output = '', output_directory = '', **kw
             pds_bgr = pds.assign(power = pds['power'] / model)
             ofac_pds_bgr = ofac_pds.assign(power = ofac_pds['power'] / ofac_model)
 
+            pds_bgr_full = pds.assign(power = pds['power'] / full_model)
+
+            if np.mean(pds_bgr_full.power.values) < 0.95:
+                print('Background fit needs to be checked!')
+                flag = 3
+                return None, None, None, flag
+
+
             idx_closest_numax = np.where(abs(pds['frequency'].values - bg_parameters[numax_index]) == np.min(np.abs(pds['frequency'].values - bg_parameters[numax_index])))[0]
 
             data['Hmax'] = full_model[idx_closest_numax].values
             data['Bmax'] = model[idx_closest_numax].values
             data['HBR'] = data['Hmax'] / data['Bmax']
-            
+
             if (data['HBR'][0] > 1.05):
                 done_q = True
 
@@ -229,7 +238,7 @@ def background_fit(pds, ofac_pds, data, output = '', output_directory = '', **kw
                 bkg_summary.to_csv(Path(output_directory,settings.output_quantiles), index = False)
             else:
                 j+=1
-                
+
 
     if (done_p and not done_q):
         print("too low amplitude of power excess")
@@ -239,11 +248,11 @@ def background_fit(pds, ofac_pds, data, output = '', output_directory = '', **kw
             data[row['parameter']+'_sd'] = row['sd']
 
         bkg_summary.to_csv(Path(output_directory,settings.output_quantiles), index = False)
-        
+
     if (not done_p and not done_q):
         print("Giving up")
         flag = 1
         return None, None, None, flag
-    
-   
+
+
     return pds_bgr, ofac_pds_bgr, data, flag
