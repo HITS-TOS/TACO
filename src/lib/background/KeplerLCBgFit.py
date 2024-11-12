@@ -116,7 +116,7 @@ class KeplerBg3Comp(_KeplerLCBgFit):
             #print(8)
             return -np.inf
         # Prior 9
-        if not (numax < 0.95*self.nuNyq):
+        if not (numax < 1.1*self.nuNyq):
             #print(9)
             return -np.inf
         # Prior 10
