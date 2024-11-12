@@ -10,7 +10,7 @@ from rpy2.robjects.packages import STAP
 def _none2null(none_obj):
     return ro.r("NULL")
 
-def peak_bag_mode_id02(pds, peaks, data):
+def peak_bag_mode_id02(pds, peaks, data, contours):
     """
     Get Δν and label the l=0,2 peaks
 
@@ -28,7 +28,7 @@ def peak_bag_mode_id02(pds, peaks, data):
             Columns:
                 Name: numax, dtype: float
     Returns:
-        peaks(pandas.DataFrame): Identified peaks. 
+        peaks(pandas.DataFrame): Identified peaks.
         flag(int):
             Values:
                 1: No peaks detected so not proceeding with mode ID
@@ -44,7 +44,7 @@ def peak_bag_mode_id02(pds, peaks, data):
                 dNu02(float): Small frequency separation l=0,2 [micro-Hertz]
                 eps_p(float): p-modes phase term
                 eps_p_sd(float): eps_p standard deviation
-                alpha(float): curvature 
+                alpha(float): curvature
                 alpha_sd(float): alpha standard deviation
                 gamma0(float): Γ_0(ν_max) of Vrard et al. (2018)
                 Central_DeltaNu(float): DeltaNu estimate from 3 central radial modes [micro-Hertz]
@@ -53,7 +53,7 @@ def peak_bag_mode_id02(pds, peaks, data):
                 Central_eps_p(float): Central_eps_p standard deviation [micro-Hertz]
                 Central_alpha(float): alpha estimate from 3 central radial modes [micro-Hertz]
                 Central_alpha(float): Central_alpha standard deviation [micro-Hertz]
-                
+
 
 
     """
@@ -71,10 +71,12 @@ def peak_bag_mode_id02(pds, peaks, data):
             r_pds = ro.conversion.py2rpy(pds)
             r_peaks = ro.conversion.py2rpy(peaks)
             r_data = ro.conversion.py2rpy(data)
-            result = peak_bag_mode_id02.peak_bag_mode_id02_r(r_pds, r_peaks, r_data)
-            
+            r_contours = ro.conversion.py2rpy(contours)
+            result = peak_bag_mode_id02.peak_bag_mode_id02_r(r_pds, r_peaks, r_data, r_contours)
+
             peaks = ro.conversion.rpy2py(result['peaks'])
             flag = ro.conversion.rpy2py(result['flag'])
+            flag_contour = ro.conversion.rpy2py(result['flag_contour'])
             data = ro.conversion.rpy2py(result['data'])
-            
-            return peaks, int(flag[0]), data
+
+            return peaks, int(flag[0]), int(flag_contour[0]), data
