@@ -51,8 +51,6 @@ def peak_bag_mode_id02(pds, peaks, data, contours):
                 Central_DeltaNu_sd(float): Central_DeltaNu standard deviation [micro-Hertz]
                 Central_eps_p(float): eps_p estimate from 3 central radial modes [micro-Hertz]
                 Central_eps_p(float): Central_eps_p standard deviation [micro-Hertz]
-                Central_alpha(float): alpha estimate from 3 central radial modes [micro-Hertz]
-                Central_alpha(float): Central_alpha standard deviation [micro-Hertz]
 
 
 
