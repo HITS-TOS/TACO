@@ -12,3 +12,4 @@ jupyter/.ipynb_checkpoints/
 pipeline/pds_fit_quantiles.csv
 pipeline/pds_fit.log
 result*
+.DS_Store
