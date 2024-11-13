@@ -11,3 +11,4 @@ jupyter/pds_fit_quantiles.csv
 jupyter/.ipynb_checkpoints/
 pipeline/pds_fit_quantiles.csv
 pipeline/pds_fit.log
+result*
