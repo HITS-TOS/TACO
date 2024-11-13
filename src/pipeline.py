@@ -75,7 +75,7 @@ def pipeline(argv):
     final_modesfile= settings['pipeline'][11]['filenames']['final_modes']
 
     # Open csv file necessary for numax-dnu internal flag
-    contours = pd.read_csv('contour_90pct_interp.csv')
+    contours = pd.read_csv('~/TACO/contour_90pct_interp.csv')
 
     # open a csv files to log the stars that have been processed + their flags
 
