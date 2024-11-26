@@ -41,8 +41,8 @@ DeltaNu_from_peaks_lm <- function(peaks, .l = NULL, numax = NULL, alpha = TRUE) 
     if((alpha == TRUE) & (!is.null(numax))) {
         # Approximate nmax
         n_max <- numax / mean(diff(peaks$frequency)) - eps_p_from_Dnu(DeltaNu_from_numax(numax))
-        peaks$quad <- (peaks$n - n_max)^2 
-  
+        peaks$quad <- (peaks$n - n_max)^2
+
         res <-
             peaks %>%
             # 11/02/2020 added in uncertainties as weights
@@ -55,7 +55,7 @@ DeltaNu_from_peaks_lm <- function(peaks, .l = NULL, numax = NULL, alpha = TRUE) 
         # Delta Nu and uncertainty
         Dnu <- list(DeltaNu=res$estimate[2], DeltaNu_sd=res$std.error[2])
         # Compute epsilon_p and error estimate
-        c <- list(c=res$estimate[1], c_sd=res$std.error[1])    
+        c <- list(c=res$estimate[1], c_sd=res$std.error[1])
         eps <- c$c / Dnu$DeltaNu
         eps_sd <- eps * sqrt((c$c_sd/c$c)^2 + (Dnu$DeltaNu_sd/Dnu$DeltaNu)^2)
         eps <- list(eps=eps, eps_sd=eps_sd)
@@ -93,7 +93,7 @@ DeltaNu_from_peaks_lm <- function(peaks, .l = NULL, numax = NULL, alpha = TRUE) 
         # Delta Nu and uncertainty
         Dnu <- list(DeltaNu=res$estimate[2], DeltaNu_sd=res$std.error[2])
         # Compute epsilon_p and error estimate
-        c <- list(c=res$estimate[1], c_sd=res$std.error[1])    
+        c <- list(c=res$estimate[1], c_sd=res$std.error[1])
         eps <- c$c / Dnu$DeltaNu
         eps_sd <- eps * sqrt((c$c_sd/c$c)^2 + (Dnu$DeltaNu_sd/Dnu$DeltaNu)^2)
         eps <- list(eps=eps, eps_sd=eps_sd)
@@ -166,7 +166,7 @@ alpha_obs_from_DeltaNu_Hekker24 <- function(DeltaNu) {
 
 #' Calculate the heights of the l=0/2 pair as a function of numax
 l02_amplitudes <- function(l0_freqs, l2_freqs, numax, HBR, sigmaEnv, DeltaNu) {
-    # Set to total relative visibility for Kepler - for TESS this should be 
+    # Set to total relative visibility for Kepler - for TESS this should be
     # set to 2.94 and 4.09 for SONG
     vis_tot <- 3.16
     vis_l2 <- 0.58 # for Kepler, 0.46 for TESS and 1.04 for SONG
@@ -244,7 +244,7 @@ l02_pattern <- function(pds, DeltaNu, numax, HBR, sigmaEnv, d02, l0_freq, linewi
 
 tag_central_l02 <- function(peaks, pds, DeltaNu, d02, numax,
                             HBR, sigmaEnv,
-                            linewidth) {    
+                            linewidth) {
     deltanu <- abs(diff(pds$frequency[1:2]))
     pds <-
         pds %>%
@@ -267,8 +267,8 @@ tag_central_l02 <- function(peaks, pds, DeltaNu, d02, numax,
         filter(frequency > numax - 1.1*DeltaNu,
                frequency < numax + 1.1*DeltaNu) %>%
         nrow()
-    
-    
+
+
     # TODO: CHECK MAX LAG: EFFECTIVELY NUMAX+/-DELTANU/2, BUT NEEDS TO BE A BIT MORE
     pds.ccf <-
         ccf(x = pds$power,
@@ -301,8 +301,8 @@ tag_central_l02 <- function(peaks, pds, DeltaNu, d02, numax,
 
     central_l0_expected <-
         numax + deltanu * pds.ccf$lag[which.max(pds.ccf$acf)]
-    
-    
+
+
     #print(paste0("expected frequency for central l=0 mode from CCF ", central_l0_expected))
     #print(peaks)
     #print(median(peaks$amplitude,na.rm = TRUE))
@@ -321,7 +321,7 @@ tag_central_l02 <- function(peaks, pds, DeltaNu, d02, numax,
             slice(1) %>%
             select(-l0_dist) %>%
             mutate(l = 0)
-       
+
        #print(nrow(central_l0))
        if (nrow(central_l0) == 0){
            central_l0 <-
@@ -352,7 +352,7 @@ tag_central_l02 <- function(peaks, pds, DeltaNu, d02, numax,
         #print(central_l0)
         #print(central_l0$frequency - 1.7*d02)
         #print(central_l0$frequency - 0.5*d02)
-        
+
        central_l2 <-
             peaks %>%
             filter(!is.na(linewidth), !is.na(linewidth_sd), linewidth > 0.3*deltanu,
@@ -394,7 +394,7 @@ tag_central_l02 <- function(peaks, pds, DeltaNu, d02, numax,
     #print(central_l02)
     #print("peaks from tag_l02_peaks")
     #print(peaks)
-    
+
     return(peaks)
 }
 
@@ -402,7 +402,7 @@ tag_central_l02 <- function(peaks, pds, DeltaNu, d02, numax,
 tag_l02_pair <- function(peaks, pds, DeltaNu, d02, alpha, search.range, current_radial_order, central_radial_order, sign) {
     # Bin width
     deltanu <- abs(diff(pds$frequency[1:2]))
-    
+
     # Define current l=0 and l=2 modes
     current_l0 <-
         peaks %>%
@@ -420,8 +420,8 @@ tag_l02_pair <- function(peaks, pds, DeltaNu, d02, alpha, search.range, current_
     #       print(current_l0)
     #       print(current_l2)
     #   }
-        
-    # If have no current_l0 but have l2. This can occur when there is a radial order with a 
+
+    # If have no current_l0 but have l2. This can occur when there is a radial order with a
     # detected l=2, but no detected l=0
     if((nrow(current_l0) == 0) & (nrow(current_l2) > 0)){
         current_l0 <- current_l2 %>% mutate(frequency = frequency + d02, l=0)
@@ -431,7 +431,7 @@ tag_l02_pair <- function(peaks, pds, DeltaNu, d02, alpha, search.range, current_
         # If have l0 but no l2
         current_l2 <- current_l0 %>% mutate(frequency = frequency - d02, l=2)
         current_l2 <- current_l2 %>% mutate(n = current_radial_order-1, l=2)
-    } 
+    }
     else if((nrow(current_l0) == 0) & (nrow(current_l2) == 0)){
         # If have no l=0 or l=2 then just return peaks with no mode ID performed
         # in this radial order
@@ -441,7 +441,7 @@ tag_l02_pair <- function(peaks, pds, DeltaNu, d02, alpha, search.range, current_
     #current_l02 <- bind_rows(current_l0, current_l2)
     #print(current_l02)
     #print(l2mnfreq)
-    
+
     # Estimate d02 from frequencies
     #d02 <- abs(diff(current_l02$frequency))
     #print(alpha)
@@ -457,13 +457,13 @@ tag_l02_pair <- function(peaks, pds, DeltaNu, d02, alpha, search.range, current_
     if(sign < 0) predictedl0 <- (current_l0$frequency - (DeltaNu * (1.0 + (alpha) * (current_radial_order - 1 - central_radial_order))))
     if(sign > 0) predictedl2 <- (current_l2$frequency + (DeltaNu * (1.0 + (alpha) * (current_radial_order  - central_radial_order))))
     if(sign < 0) predictedl2 <- (current_l2$frequency - (DeltaNu * (1.0 + (alpha) * (current_radial_order  - 2 - central_radial_order))))
-    
+
     #print("predicted l=2")
     #print(predictedl2)
     #print("predicted l=0")
     #print(predictedl0)
 
-    
+
     ################################################
 
 
@@ -511,7 +511,7 @@ tag_l02_pair <- function(peaks, pds, DeltaNu, d02, alpha, search.range, current_
     #                    #  select(-min_dist2) %>%
     #                    #  select(-amplitude)
     #      }
-    
+
     # Find closest peak
     #closest_peak <- peaks %>%
     # This line might be a bit suspect as will fail when get to shorter datasets! Maybe better to take widest peak e.g.
@@ -533,7 +533,7 @@ tag_l02_pair <- function(peaks, pds, DeltaNu, d02, alpha, search.range, current_
     #     print(closest_peak)
     # }
     # If we have a closest peak
-    
+
     if(nrow(closest_peak) >= 1){
         # Compute distances between predicted l=0,2 frequencies and closest peaks
         dist_l0 <- (closest_peak$frequency - ifelse(sign > 0,
@@ -544,7 +544,7 @@ tag_l02_pair <- function(peaks, pds, DeltaNu, d02, alpha, search.range, current_
                                                     current_l2$frequency + (DeltaNu * (1.0 + (alpha) * (current_radial_order - central_radial_order))),
                                                     current_l2$frequency - (DeltaNu * (1.0 + (alpha) * (current_radial_order - 2 - central_radial_order)))
                                                     )) / DeltaNu
-      
+
         # 31/05/2021 changed the values a bit to incorporate more room for curvature
      #   if( DeltaNu < 4){
      #       bounds0 <- -0.05
@@ -553,9 +553,9 @@ tag_l02_pair <- function(peaks, pds, DeltaNu, d02, alpha, search.range, current_
      #       bounds0 <- -0.05
      #       bounds1 <- 0.15
      #   }
-        
-        
-        
+
+
+
         # If peak is closer to l=0 than l=2, assign l=0
         #print(closest_peak)
         #print(dist_l0)
@@ -587,11 +587,11 @@ tag_l02_pair <- function(peaks, pds, DeltaNu, d02, alpha, search.range, current_
         } else {
             return(peaks)
         }
-    # If don't find a close peak then return 
+    # If don't find a close peak then return
     } else{
         return(peaks)
     }
-    
+
     # if(sign > 0){
     #     print("New Peaks")
     #     print(current_l0)
@@ -636,19 +636,19 @@ tag_l02_pair <- function(peaks, pds, DeltaNu, d02, alpha, search.range, current_
                 arrange(-amplitude) %>%
                 slice(1) %>%
                 mutate(l = 2, n = ifelse(sign > 0, current_l0$n, current_l0$n - 2))
-        
+
         #print(l0_peak)
         #print(peaks)
         #closest_peak_info <- peaks %>%
         #                        filter(!is.na(linewidth),linewidth > 0.3*deltanu,
         #                            frequency > l0_peak$frequency - 1.5*d02,
-        #                            frequency < l0_peak$frequency - 0.5*d02) 
-                
+        #                            frequency < l0_peak$frequency - 0.5*d02)
+
         #print('HOLA MUNDO 2')
         #print('small freq:')
         #print(d02)
         #print(closest_peak_info)
-        
+
         #l2_peak <- closest_peak_info %>%
         #                arrange(-amplitude) %>%
         #                slice(1) %>%
@@ -676,7 +676,7 @@ tag_l02_pair <- function(peaks, pds, DeltaNu, d02, alpha, search.range, current_
     l02_pair <-
         bind_rows(l0_peak, l2_peak)
     #print(l02_pair)
-   
+
     res <-
         bind_rows(
             l02_pair,
@@ -708,7 +708,7 @@ tag_l02_peaks <- function(peaks, pds, DeltaNu, d02, alpha, numax, HBR, sigmaEnv,
         peaks %>%
         filter(l == 0 | l == 2) %>%
         nrow()
-    
+
     continue_p <- TRUE
     DeltaNu_lower <- DeltaNu
     DeltaNu_upper <- DeltaNu
@@ -725,10 +725,10 @@ tag_l02_peaks <- function(peaks, pds, DeltaNu, d02, alpha, numax, HBR, sigmaEnv,
             #slice(1)
     #l2mnfreq <-weighted.mean(l2$frequency,l2$amplitude,.,na.rm=TRUE)
     #print(l2mnfreq)
-            
+
     print("CENTRAL PEAKS")
     print("=======================")
-            
+
     if ((nrow(l2) > 0) & (nrow(l0) > 0)) {
         d02 <- l0$frequency-l2$frequency
     }
@@ -737,7 +737,7 @@ tag_l02_peaks <- function(peaks, pds, DeltaNu, d02, alpha, numax, HBR, sigmaEnv,
     radial_order_low <- max(l0$n)
     central_radial_order <- max(l0$n)
     # This is designed to improve estimate of delta nu upper and lower.
-    # Accounts for the fact that if central l0 is above numax then will 
+    # Accounts for the fact that if central l0 is above numax then will
     # calculated delta nu lower wrong (have one too many radial orders),
     # and vice versa for delta nu upper.
     # if(l0$frequency > numax){
@@ -766,7 +766,7 @@ tag_l02_peaks <- function(peaks, pds, DeltaNu, d02, alpha, numax, HBR, sigmaEnv,
             peaks %>%
             tag_l02_pair(pds = pds, DeltaNu = DeltaNu, d02 = d02, alpha = alpha, search.range = search.range, current_radial_order=radial_order_high, central_radial_order=central_radial_order, sign=+1) %>%
             tag_l02_pair(pds = pds, DeltaNu = DeltaNu, d02 = d02, alpha = alpha, search.range = search.range, current_radial_order=radial_order_low, central_radial_order=central_radial_order, sign=-1)
-        
+
         radial_order_high <- radial_order_high + 1
         radial_order_low <- radial_order_low - 1
         # Take delta nu as average of differences of l=0 below and above central l=0 peak
@@ -778,8 +778,8 @@ tag_l02_peaks <- function(peaks, pds, DeltaNu, d02, alpha, numax, HBR, sigmaEnv,
             #print(DeltaNu)
             #stop()
        # }
-       
-        
+
+
         #peaks_upper <- peaks %>%
         #                filter((l==0) & (frequency >= central_l0))
         #if(nrow(peaks_upper) > 1){
@@ -797,10 +797,10 @@ tag_l02_peaks <- function(peaks, pds, DeltaNu, d02, alpha, numax, HBR, sigmaEnv,
         #print(peaks_upper)
         #print(DeltaNu_upper)
         #stop()
-        # Compute DeltaNu from currently detected radial modes. - THIS IS A BAD IDEA AS CURVATURE MESSES WITH THIS!                        
+        # Compute DeltaNu from currently detected radial modes. - THIS IS A BAD IDEA AS CURVATURE MESSES WITH THIS!
         #res <- DeltaNu_from_peaks_lm(peaks, .l = 0)
         #DeltaNu <- res$Dnu$DeltaNu
-        
+
         # Set of tagged peaks, included the most recently tagged pairs.
         n.l02.new <-
             peaks %>%
@@ -906,7 +906,7 @@ DeltaNu_l0_fit <- function(peaks, numax, DeltaNu0,alpha0,
         filter(l==0)
     if(nrow(l0_peaks) == 0)
         stop(paste("'peaks' does not have l=0 modes"))
-   
+
     res <-
         optim(
             # I use theta = (DeltaNu, epsilonp, alpha)
@@ -971,7 +971,7 @@ DeltaNu_l0_fit_nmax <- function(peaks, numax, DeltaNu0,alpha0,
         filter(l==0)
     if(nrow(l0_peaks) == 0)
         stop(paste("'peaks' does not have l=0 modes"))
-   
+
     n_max0 <- numax/DeltaNu0 - eps_p_from_Dnu(DeltaNu0) # Using updated expression from Mosser et al. (2018)
     #print(n_max0)
     res <-
@@ -1035,10 +1035,11 @@ DeltaNu_l0_fit_Hekker24 <- function(peaks, numax) {
         filter(l==0)
     if(nrow(l0_peaks) == 0)
         stop(paste("'peaks' does not have l=0 modes"))
-        
+
+    print(l0_peaks)
     lm_freq= lm(frequency ~ n, data = l0_peaks)
-    #print(summary(lm_freq))
-    
+    print(summary(lm_freq))
+
     lm_summary <- summary(lm_freq)
     lm_coeffs <- lm_summary$coefficients
     DeltaNu.estimate <- lm_coeffs["n","Estimate"]
@@ -1047,7 +1048,7 @@ DeltaNu_l0_fit_Hekker24 <- function(peaks, numax) {
     intercept.error <- lm_coeffs["(Intercept)","Std. Error"]
     eps_p <- intercept.estimate/DeltaNu.estimate
     eps_p_sd <- eps_p*sqrt((intercept.error/intercept.estimate)^2+(DeltaNu.error/DeltaNu.estimate)^2)
-    
+
     alpha <- -99.9
     alpha_sd <- -99.9
 
@@ -1078,12 +1079,12 @@ DeltaNu_l2_fit <- function(peaks, numax, DeltaNu0, alpha0, eps_p0, d020,
                           return_res = FALSE) {
     #alpha0 <- alpha_obs_from_n_max(n_max = (numax/DeltaNu0))
     #print(5*alpha0)
- 
+
     l2_peaks <-
         peaks %>%
         arrange(frequency) %>%
         filter(l==2)
-         
+
     #if(nrow(l2_peaks) > 0) {
     #    tmp_l2_0 <- l2_peaks %>%
     #       filter(n==min(l2_peaks$n))
@@ -1101,13 +1102,13 @@ DeltaNu_l2_fit <- function(peaks, numax, DeltaNu0, alpha0, eps_p0, d020,
             #tmp_l2 <- tmp_l2 %>%
             #    mutate(frequency = l2mnfreq, amplitude = l2totampl) %>%
             #    slice(1)
-       
+
     #        if (i > min(l2_peaks$n)){
     #            l2_unique <-
     #                bind_rows(l2_unique,tmp_l2)
     #         }
     #    }
-    
+
      #   l2_peaks <- l2_unique
         res2 <-
             optim(
@@ -1126,12 +1127,12 @@ DeltaNu_l2_fit <- function(peaks, numax, DeltaNu0, alpha0, eps_p0, d020,
                                   DeltaNu = DeltaNu0,
                                   d02     = theta[1]),
                            diffsq = (frequency - predFreq)^2)
-                    
+
                     if(weight.by.amplitudes) {
                         pks <-
                             pks %>% mutate(diffsq = amplitude * diffsq)
                     }
-                   
+
                     res2 <-
                         pks %>%
                         summarise(sqdiff_sum = sum(diffsq)) %>%
@@ -1152,7 +1153,7 @@ DeltaNu_l2_fit <- function(peaks, numax, DeltaNu0, alpha0, eps_p0, d020,
             }
         sd <- sqrt(diag(solve(res2$hessian)))
         #if(res$convergence != 0) stop("Error (DeltaNu_l_fit): optim didn't converge")
-       
+
         return(
             list(
                 d02      = res2$par[1],
@@ -1227,17 +1228,17 @@ central_d02 <- function(peaks, numax) {
         slice(1) %>%
         select(n) %>%
         as.numeric()
-    
+
     l0_central <-
         peaks %>%
         filter(n == n.central & l == 0)
-    
+
     l2_central <-
             peaks %>%
             filter(n == n.central-1 & l == 2)
-    
+
     l02_central <- bind_rows(l0_central, l2_central)
-    
+
     d02 <- ifelse(nrow(l02_central) == 2, abs(diff(l02_central$frequency)), NA)
     return(d02)
 }

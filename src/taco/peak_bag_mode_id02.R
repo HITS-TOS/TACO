@@ -226,6 +226,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data, contour) {
     res <- DeltaNu_l0_fit_Hekker24(
                 peaks = peaks %>%
                 filter(l == 0) %>%
+                filter(AIC > 2) %>%   #only select modes where we are rather sure that they are not noise peaks
                     drop_na() %>% # in case have nan in frequency_sd
                     arrange(frequency),
                     numax = data$numax)
@@ -236,6 +237,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data, contour) {
     Eps_p <- res$eps_p
     Alpha <- res$alpha
     Alpha_sd <- res$alpha_sd
+    print(res)
 
     # For consistency with epsilon from Kallinger et al. (2012)
     if (Eps_p < 0) {
@@ -298,7 +300,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data, contour) {
     l3 <- peaks %>% filter((x > 0.15))
     l3 <- peaks %>% filter((x < 0.26))
     l3['n'] <- floor((l3$frequency / Dnu) - Eps_p)
-
+    print(l3)
     if (nrow(l3) > 0) {
         print("Tagging any possible l=3 modes...")
         tmp_l0 <- peaks %>% filter(l == 0)

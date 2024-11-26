@@ -440,7 +440,7 @@ def visualise_echelle(selected_dir, KIC, psd_bgr, summary, session):
         peaks = pd.read_csv(final_peaks_MLE_file)
 
         MARKERS = ["circle", "square", "triangle", "hex"]
-        MODE_DEGREE = ["l=0", "l=2", "l=1", "l=3"]
+        MODE_DEGREE = ["l=0", "l=2", "l=?", "l=3"]
         COLOURS = ["red", "green", "blue", "orange"]
 
         numax = summary['numax'].item()
@@ -590,7 +590,7 @@ def visualise_echelle(selected_dir, KIC, psd_bgr, summary, session):
             "frequency": np.r_[l0_y, l2_y, l1_y, l3_y],
             "l": np.r_[np.array(["l=0"]*len(l0_x)),
                        np.array(["l=2"]*len(l2_x)),
-                       np.array(["l=1"]*len(l1_x)),
+                       np.array(["l=?"]*len(l1_x)),
                        np.array(["l=3"]*len(l3_x))],
             "size": np.r_[l0_size, l2_size, l1_size, l3_size]
         })
