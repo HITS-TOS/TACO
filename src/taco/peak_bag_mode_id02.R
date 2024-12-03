@@ -297,7 +297,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data, contour) {
     # 31/01/2020 Tag l=3 as wide modes around where expected
     peaks$x <- (peaks$frequency / Dnu - Eps_p) %% 1 #include alpha
     # l=3 occur at l=0 + deltanu/2 - 0.280 according to Mosser et al. (2010)
-    l3 <- peaks %>% filter((x > 0.15))   # was selecting from peaks
+    l3 <- peaks %>% filter((x > 0.15))
     l3 <- l3 %>% filter((x < 0.26))   # was selecting from peaks
     l3['n'] <- floor((l3$frequency / Dnu) - Eps_p)
     print(l3)
