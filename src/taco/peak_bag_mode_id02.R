@@ -237,7 +237,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data, contour) {
     Eps_p <- res$eps_p
     Alpha <- res$alpha
     Alpha_sd <- res$alpha_sd
-    print(res)
+    #print(res)
 
     # For consistency with epsilon from Kallinger et al. (2012)
     if (Eps_p < 0) {
@@ -300,9 +300,10 @@ peak_bag_mode_id02_r <- function(pds, peaks, data, contour) {
     l3 <- peaks %>% filter((x > 0.15))
     l3 <- l3 %>% filter((x < 0.26))   # was selecting from peaks
     l3['n'] <- floor((l3$frequency / Dnu) - Eps_p)
-    #print(l3)
+    print(l3)
     if (nrow(l3) > 0) {
         print("Tagging any possible l=3 modes...")
+        print(l3)
         tmp_l0 <- peaks %>% filter(l == 0)
 
         for (i in unique(l3$n)) {
