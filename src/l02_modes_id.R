@@ -1038,7 +1038,7 @@ DeltaNu_l0_fit_Hekker24 <- function(peaks, numax) {
 
     print(l0_peaks)
     lm_freq= lm(frequency ~ n, data = l0_peaks)
-    print(summary(lm_freq))
+    #print(summary(lm_freq))
 
     lm_summary <- summary(lm_freq)
     lm_coeffs <- lm_summary$coefficients

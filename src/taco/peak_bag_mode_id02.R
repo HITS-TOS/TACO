@@ -300,7 +300,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data, contour) {
     l3 <- peaks %>% filter((x > 0.15))
     l3 <- l3 %>% filter((x < 0.26))   # was selecting from peaks
     l3['n'] <- floor((l3$frequency / Dnu) - Eps_p)
-    print(l3)
+    #print(l3)
     if (nrow(l3) > 0) {
         print("Tagging any possible l=3 modes...")
         tmp_l0 <- peaks %>% filter(l == 0)
