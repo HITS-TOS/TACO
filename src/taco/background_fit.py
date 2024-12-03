@@ -222,6 +222,11 @@ def background_fit(pds, ofac_pds, data, output = '', output_directory = '', **kw
                 return None, None, None, flag
 
 
+            if bg_parameters[numax_index] > data['nuNyq'].iloc[0]:
+                flag = 4
+                print('Numax larger than Nyquist frequency')
+
+
             idx_closest_numax = np.where(abs(pds['frequency'].values - bg_parameters[numax_index]) == np.min(np.abs(pds['frequency'].values - bg_parameters[numax_index])))[0]
 
             data['Hmax'] = full_model[idx_closest_numax].values
@@ -238,6 +243,7 @@ def background_fit(pds, ofac_pds, data, output = '', output_directory = '', **kw
                 bkg_summary.to_csv(Path(output_directory,settings.output_quantiles), index = False)
             else:
                 j+=1
+
 
 
     if (done_p and not done_q):
