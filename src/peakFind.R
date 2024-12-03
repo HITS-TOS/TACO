@@ -110,7 +110,7 @@ if (argv$removel02 == TRUE){
     #deltanu <- diff(d.pds$frequency[1:2])
 
 
-    print("Removing l=0,2,3 first")
+    print("Removing l=0,2 first")
     d.peaks <- try(read_csv(argv$peaks, col_types = cols()) %>%
                         filter(frequency > d.summary$numax - 3*d.summary$sigmaEnv,
                                frequency < d.summary$numax + 3*d.summary$sigmaEnv))
@@ -129,7 +129,7 @@ if (argv$removel02 == TRUE){
         } else{
             d.pds_l02_removed <- d.new_pds
         }
-    } 
+    }
 
     #X11()
     #plot(d.pds, type='l')
@@ -138,7 +138,7 @@ if (argv$removel02 == TRUE){
     #print(peaks_idx)
     #prompt  <- "hit spacebar to close plots"
     #extra   <- "some extra comment"
-    #capture <- tk_messageBox(message = prompt, detail = extra) 
+    #capture <- tk_messageBox(message = prompt, detail = extra)
 
     # 01/05/2020 Oversample if resolution is too bad to find "unresolved" modes.
     #deltanu = mean(diff(d.pds$frequency))

@@ -286,9 +286,16 @@ def pipeline(argv):
                                     summary.to_csv(Path(argv.output_directory, input_name, summaryfile), index = False)
                                     all_peaks.to_csv(Path(argv.output_directory, input_name, final_modesfile), index = False)
 
-                                    # 12) Bag_period_spacing
+                                # 12) Bag mode id3
+                                if (((len(peaks_mle.frequency)) >= 3) and (flag_mle_resolved == 0.0)):
+                                    print('12) Identify l=3 modes')
+                                    all_peaks, summary = taco.peak_bag_mode_id3(pds_bgr, all_peaks, summary)
+                                    summary.to_csv(Path(argv.output_directory, input_name, summaryfile), index = False)
+                                    all_peaks.to_csv(Path(argv.output_directory, input_name, final_modesfile), index = False)
+
+                                    # 13) Bag_period_spacing
                                     if (flag_mle_final == 0):
-                                        print('12) Find period spacing')
+                                        print('13) Find period spacing')
                                         pds_bgr, all_peaks, flag_dP, summary = taco.peak_bag_period_spacing(pds_bgr, all_peaks, summary,
                                             **settings['pipeline'][10]['peak_bag_period_spacing'])
                                         summary.to_csv(Path(argv.output_directory, input_name, summaryfile), index = False)

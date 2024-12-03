@@ -11,9 +11,9 @@ source("src/l02_modes_id.R", chdir = TRUE)
 peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
                         removel02, minAIC, navg, finalfit) {
 
-    
+
     peaks <- peaks %>% arrange(frequency)
-    
+
     ## Trim to relevant region
     peaks <-
         peaks %>%
@@ -23,7 +23,7 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
         pds %>%
         filter(frequency > data$numax - 3 * data$sigmaEnv &
                frequency < data$numax + 3 * data$sigmaEnv)
-               
+
     flag <- 0
 
     deltanu <- diff(pds$frequency[1:2])
@@ -46,7 +46,7 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
         #peaks <- peaks %>% arrange(frequency)
         #peaks_low <- peaks %>% filter(AIC < minAIC)
         #peaks_high <- peaks %>% filter(AIC >= minAIC)
-        
+
         #if (nrow(peaks_low) != 0){
         peaks <- peaks %>% peaks_with_low_AIC(pds, minAIC = minAIC, naverages=1)
         #}
@@ -55,7 +55,7 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
         #                                pds = pds,
         #                                maxLWD = maxlwd,
         #                                naverages = navg)
-        
+
         #peaks.mle <- peaks_MLE_final_sd(peaks = peaks,
         #                                pds = pds,
         #                                final_fit_factor = 0.3,
@@ -77,7 +77,7 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
     } else {
         #   Only find resolved peaks from mixed modes
         if (removel02 == TRUE) {
-            print("Removing l=0,2,3 first")
+            print("Removing l=0,2 first")
             if (nrow(peaks) != 0) {
                 l02_peaks <-
                     peaks %>%
@@ -120,7 +120,7 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
                 maxlwd <- 1.5 * as.numeric(maxlwd)
                 print(paste("Maximum peak linewidth (HWHM) set, using value ", maxlwd, "uHz"))
             }
-            
+
             peaks.mle <- peaks_MLE_sd(peaks = rest_peaks,
                                       pds = pds_l02_removed,
                                       maxLWD = maxlwd,
@@ -148,7 +148,7 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
                 flag <- 1
                 return(list(peaks.mle, flag, data))
             }
-            
+
             # 22/12/19 Add in maxlwd default so consistent with peakfind
             if (is.null(maxlwd)) {
                 deltanu_est <- DeltaNu_from_numax(data$numax)

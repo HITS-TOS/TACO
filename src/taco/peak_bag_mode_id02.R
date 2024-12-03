@@ -294,46 +294,47 @@ peak_bag_mode_id02_r <- function(pds, peaks, data, contour) {
         d02.central <- 0.0
     }
 
-    # 31/01/2020 Tag l=3 as wide modes around where expected
-    peaks$x <- (peaks$frequency / Dnu - Eps_p) %% 1 #include alpha
-    # l=3 occur at l=0 + deltanu/2 - 0.280 according to Mosser et al. (2010)
-    l3 <- peaks %>% filter((x > 0.13))
-    l3 <- l3 %>% filter((x < 0.26))   # was selecting from peaks
-    l3['n'] <- floor((l3$frequency / Dnu) - Eps_p)
-    print(l3)
-    if (nrow(l3) > 0) {
-        print("Tagging any possible l=3 modes...")
-        print(l3)
-        tmp_l0 <- peaks %>% filter(l == 0)
+  # moved the l=3 determination to after the full fit in a separate module
+  #  # 31/01/2020 Tag l=3 as wide modes around where expected
+  #  peaks$x <- (peaks$frequency / Dnu - Eps_p) %% 1 #include alpha
+  #  # l=3 occur at l=0 + deltanu/2 - 0.280 according to Mosser et al. (2010)
+  #  l3 <- peaks %>% filter((x > 0.13))
+  #  l3 <- l3 %>% filter((x < 0.26))   # was selecting from peaks
+  #  l3['n'] <- floor((l3$frequency / Dnu) - Eps_p)
+  #  print(l3)
+  #  if (nrow(l3) > 0) {
+  #      print("Tagging any possible l=3 modes...")
+  #      print(l3)
+  #      tmp_l0 <- peaks %>% filter(l == 0)
 
-        for (i in unique(l3$n)) {
-            # Take widest l=3 candidate
-            tmp_l3 <- l3 %>%
-                        filter(n == i) %>%
-                        arrange(-linewidth) %>%
-                        slice(1)
+#        for (i in unique(l3$n)) {
+#           # Take widest l=3 candidate
+#            tmp_l3 <- l3 %>%
+#                        filter(n == i) %>%
+#                        arrange(-linewidth) %>%
+#                        slice(1)
 
             # TODO: Need to make sure checking against l=0 with right radial order!
-            closest_l0_amp = tmp_l0 %>%
-                                filter(n == i) %>%
-                                select(amplitude)
-            closest_l0_width = tmp_l0 %>%
-                                filter(n == i) %>%
-                                select(linewidth)
+#            closest_l0_amp = tmp_l0 %>%
+#                                filter(n == i) %>%
+#                                select(amplitude)
+#            closest_l0_width = tmp_l0 %>%
+#                                filter(n == i) %>%
+#                                select(linewidth)
 
             # Make sure there is a nearest l=0 before doing this
-            if (is.na(tmp_l3$l) && !is.na(tmp_l3$linewidth)) {
-                if ((nrow(closest_l0_amp) > 0) && (nrow(closest_l0_width) > 0) && tmp_l3$linewidth > deltanu) {
-                        peaks$l[peaks$frequency == tmp_l3$frequency] <- 3
-                        # Subtract one from nearest l=0 radial order to ensure correct
-                        peaks$n[peaks$frequency == tmp_l3$frequency] <- tmp_l3$n - 1
-            }
-            }
-        }
-    }
+#            if (is.na(tmp_l3$l) && !is.na(tmp_l3$linewidth)) {
+#                if ((nrow(closest_l0_amp) > 0) && (nrow(closest_l0_width) > 0) && tmp_l3$linewidth > deltanu) {
+#                        peaks$l[peaks$frequency == tmp_l3$frequency] <- 3
+#                        # Subtract one from nearest l=0 radial order to ensure correct
+#                        peaks$n[peaks$frequency == tmp_l3$frequency] <- tmp_l3$n - 1
+#           }
+#            }
+#        }
+#    }
 
     # Drop x column as no longer needed
-    peaks <- peaks %>% select(-x)
+#    peaks <- peaks %>% select(-x)
 
     # Fit through frequencies to estimate delta nu, epsilon and alpha
     #res <- DeltaNu_l0_fit(

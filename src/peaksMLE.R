@@ -112,9 +112,9 @@ if (argv$finalfit == TRUE) {
 
 
     d.peaks.mle <-
-        peaks_MLE_final_sd(peaks = d.peaks, pds = d.pds_bgr, 
+        peaks_MLE_final_sd(peaks = d.peaks, pds = d.pds_bgr,
                            final_fit_factor = 0.1, naverages=argv$navg) %>%
-        arrange(frequency) 
+        arrange(frequency)
 
     # 31/01/2020 Add n and l ID back in as no frequencies will have been removed
     d.peaks.mle$n <- d.peaks$n
@@ -127,7 +127,7 @@ if (argv$finalfit == TRUE) {
 
     DeltaNu <- d.summary$DeltaNu
     eps_p <- d.summary$eps_p
-    
+
     ## Write the output
     write_csv(x = d.peaks.mle, file = argv$output)
     write_csv(x = d.summary,   file = argv$summary)
@@ -137,7 +137,7 @@ if (argv$finalfit == TRUE) {
 } else {
     #   Only find resolved peaks from mixed modes
     if (argv$removel02 == TRUE){
-        print("Removing l=0,2,3 first")
+        print("Removing l=0,2 first")
         if (nrow(d.peaks) != 0){
             d.l02_peaks <-
                 d.peaks %>%
@@ -150,7 +150,7 @@ if (argv$finalfit == TRUE) {
             d.pds_l02_removed <- d.pds_bgr
         }
         ## Do the calculations
-        d.rest_peaks <-     
+        d.rest_peaks <-
                 read_csv(argv$mixedpeaks,
                 col_types = cols(frequency = col_number(),
                                 amplitude = col_number(),
@@ -178,19 +178,19 @@ if (argv$finalfit == TRUE) {
             maxlwd <- 1.5*as.numeric(argv$maxlwd)
             print(paste("Maximum peak linewidth (HWHM) set, using value ", maxlwd, "uHz"))
         }
-    
+
         d.peaks.mle <-
             peaks_MLE_sd(peaks = d.rest_peaks, pds = d.pds_l02_removed, maxLWD = maxlwd, naverages=argv$navg) %>%
             arrange(frequency) %>%
             filter(AIC > argv$minAIC)
-            
+
         # Add n,l & m columns so consistent with l=0,2 peaks file
         d.peaks.mle[,c("n","l")] <- NA
 
         ## Write the output
         write_csv(x = d.peaks.mle, file = argv$mixedoutput)
         ## Concatenate l=0,2 from first peaks file and mixed peaks file and save to peaksMLE.csv
-      
+
         d.peaks.full <- rbind(d.l02_peaks, d.peaks.mle)
 
         write_csv(x = d.peaks.full, file= argv$output)
@@ -232,7 +232,7 @@ if (argv$finalfit == TRUE) {
             peaks_MLE_sd(peaks = d.peaks, pds = d.pds_bgr, maxLWD = maxlwd, naverages=argv$navg) %>%
             arrange(frequency) %>%
             filter(AIC > argv$minAIC)
-            
+
             if (max(d.peaks.mle$linewidth) >= 0.95*maxlwd){
                 print("modes larger than 0.95*maxlwd, redoing the fit")
 
@@ -245,19 +245,19 @@ if (argv$finalfit == TRUE) {
                 filter(linewidth >= 0.95*maxlwd) %>%
                 mutate(frequency = frequency-0.5*maxlwd) %>%
                 mutate(linewidth = maxlwd/3.0)
-        
+
                 peaks_split2 <-
                 d.peaks.mle %>%
                 filter(linewidth >= 0.95*maxlwd) %>%
                 mutate(frequency = frequency+0.5*maxlwd) %>%
                 mutate(linewidth = maxlwd/3.0)
-                    
+
                 peaks_all <-
                 d.peaks.mle %>%
                 filter(linewidth < 0.9*maxlwd)
-                    
+
                 peaks_new <- bind_rows(peaks_split1, peaks_split2, peaks_all)
-            
+
                 N <- nrow(d.pds_bgr)
                 LL1 <- log_likelihood(d.pds_bgr, fit_model(d.pds_bgr, d.peaks.mle), naverages=1)
                 k1 <- 3*nrow(d.peaks.mle) - sum(is.na(d.peaks.mle$linewidth))
@@ -266,7 +266,7 @@ if (argv$finalfit == TRUE) {
                 peaks_MLE_sd(peaks = peaks_new, pds = d.pds_bgr, maxLWD = maxlwd, naverages=argv$navg) %>%
                     arrange(frequency) %>%
                     filter(AIC > argv$minAIC)
-                                         
+
                 LL2 <- log_likelihood(d.pds_bgr, fit_model(d.pds_bgr, d.peaks.mle2), naverages=1)
                 k2 <- 3*nrow(d.peaks.mle2) - sum(is.na(d.peaks.mle2$linewidth))
                 AIC2 <- model_AIC(LL2, k2, N)
@@ -288,7 +288,7 @@ if (argv$finalfit == TRUE) {
             mutate(npeaks = nrow(d.peaks.mle %>% filter(AIC > argv$minAIC)))
 
         ## Write the output
-        
+
         write_csv(x = d.peaks.mle, file = argv$output)
         write_csv(x = d.summary,   file = argv$summary)
 
