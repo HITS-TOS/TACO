@@ -78,7 +78,7 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
     } else {
         #   Only find resolved peaks from mixed modes
         if (removel02 == TRUE) {
-            print("Removing l=0,2,3 first")
+            print("Removing l=0,2 first")
             if (nrow(peaks) != 0) {
                 l02_peaks <-
                     peaks %>%
@@ -156,7 +156,7 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
                 #if (data$numax < 29.76) {
                 #    maxlwd <- (0.009221 * data$numax) -0.022399
                 #} else {
-                #    maxlwd <- (0.23227534 * atan(data$numax * 0.1227482)) -0.05085946 
+                #    maxlwd <- (0.23227534 * atan(data$numax * 0.1227482)) -0.05085946
                 #}
                 deltanu_est <- DeltaNu_from_numax(data$numax)
                 # Set to be < d02 from scaling relation (~0.125 dnu)
@@ -164,7 +164,7 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
                 maxlwd <- 0.125 * deltanu_est / 1
 
                 print(paste("Maximum peak linewidth (HWHM) not set, therefore taking estimated value ", maxlwd, "uHz"))
-                
+
                 if (maxlwd < deltanu / 2) {
                     maxlwd <- deltanu / 2 + 0.1 * deltanu / 2
                     print(paste("Estimated value less than frequency bin width, therefore setting to slightly larger than bin width", maxlwd, "uHz"))

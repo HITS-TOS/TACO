@@ -24,13 +24,13 @@ peak_find_r <- function(pds, ofac_pds, data, peaks, snr, prob,
 
     pds <- ofac_pds
     deltanu <- ofac_deltanu
-    
+
     # Need to actually oversample!
     # If timeseries is too short then "oversample"
     if (removel02 == TRUE) {
         # Finding mixed modes!
 
-        print("Removing l=0,2,3 first")
+        print("Removing l=0,2 first")
         peaks <- peaks %>%
             filter(frequency > data$numax - 3 * data$sigmaEnv,
                    frequency < data$numax + 3 * data$sigmaEnv)
@@ -45,9 +45,9 @@ peak_find_r <- function(pds, ofac_pds, data, peaks, snr, prob,
         } else {
             pds_l02_removed <- new_pds
         }
-       
+
         # If max linewidth argument not set
-        
+
         if (is.null(maxlwd)) {
             # Since this is for finding mixed modes we add in constraint that linewidth must be less than Gamma0
             if(is.null(data$gamma0)) {
@@ -62,7 +62,7 @@ peak_find_r <- function(pds, ofac_pds, data, peaks, snr, prob,
             maxlwd <- 1.5 * as.numeric(maxlwd)
             print(paste("Maximum peak linewidth (HWHM) set, using value ", maxlwd, "uHz"))
         }
-        
+
         # 23/12/19 Because we are fitting in terms of HWHM the minimum linewidth should be bw/2 not bw!
         peaks <- peak_find(pds_l02_removed, min.snr = snr, p = prob,
                            linewidth.range = c(deltanu / 2, maxlwd),
@@ -88,13 +88,13 @@ peak_find_r <- function(pds, ofac_pds, data, peaks, snr, prob,
         if (is.null(maxlwd) || is.na(maxlwd)) {
             maxlw_slope = 0.249
             maxlwd <- ((0.16423368 * log10(data$numax)) - 0.08792122)
-            
+
             if (maxlwd < deltanu / 2) {
                 print("Maximum peak linewidth (HWHM) is less than frequency resolution! Increasing upper bound slightly")
                 maxlwd <- deltanu / 2 + 0.1 * deltanu / 2
             } else if (maxlwd < 5 * deltanu / 2){
                     maxlwd <- 10 * deltanu / 2
-            } 
+            }
             maxlwd <- as.numeric(maxlwd)
             print(paste("Maximum peak linewidth (HWHM) set, using value ", maxlwd, "uHz"))
         }
@@ -103,7 +103,7 @@ peak_find_r <- function(pds, ofac_pds, data, peaks, snr, prob,
                            linewidth.range = c(0.8*(deltanu / 2), 1.5*maxlwd),
                            find.first.set = TRUE, naverages = navg,
                            var.maxlw = TRUE)
-                           
+
         if (is.null(peaks)) {
             peaks <- tibble(frequency = double(),
                             linewidth = double(),
