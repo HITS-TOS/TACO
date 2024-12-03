@@ -237,7 +237,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data, contour) {
     Eps_p <- res$eps_p
     Alpha <- res$alpha
     Alpha_sd <- res$alpha_sd
-    print(res)
+    #print(res)
 
     # For consistency with epsilon from Kallinger et al. (2012)
     if (Eps_p < 0) {
@@ -298,11 +298,12 @@ peak_bag_mode_id02_r <- function(pds, peaks, data, contour) {
     peaks$x <- (peaks$frequency / Dnu - Eps_p) %% 1 #include alpha
     # l=3 occur at l=0 + deltanu/2 - 0.280 according to Mosser et al. (2010)
     l3 <- peaks %>% filter((x > 0.15))
-    l3 <- peaks %>% filter((x < 0.26))
+    l3 <- l3 %>% filter((x < 0.26))   # was selecting from peaks
     l3['n'] <- floor((l3$frequency / Dnu) - Eps_p)
     print(l3)
     if (nrow(l3) > 0) {
         print("Tagging any possible l=3 modes...")
+        print(l3)
         tmp_l0 <- peaks %>% filter(l == 0)
 
         for (i in unique(l3$n)) {
@@ -322,7 +323,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data, contour) {
 
             # Make sure there is a nearest l=0 before doing this
             if (is.na(tmp_l3$l) && !is.na(tmp_l3$linewidth)) {
-                if ((nrow(closest_l0_amp) > 0) && (nrow(closest_l0_width) > 0) && tmp_l3$linewidth > 2 * deltanu) {
+                if ((nrow(closest_l0_amp) > 0) && (nrow(closest_l0_width) > 0) && tmp_l3$linewidth > deltanu) {
                         peaks$l[peaks$frequency == tmp_l3$frequency] <- 3
                         # Subtract one from nearest l=0 radial order to ensure correct
                         peaks$n[peaks$frequency == tmp_l3$frequency] <- tmp_l3$n - 1

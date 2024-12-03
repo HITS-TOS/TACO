@@ -757,7 +757,7 @@ tag_l02_peaks <- function(peaks, pds, DeltaNu, d02, alpha, numax, HBR, sigmaEnv,
         # Bear in mind that if no l=0 is returned then it will stall because it will add DeltaNu onto the last l=0 it found and won't move anywhere. So try to
         # account for this in the tagging functions.
         # Need to give radial order as well so that it knows where it should be if no l=0 is found.
-        print("CURRENT RADIAL ORDER")
+        #print("CURRENT RADIAL ORDER")
         #print(radial_order_high)
         #print(radial_order_low)
         #print("CENTRAL RADIAL ORDER")
@@ -1036,9 +1036,9 @@ DeltaNu_l0_fit_Hekker24 <- function(peaks, numax) {
     if(nrow(l0_peaks) == 0)
         stop(paste("'peaks' does not have l=0 modes"))
 
-    print(l0_peaks)
+    #print(l0_peaks)
     lm_freq= lm(frequency ~ n, data = l0_peaks)
-    print(summary(lm_freq))
+    #print(summary(lm_freq))
 
     lm_summary <- summary(lm_freq)
     lm_coeffs <- lm_summary$coefficients

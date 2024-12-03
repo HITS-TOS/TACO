@@ -24,7 +24,7 @@ import itertools
 
 def find_directory():
     dir = Path().cwd().parent
-    dirs = [str(item).split('/')[-1] for item in Path(dir).rglob('results*')]
+    dirs = [str(item).split('/')[-1] for item in Path(dir).rglob('result*')]
     return dirs
 
 
