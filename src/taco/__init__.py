@@ -7,6 +7,7 @@ from .background_fit import background_fit
 from .peak_find import peak_find
 from .peaks_mle import peaks_mle
 from .peak_bag_mode_id02 import peak_bag_mode_id02
+from .peak_bag_mode_id3 import peak_bag_mode_id3
 from .peak_bag_period_spacing import peak_bag_period_spacing
 from .cv_method import cv_method
 

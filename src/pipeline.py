@@ -13,6 +13,8 @@ from codetiming import Timer
 import taco
 import csv
 
+import taco.peak_bag_mode_id3
+
 def get_kic_id(input_file):
     """ Returns the KIC identifier from raw data file """
 
