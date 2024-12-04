@@ -355,7 +355,7 @@ tag_central_l02 <- function(peaks, pds, DeltaNu, d02, numax,
 
        central_l2 <-
             peaks %>%
-            filter(!is.na(linewidth), !is.na(linewidth_sd), linewidth > central_l0$linewidth/2.0 , #0.3*deltanu
+            filter(!is.na(linewidth), !is.na(linewidth_sd), linewidth > central_l0$linewidth/3.0 , #divide by 2 seems to be too strong a requirement   #0.3*deltanu
                 frequency > central_l0$frequency - 1.7*d02,
                 frequency < central_l0$frequency - 0.5*d02) %>%
         # 03/03/2020 change so that relative to expected l=0 frequency,
