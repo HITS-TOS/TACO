@@ -69,7 +69,6 @@ def peak_bag_mode_id3(pds, peaks, data):
             r_pds = ro.conversion.py2rpy(pds)
             r_peaks = ro.conversion.py2rpy(peaks)
             r_data = ro.conversion.py2rpy(data)
-            r_contours = ro.conversion.py2rpy(contours)
             result = peak_bag_mode_id3.peak_bag_mode_id3_r(r_pds, r_peaks, r_data)
 
             peaks = ro.conversion.rpy2py(result['peaks'])

@@ -32,6 +32,8 @@ peak_bag_mode_id3_r <- function(pds, peaks, data) {
                frequency < data$numax + 3 * data$sigmaEnv)
 
     deltanu <- pds$frequency[2] - pds$frequency[1]
+    Dnu <- data$DeltaNu
+    Eps_p <- data$Eps_p
 
     # 31/01/2020 Tag l=3 as wide modes around where expected
     peaks$x <- (peaks$frequency / Dnu - Eps_p) %% 1 #include alpha

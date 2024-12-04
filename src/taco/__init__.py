@@ -30,5 +30,6 @@ __all__ = [
     "peak_find",
     "peaks_mle",
     "peak_bag_mode_id02",
+    "peak_bag_mode_id3",
     "peak_bag_period_spacing",
 ]
