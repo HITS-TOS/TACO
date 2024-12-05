@@ -43,7 +43,7 @@ peak_bag_mode_id3_r <- function(pds, peaks, data) {
     #print(l3)
     if (nrow(l3) > 0) {
         print("Tagging any possible l=3 modes...")
-        print(l3)
+        #print(l3)
         tmp_l0 <- peaks %>% filter(l == 0)
 
         for (i in unique(l3$n)) {
