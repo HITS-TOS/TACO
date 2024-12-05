@@ -35,12 +35,12 @@ peak_bag_mode_id3_r <- function(pds, peaks, data) {
 
     # 31/01/2020 Tag l=3 as wide modes around where expected
     peaks$x <- (peaks$frequency / data$DeltaNu - data$eps_p) %% 1 #include alpha
-    print(peaks)
+    #print(peaks)
     # l=3 occur at l=0 + deltanu/2 - 0.280 according to Mosser et al. (2010)
     l3 <- peaks %>% filter((x > 0.13))
     l3 <- l3 %>% filter((x < 0.26))   # was selecting from peaks
     l3['n'] <- floor((l3$frequency / data$DeltaNu) - data$eps_p)
-    print(l3)
+    #print(l3)
     if (nrow(l3) > 0) {
         print("Tagging any possible l=3 modes...")
         print(l3)
