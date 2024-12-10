@@ -1158,8 +1158,8 @@ DeltaNu_l2_fit <- function(peaks, numax, DeltaNu0, alpha0, eps_p0, d020,
             list(
                 d02      = res2$par[1],
                 d02_sd   = sd[1],
-                eps_p    = res2$par[2]
-                eps_p_sd = sd[2]
+                eps_p    = res2$par[2],
+                eps_p_sd = sd[2],
                 message  = res2$message))
     #    }
     if(nrow(l2_peaks) == 0)
@@ -1167,8 +1167,8 @@ DeltaNu_l2_fit <- function(peaks, numax, DeltaNu0, alpha0, eps_p0, d020,
         list(
              d02      = 0.0,
              d02_sd   = 0.0,
-             eps_p    = eps_p0
-             eps_p_sd = 0.1
+             eps_p    = eps_p0,
+             eps_p_sd = 0.1,
              message  = '')
 }
 
