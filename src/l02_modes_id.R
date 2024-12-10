@@ -1115,7 +1115,7 @@ DeltaNu_l2_fit <- function(peaks, numax, DeltaNu0, alpha0, eps_p0, d020,
                 # I use theta = (DeltaNu, epsilonp, alpha)
                 par = c(d020,eps_p0),   # initial values
                 fn = function(theta) {
-                    n_max <- numax/DeltaNu0 - eps_p0 # Using updated expression from Mosser et al. (2018)
+                    n_max <- numax/DeltaNu0 - theta[2] # Using updated expression from Mosser et al. (2018)
                     pks <-
                         l2_peaks %>%
                         mutate(predFreq =
@@ -1140,7 +1140,7 @@ DeltaNu_l2_fit <- function(peaks, numax, DeltaNu0, alpha0, eps_p0, d020,
                 return(res2)
             },
             control = list(
-                    parscale = c(1e-3)
+                    parscale = c(1e-3, 1e-3)
                 ),
                 method = "L-BFGS-B",
                 ## Limits on:  DeltaNu, epsilonp,      alpha)
