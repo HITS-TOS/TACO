@@ -1113,7 +1113,7 @@ DeltaNu_l2_fit <- function(peaks, numax, DeltaNu0, alpha0, eps_p0, d020,
         res2 <-
             optim(
                 # I use theta = (DeltaNu, epsilonp, alpha)
-                par = c(d020,epsilonp),   # initial values
+                par = c(d020,eps_p0),   # initial values
                 fn = function(theta) {
                     n_max <- numax/DeltaNu0 - eps_p0 # Using updated expression from Mosser et al. (2018)
                     pks <-
@@ -1144,8 +1144,8 @@ DeltaNu_l2_fit <- function(peaks, numax, DeltaNu0, alpha0, eps_p0, d020,
                 ),
                 method = "L-BFGS-B",
                 ## Limits on:  DeltaNu, epsilonp,      alpha)
-                lower = c(0.5*d020, 0.5*epsilonp),
-                upper = c(2.0*d020, 1.5*epsilonp),
+                lower = c(0.5*d020, 0.5*eps_p0),
+                upper = c(2.0*d020, 1.5*eps_p0),
                 hessian = TRUE
                 )
                 if(return_res == TRUE){
@@ -1158,6 +1158,8 @@ DeltaNu_l2_fit <- function(peaks, numax, DeltaNu0, alpha0, eps_p0, d020,
             list(
                 d02      = res2$par[1],
                 d02_sd   = sd[1],
+                eps_p    = res2$par[2]
+                eps_p_sd = sd[2]
                 message  = res2$message))
     #    }
     if(nrow(l2_peaks) == 0)
@@ -1165,6 +1167,8 @@ DeltaNu_l2_fit <- function(peaks, numax, DeltaNu0, alpha0, eps_p0, d020,
         list(
              d02      = 0.0,
              d02_sd   = 0.0,
+             eps_p    = eps_p0
+             eps_p_sd = 0.1
              message  = '')
 }
 
