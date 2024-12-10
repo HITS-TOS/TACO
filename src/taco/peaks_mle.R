@@ -114,7 +114,7 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
                     maxlwd <- deltanu / 2 + 0.1 * deltanu / 2
                     print(paste("Gamma0 from summary file is NA therefore setting to slightly larger than bin width: ", maxlwd, "uHz"))
                 } else {
-                    maxlwd <- 1.5 * data$gamma0
+                    maxlwd <- 5.0 * data$gamma0 # was 1.5 times
                     print(paste("Maximum peak linewidth (HWHM) not set, therefore set to Gamma0: ", maxlwd, "uHz"))
                 }
             } else {
