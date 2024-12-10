@@ -15,6 +15,9 @@ import csv
 
 import taco.peak_bag_mode_id3
 
+pipeline_directory = Path(__file__).resolve().parent
+taco_directory = pipeline_directory.parent
+
 def get_kic_id(input_file):
     """ Returns the KIC identifier from raw data file """
 
@@ -77,7 +80,7 @@ def pipeline(argv):
     final_modesfile= settings['pipeline'][11]['filenames']['final_modes']
 
     # Open csv file necessary for numax-dnu internal flag
-    contours = pd.read_csv('~/TACO/contour_90pct_interp.csv')
+    contours = pd.read_csv(taco_directory / 'contour_90pct_interp.csv')
 
     # open a csv files to log the stars that have been processed + their flags
 
