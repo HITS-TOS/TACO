@@ -270,8 +270,8 @@ peak_bag_mode_id02_r <- function(pds, peaks, data, contour) {
         # extract d02 values
         d02 <- res2$d02
         d02_sd <- res2$d02_sd
-        Eps_p <- res2$eps_p
-        Eps_p_sd <- res2$eps_p_sd
+        #Eps_p <- res2$eps_p
+        #Eps_p_sd <- res2$eps_p_sd
     }
 
     print(paste0("Initial fit to radial modes gives dnu: ", round(Dnu, 2),
