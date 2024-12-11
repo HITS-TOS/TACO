@@ -55,7 +55,7 @@ peak_find_r <- function(pds, ofac_pds, data, peaks, snr, prob,
                 print(paste("Gamma0 from summary file is NA therefore setting to slightly larger than bin width: ", maxlwd, "uHz"))
                 #stop("Gamma0 from summary file is NA please supply a maximum linewidth")
             } else {
-                maxlwd <- 5.0 * data$gamma0  #was 1.5 times gamma0
+                maxlwd <- 2.0 * data$gamma0  #was 1.5 times gamma0
                 print(paste("Maximum peak linewidth (HWHM) not set, therefore set to Gamma0: ", maxlwd, "uHz"))
             }
         } else {

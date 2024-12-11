@@ -64,14 +64,11 @@ peak_bag_mode_id3_r <- function(pds, peaks, data) {
                         arrange(-linewidth) %>%
                         #slice(1)
                         filter(linewidth > 0.3 * closest_l0_width)
-                print(tmp_l3x)
 
             # Make sure there is a nearest l=0 before doing this
                 if (nrow(tmp_l3x) > 0){
                     for (j in 1:nrow(tmp_l3x)){
-                        print(j)
                         tmp_l3 <- tmp_l3x %>% slice(j)
-                        print(tmp_l3)
                         if (is.na(tmp_l3$l) && !is.na(tmp_l3$linewidth)) {
                             if ((nrow(closest_l0_amp) > 0) && (nrow(closest_l0_width) > 0) && tmp_l3$linewidth > deltanu) {
                                 peaks$l[peaks$frequency == tmp_l3$frequency] <- 3
