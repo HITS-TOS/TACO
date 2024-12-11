@@ -239,6 +239,19 @@ peak_bag_mode_id02_r <- function(pds, peaks, data, contour) {
     Alpha_sd <- res$alpha_sd
     #print(res)
 
+# Fit through frequencies to improve estimate from epsilon now including curvature
+    res <- DeltaNu_l0_fit(
+                peaks = peaks %>%
+                filter(l == 0) %>%
+                   drop_na() %>% # in case have nan in frequency_sd
+                    arrange(frequency),
+                    numax = data$numax,
+                    DeltaNu0 = Dnu,
+                    alpha0 = Alpha,
+                    eps_p = Eps_p)
+
+    Eps_p <- res$eps_p
+
     # For consistency with epsilon from Kallinger et al. (2012)
     if (Eps_p < 0) {
         print("Epsilon p is negative! There may be a problem with the mode ID.")

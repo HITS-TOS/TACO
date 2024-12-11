@@ -894,7 +894,7 @@ search_l02_linewidth <- function(numax, nuNyq) {
 #' the `alpha_obs_from_n_max` function
 #'
 #' Mosser et al. (2013): http://dx.doi.org/10.1051/0004-6361/201220435
-DeltaNu_l0_fit <- function(peaks, numax, DeltaNu0,alpha0,
+DeltaNu_l0_fit <- function(peaks, numax, DeltaNu0,alpha0,eps_p,
                           weight.by.amplitudes = FALSE,
                           return_res = FALSE) {
     #alpha0 <- alpha_obs_from_n_max(n_max = (numax/DeltaNu0))
@@ -910,18 +910,19 @@ DeltaNu_l0_fit <- function(peaks, numax, DeltaNu0,alpha0,
     res <-
         optim(
             # I use theta = (DeltaNu, epsilonp, alpha)
-            par = c(DeltaNu0, eps_p_from_Dnu(DeltaNu0), alpha0),   # initial values
+            #par = c(DeltaNu0, eps_p_from_Dnu(DeltaNu0), alpha0),   # initial values
+            par = c(eps_p) #only fitting for eps+p
             fn = function(theta) {
-                n_max <- numax/theta[1] - theta[2] # Using updated expression from Mosser et al. (2018)
+                n_max <- numax/DeltaNu0 - theta[1] # Using updated expression from Mosser et al. (2018)
                 pks <-
                     l0_peaks %>%
                     mutate(predFreq =
                                l0_from_UP(
                                    N       = .$n,
-                                   eps_p   = theta[2],
-                                   alpha   = theta[3],
+                                   eps_p   = theta[1],
+                                   alpha   = alpha0,
                                    n_max   = n_max,
-                                   DeltaNu = theta[1]),
+                                   DeltaNu = DeltaNu0),
                            diffsq = (frequency - predFreq)^2/(frequency_sd^2))
                 if(weight.by.amplitudes) {
                     pks <-
@@ -934,12 +935,15 @@ DeltaNu_l0_fit <- function(peaks, numax, DeltaNu0,alpha0,
                 return(res)
             },
             control = list(
-                parscale = c(1e-2, 1e-2, 1e-3)
+                #parscale = c(1e-2, 1e-2, 1e-3)
+                parscale = c(1e-2)
             ),
             method = "L-BFGS-B",
             ## Limits on:  DeltaNu, epsilonp,      alpha)
-            lower = c(0.8*DeltaNu0,      0.4, 0.1*alpha0),
-            upper = c(1.2*DeltaNu0,      2.8,   10*alpha0),
+            #lower = c(0.8*DeltaNu0,      0.4, 0.1*alpha0),
+            #upper = c(1.2*DeltaNu0,      2.8,   10*alpha0),
+            lower = c(      0.4),
+            upper = c(      2.8),
             hessian = TRUE
         )
     if(return_res == TRUE){
@@ -950,12 +954,12 @@ DeltaNu_l0_fit <- function(peaks, numax, DeltaNu0,alpha0,
     #if(res$convergence != 0) stop("Error (DeltaNu_l_fit): optim didn't converge")
     return(
         list(
-            DeltaNu  = res$par[1],
-            DeltaNu_sd = sd[1],
-            eps_p = res$par[2],
-            eps_p_sd = sd[2],
-            alpha    = res$par[3],
-            alpha_sd = sd[3],
+            #DeltaNu  = res$par[1],
+            #DeltaNu_sd = sd[1],
+            eps_p = res$par[1],
+            eps_p_sd = sd[1],
+            #alpha    = res$par[3],
+            #alpha_sd = sd[3],
             message  = res$message))
 }
 
