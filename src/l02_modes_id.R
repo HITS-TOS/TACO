@@ -911,7 +911,7 @@ DeltaNu_l0_fit <- function(peaks, numax, DeltaNu0,alpha0,eps_p,
         optim(
             # I use theta = (DeltaNu, epsilonp, alpha)
             #par = c(DeltaNu0, eps_p_from_Dnu(DeltaNu0), alpha0),   # initial values
-            par = c(eps_p) #only fitting for eps+p
+            par = c(eps_p), #only fitting for eps_p
             fn = function(theta) {
                 n_max <- numax/DeltaNu0 - theta[1] # Using updated expression from Mosser et al. (2018)
                 pks <-
