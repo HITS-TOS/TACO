@@ -236,7 +236,6 @@ peak_bag_mode_id02_r <- function(pds, peaks, data, contour) {
     Eps_p <- res$eps_p
     Alpha <- res$alpha
     Alpha_sd <- res$alpha_sd
-    #print(res)
 
 # Fit through frequencies to improve estimate from epsilon now including curvature
     res <- DeltaNu_l0_fit(
@@ -422,8 +421,10 @@ peak_bag_mode_id02_r <- function(pds, peaks, data, contour) {
                     slice(1:2)
 
     # Check if it's within the area:
-    if (min(contour_numax$dnu) <= (Dnu + Dnu_sd) && (Dnu - Dnu_sd) <= max(contour_numax$dnu)) {
-        flag_contour <- 0
+    if (Dnu != NaN) && (Dnu_sd != NaN){
+        if (min(contour_numax$dnu) <= (Dnu + Dnu_sd) && (Dnu - Dnu_sd) <= max(contour_numax$dnu)) {
+            flag_contour <- 0
+        }
     }
 
     print(paste0("Final dnu: ", format(round(Dnu, 3), nsmall = 3),
