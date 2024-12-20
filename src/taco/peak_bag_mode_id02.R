@@ -36,7 +36,6 @@ peak_bag_mode_id02_r <- function(pds, peaks, data, contour) {
     flag <- 0
     flag_contour <- 1
 
-
     ## Check to see if there are any peaks in file, if not then stop
     if (nrow(peaks) == 0) {
         peaks <- tibble(frequency = double(),
@@ -269,7 +268,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data, contour) {
 
     # fit for d02, while keeping delta nu, epsilon and alpha fixed
 
-    if (nrow(peaks.l2) > 0){
+    if (nrow(peaks.l2) > 1){
         res2 <- DeltaNu_l2_fit(
                     peaks = peaks %>%
                     filter(l == 2) %>%
@@ -285,6 +284,9 @@ peak_bag_mode_id02_r <- function(pds, peaks, data, contour) {
         d02_sd <- res2$d02_sd
         #Eps_p <- res2$eps_p
         #Eps_p_sd <- res2$eps_p_sd
+    } else {
+        d02 <- NaN
+        d02_sd <- NaN
     }
 
     print(paste0("Initial fit to radial modes gives dnu: ", round(Dnu, 2),
