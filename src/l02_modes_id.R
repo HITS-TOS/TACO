@@ -1146,7 +1146,7 @@ DeltaNu_l2_fit <- function(peaks, numax, DeltaNu0, alpha0, eps_p0, d020,
             },
             control = list(
                     #parscale = c(1e-3, 1e-3)
-                    parscale = c(1e-3)
+                    parscale = c(1e-2)
                 ),
                 method = "L-BFGS-B",
                 ## Limits on:  DeltaNu, epsilonp,      alpha)
