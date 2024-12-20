@@ -50,13 +50,16 @@ peak_bag_mode_id3_r <- function(pds, peaks, data) {
             # TODO: Need to make sure checking against l=0 with right radial order!
             closest_l0_amp = tmp_l0 %>%
                                 filter(n == i) %>%
-                                select(amplitude)
+                                arrange(-amplitude) %>%
+                                slice(1)
+
             closest_l0_width = tmp_l0 %>%
-                                filter(n == i) %>%
-                                select(linewidth)
+                                filter(n == i)%>%
+                                arrange(-linewidth) %>%
+                                slice(1)
 
             # Take widest l=3 candidate, can be multiple
-            if (nrow(closest_l0_width)> 0){
+            if (nrow(closest_l0_width) == 1){
                 print(closest_l0_width)
                 tmp_l3x <- l3 %>%
                         filter(n == i) %>%
