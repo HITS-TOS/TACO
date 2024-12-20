@@ -131,6 +131,7 @@ def pipeline(argv):
                 flag_cv = -1
                 flag_numax = -1
                 flag_bgr = -1
+                flag_numax_dnu = -1
                 flag_mle_resolved = -1
                 flag_02 = -1
                 flag_mle_mixed = -1
