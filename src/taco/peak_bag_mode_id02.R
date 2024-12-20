@@ -421,7 +421,9 @@ peak_bag_mode_id02_r <- function(pds, peaks, data, contour) {
                     slice(1:2)
 
     # Check if it's within the area:
-    if (Dnu != NaN) && (Dnu_sd != NaN){
+    print(flag_contour)
+    if ((!is.nan(Dnu)) && (!is.nan(Dnu_sd))){
+        print("entered condition")
         if (min(contour_numax$dnu) <= (Dnu + Dnu_sd) && (Dnu - Dnu_sd) <= max(contour_numax$dnu)) {
             flag_contour <- 0
         }
