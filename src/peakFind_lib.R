@@ -1268,7 +1268,7 @@ peak_res_sd <- function(peak, pds, maxLWD, other_peaks = NULL, final_fit = FALSE
               lwd.upp)
   )
   peak.hess <- peak.optim$hessian
-
+  #print(peak.hess)
   # numHessian <- hessian(func =
   #                       function(theta) {
   #                                     pk <- data.frame(frequency = theta[1],
@@ -1279,7 +1279,8 @@ peak_res_sd <- function(peak, pds, maxLWD, other_peaks = NULL, final_fit = FALSE
   #                                   },
   #                       peak.optim$par)
   peak.pars <- peak.optim$par
-  sd <- sqrt(diag(solve(peak.hess)))
+  sd = c(-99,-99,-99)
+  try(sd <- sqrt(diag(solve(peak.hess))),TRUE)
   res <- data.frame(
       frequency = peak.pars[1], amplitude = peak.pars[2], linewidth = peak.pars[3],
       frequency_sd = sd[1], amplitude_sd = sd[2], linewidth_sd = sd[3], convergence=peak.optim$convergence)

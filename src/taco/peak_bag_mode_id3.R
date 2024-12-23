@@ -60,13 +60,13 @@ peak_bag_mode_id3_r <- function(pds, peaks, data) {
 
             # Take widest l=3 candidate, can be multiple
             if (nrow(closest_l0_width) == 1){
-                print(closest_l0_width)
+                #print(closest_l0_width)
                 tmp_l3x <- l3 %>%
                         filter(n == i) %>%
                         filter(AIC1 > 0) %>%
                         arrange(-linewidth) %>%
                         #slice(1)
-                        filter(linewidth > 0.2 * closest_l0_width)
+                        filter(linewidth > 0.2 * closest_l0_width$linewidth)
 
             # Make sure there is a nearest l=0 before doing this
                 if (nrow(tmp_l3x) > 0){
