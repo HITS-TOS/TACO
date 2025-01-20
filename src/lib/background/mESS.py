@@ -55,8 +55,16 @@ def multiESS(chain, nu=0.5):
     lambda_mat = np.cov(chain, rowvar=False)
     sigma_mat = np.cov(batch_means(chain, batch_size), rowvar=False)
     lambda_det_p = np.linalg.det(lambda_mat) ** (1.0 / p)
-    sigma_det_p = np.linalg.det(sigma_mat) ** (1.0 / p)
-    mess = n * (lambda_det_p / sigma_det_p) / batch_size
+    if (np.linalg.det(lambda_mat) > 1e-6):
+        sigma_det_p = np.linalg.det(sigma_mat) ** (1.0 / p)
+    else:
+        sigma_det_p = 0
+
+    if sigma_det_p != 0:
+        mess = n * (lambda_det_p / sigma_det_p) / batch_size
+    else:
+        mess = math.nan
+
     if np.isfinite(mess):
         return mess
     else:
@@ -66,7 +74,7 @@ def multiESS(chain, nu=0.5):
 def minESS(p, alpha=0.05, eps=0.05):
     """
     Mimimum number of multivariate effective samples (integer) in order
-    to have an estimate within an confidence interval 1-alpha with an error, 
+    to have an estimate within an confidence interval 1-alpha with an error,
     due to the Monte-Carlo estimation, of eps.
     """
     crit = scipy.stats.chi2.ppf(1 - alpha, p)
