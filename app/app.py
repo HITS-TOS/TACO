@@ -12,6 +12,7 @@ from bokeh.transform import factor_cmap, factor_mark
 import os
 import pandas as pd
 import numpy as np
+pd.options.mode.chained_assignment = None  # default='warn'
 
 from bokeh.plotting import figure, show
 import app_helpers
