@@ -645,6 +645,9 @@ peaks_AIC_addvalues <- function(peaks, pds, minAIC = 2, naverages=1) {
   #res <- do.call(rbind,
   #               Map(function (i) {
   for(i in 1:nrow(peaks)){
+    if (peaks[i,9] == maxAIC){
+      peaks[i,12] <- maxAIC
+    }
     if (peaks[i,9] < maxAIC){
         AIC1 = peak_AIC_diff(pds, peaks[i,], peaks_high, naverages=naverages)
         peaks[i,12] <- AIC1
