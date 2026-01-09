@@ -355,7 +355,7 @@ tag_central_l02 <- function(peaks, pds, DeltaNu, d02, numax,
 
        central_l2 <-
             peaks %>%
-            filter(!is.na(linewidth), !is.na(linewidth_sd), linewidth > central_l0$linewidth/4.0 , #divide by 2 seems to be too strong a requirement   #0.3*deltanu
+            filter(!is.na(linewidth), !is.na(linewidth_sd), #linewidth > central_l0$linewidth/4.0 , #divide by 2 seems to be too strong a requirement   #0.3*deltanu
                 frequency > central_l0$frequency - 1.7*d02,
                 frequency < central_l0$frequency - 0.5*d02) %>%
         # 03/03/2020 change so that relative to expected l=0 frequency,
@@ -468,7 +468,7 @@ tag_l02_pair <- function(peaks, pds, DeltaNu, d02, alpha, search.range, current_
 
 
     closest_peak_info <- peaks %>%
-                            filter(!is.na(linewidth), !is.na(linewidth_sd), linewidth > 0.3*deltanu, # This line might be a bit suspect as will fail when get to shorter datasets! Maybe better to take widest peak e.g.
+                            filter(!is.na(linewidth), !is.na(linewidth_sd), # linewidth > 0.3*deltanu, # This line might be a bit suspect as will fail when get to shorter datasets! Maybe better to take widest peak e.g.
                                 if(sign > 0) frequency > current_l0$frequency + search.range[1]*(DeltaNu * (1.0 + (alpha) * (current_radial_order + 1 - central_radial_order)))
                                 else frequency > current_l0$frequency - search.range[2]*(DeltaNu * (1.0 + (alpha) * (current_radial_order - 1 - central_radial_order))),
                                 if(sign > 0) frequency < current_l0$frequency + search.range[2]*(DeltaNu * (1.0 + (alpha) * (current_radial_order + 1 - central_radial_order)))
@@ -607,7 +607,7 @@ tag_l02_pair <- function(peaks, pds, DeltaNu, d02, alpha, search.range, current_
         #print("No l0 found:")
         closest_peak_info <-
             peaks %>%
-            filter(!is.na(linewidth),linewidth > 0.3*deltanu,
+            filter(!is.na(linewidth), #linewidth > 0.3*deltanu,
                 frequency < l2_peak$frequency + 1.5*d02,
                 frequency > l2_peak$frequency + 0.5*d02)
                 #   if(nrow(closest_peak_info) <= 1) {
