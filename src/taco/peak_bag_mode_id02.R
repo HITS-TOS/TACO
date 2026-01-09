@@ -184,7 +184,7 @@ peak_bag_mode_id02_r <- function(pds, peaks, data, contour) {
     peaks.l2 <- peaks %>% filter(l == 2)
 
     # If there are fewer than two modes exit mode ID
-    if (nrow(peaks.l0) < 4) {
+    if ((data$numax < 15. && nrow(peaks.l0) < 3) | (data$numax > 15. && nrow(peaks.l0) < 4)) {
 
         peaks <- peaks %>%
                     mutate(n = NaN,

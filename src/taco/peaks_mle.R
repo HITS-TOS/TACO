@@ -224,6 +224,52 @@ peaks_mle_r <- function(pds, peaks, data, mixed_peaks, maxlwd,
 
                     peaks.mle <- peaks.mle #%>% filter(AIC > minAIC)
                 }
+
+                if (max(peaks.mle$linewidth) >= 2*median(peaks.mle$linewidth,na.rm = FALSE)) {
+                    print("modes larger than 2*median linewidth, redoing the fit")
+
+                    peaks_split1 <-
+                    peaks.mle %>%
+                    filter(linewidth >= 2*median(peaks.mle$linewidth,na.rm = FALSE)) %>%
+                    mutate(frequency = frequency-0.5*median(peaks.mle$linewidth,na.rm = FALSE)) %>%
+                    mutate(linewidth = median(peaks.mle$linewidth,na.rm = FALSE))
+
+                    peaks_split2 <-
+                    peaks.mle %>%
+                    filter(linewidth >= 2*median(peaks.mle$linewidth,na.rm = FALSE)) %>%
+                    mutate(frequency = frequency+0.5*median(peaks.mle$linewidth,na.rm = FALSE)) %>%
+                    mutate(linewidth = median(peaks.mle$linewidth,na.rm = FALSE))
+
+                    peaks_all <-
+                    peaks.mle %>%
+                    filter(linewidth < 0.9*maxlwd)
+
+                    peaks_new <- bind_rows(peaks_split1, peaks_split2, peaks_all)
+
+                    N <- nrow(pds)
+                    LL1 <- log_likelihood(pds, fit_model(pds, peaks.mle), naverages=1)
+                    k1 <- 3*nrow(peaks.mle) - sum(is.na(peaks.mle$linewidth))
+                    AIC1 <- model_AIC(LL1, k1, N)
+                    peaks.mle2 <-
+                    peaks_MLE_sd(peaks = peaks_new, pds = pds, maxLWD = maxlwd, naverages = navg) %>%
+                        arrange(frequency) %>%
+                        filter(AIC > minAIC)
+
+                    LL2 <- log_likelihood(pds, fit_model(pds, peaks.mle2), naverages=1)
+                    k2 <- 3*nrow(peaks.mle2) - sum(is.na(peaks.mle2$linewidth))
+                    AIC2 <- model_AIC(LL2, k2, N)
+
+                    #print("AIC")
+                    #print(AIC1)
+                    #print(AIC2)
+
+                    # If second model is better then keep it
+                    if (AIC2 < AIC1) {
+                        peaks.mle <- peaks.mle2
+                    }
+
+                    peaks.mle <- peaks.mle #%>% filter(AIC > minAIC)
+                }
             data <- data %>%
                 mutate(npeaks = nrow(peaks.mle)) # %>% filter(AIC > minAIC)))
         }

@@ -143,17 +143,17 @@ if(d.summary$numax < 5) {
             gamma0    = NULL,
             modeIDFlag = 2)
     write_csv(x = d.summary, file = argv$summary)
-    stop("Numax < 10uHz and is too low for the automated mode identification to be reliable.")
+    stop("Numax < 5uHz and is too low for the automated mode identification to be reliable.")
 }
 
 ## Expected Δν from ν_max
 d.Dnu <- DeltaNu_from_numax(d.summary$numax)
 
 ## Refine it using the PS of the PS. We look at Δν and Δν/2 and take the highest peak
-d.psxps1 <- lsp(times = d.pds$frequency, x = d.pds$power, 
+d.psxps1 <- lsp(times = d.pds$frequency, x = d.pds$power,
                 from = 0.3*d.Dnu, to = 0.7*d.Dnu,
                 type = "period", plot = FALSE, ofac = 10)
-d.psxps2 <- lsp(times = d.pds$frequency, x = d.pds$power, 
+d.psxps2 <- lsp(times = d.pds$frequency, x = d.pds$power,
                 from = 0.7*d.Dnu, to = 1.3*d.Dnu,
                 type = "period", plot = FALSE, ofac = 10)
 d.Dnu <- ifelse(d.psxps1$peak > d.psxps2$peak, d.psxps1$peak.at[1] * 2, d.psxps2$peak.at[1])
@@ -164,7 +164,7 @@ print(paste0("Initial Dnu from PSxPS ", d.Dnu))
 d.d02 <- d02_from_DeltaNu(d.Dnu)
 #print(d.d02)
 ## Refine the δν_02 with the PSxPS
-d.psxps <- lsp(times = d.pds$frequency, x = d.pds$power, 
+d.psxps <- lsp(times = d.pds$frequency, x = d.pds$power,
                from = 0.7*d.d02, to = 1.3*d.d02,
                type = "period", plot = FALSE, ofac = 10)
 d.d02 <- d.psxps$peak.at[1]
@@ -214,7 +214,7 @@ if (nrow(d.peaks.l0) < 3) {
                     Central_alpha_sd  = NaN,
                     gamma0    = NaN,
                     modeIDFlag = 3)
-    
+
     write_csv(x = d.peaks, file = argv$peaks)
     write_csv(x = d.summary, file = argv$summary)
     stop("Not enough radial modes found to go any further. Mode ID not performed and Δν not estimated")
@@ -298,8 +298,8 @@ l3['n'] = floor((l3$frequency / d.Dnu) - d.eps_p)
 print("Tagging any possible l=3 modes...")
 if (nrow(l3) > 0){
 
-    
-    
+
+
     tmp_l0 <- d.peaks %>%
                 filter(l == 0)
 
@@ -315,12 +315,12 @@ if (nrow(l3) > 0){
      #   print(tmp_l3$l)
      #   print(deltanu)
         # TODO: Need to make sure checking against l=0 with right radial order!
-        closest_l0_amp = tmp_l0 %>% 
-                            filter(n == i) %>% 
+        closest_l0_amp = tmp_l0 %>%
+                            filter(n == i) %>%
                             select(amplitude)
-        closest_l0_width = tmp_l0 %>% 
-                            filter(n == i) %>% 
-                            select(linewidth)        
+        closest_l0_width = tmp_l0 %>%
+                            filter(n == i) %>%
+                            select(linewidth)
 
         # Make sure there is a nearest l=0 before doing this
         if(is.na(tmp_l3$l) & !is.na(tmp_l3$linewidth)){
@@ -350,7 +350,7 @@ d.peaks <- d.peaks %>%
             select(-x)
 #print(paste0("ESTIMATE DELTA NU: ", dnu_est))
 # Fit through frequencies to estimate delta nu, epsilon and aplha
-res <- DeltaNu_l0_fit(        
+res <- DeltaNu_l0_fit(
             peaks = d.peaks %>%
                 filter(l==0) %>%
                 drop_na() %>% # in case have nan in frequency_sd
@@ -373,7 +373,7 @@ if( d.eps_p < 0){
     print("Epsilon p too large, altering radial orders and rerunning fit")
     d.peaks$n <- d.peaks$n + 1
     # Fit through frequencies to estimate delta nu, epsilon and aplha
-    res <- DeltaNu_l0_fit(        
+    res <- DeltaNu_l0_fit(
                 peaks = d.peaks %>%
                     filter(l==0) %>%
                     drop_na() %>% # in case have nan in frequency_sd
@@ -411,7 +411,7 @@ d.d02_sd <- res2$d02_sd
 print(paste0("Final dnu: ", format(round(d.Dnu, 3), nsmall=3), "+/- ", format(round(d.Dnu_sd, 3), nsmall=3), " uHz, and eps: ", format(round(d.eps_p, 3), nsmall=3), "+/- ", format(round(d.eps_p_sd, 3), nsmall=3), ", alpha: ", format(round(d.alpha, 4),nsmall=3),"+/-",format(round(d.alpha_sd, 4), nsmall=4), ", d02: ", format(round(d.d02, 4))))
 
 ## Estimate central Δν from a linear fit through the 3 l=0 peaks closest to numax
-central_res <- DeltaNu_l0_fit(        
+central_res <- DeltaNu_l0_fit(
                 peaks = d.peaks %>%
                     filter(l==0) %>%
                     mutate(absdiff = abs(frequency - d.summary$numax)) %>%
